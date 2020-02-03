@@ -81,7 +81,7 @@ h1 {
 }
 .numeric {
 	text-align: right;
-	padding-right: 50px;
+	padding-right: 60px;
 }
 .confirmed {
 	background-color: #00000055;
@@ -245,19 +245,20 @@ map.on('singleclick', function(evt){
 	if(feature){
 		country = feature.get('country');
 		province = feature.get('province');
-		updated = feature.get('updated');
-		suspected = feature.get('suspected');
+		first_confirmed_date = feature.get('first_confirmed_date');
 		confirmed = feature.get('confirmed');
-		recovered = feature.get('recovered');
-		death = feature.get('death');
-		if(suspected) suspected = Number(suspected).toLocaleString('en-US');
+		last_index = confirmed.length - 1;
+		last_updated = confirmed[last_index].time;
+		confirmed = confirmed[last_index].count;
+		recovered = feature.get('recovered')[last_index].count;
+		death = feature.get('death')[last_index].count;
 		if(confirmed) confirmed = Number(confirmed).toLocaleString('en-US');
 		if(recovered) recovered = Number(recovered).toLocaleString('en-US');
 		if(death) death = Number(death).toLocaleString('en-US');
 		popupContentEl.innerHTML =
 			'<div id="popup-header">' + (province == '' ? '' : province + ', ') + country + '</div><table>' +
-			'<tr><td>Updated:</td><td>' + updated + '</td></tr>' +
-			(suspected ? '<tr><td>Suspected:</td><td class="numeric">' + suspected + '</td></tr>' : '') +
+			'<tr><td>First confirmed:</td><td>' + first_confirmed_date + '</td></tr>' +
+			'<tr><td>Last updated:</td><td>' + last_updated + '</td></tr>' +
 			(confirmed ? '<tr><td>Confirmed:</td><td class="numeric">' + confirmed + '</td></tr>' : '') +
 			(recovered ? '<tr><td>Recovered:</td><td class="numeric">' + recovered + '</td></tr>' : '') +
 			(death ? '<tr><td>Death:</td><td class="numeric">' + death + '</td></tr>' : '') +
