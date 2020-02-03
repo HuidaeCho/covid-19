@@ -1,6 +1,6 @@
-# 2019ncov
+# 2019-ncov
 
-[This web map](https://app.isnew.info/2019ncov) is an open source version of [the 2019-nCoV global cases website by Johns Hopkins SCCE](https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6). It uses [their data](https://docs.google.com/spreadsheets/d/1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo/export?format=ods&id=1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo) and [OpenLayers](https://openlayers.org).
+[This web map](https://app.isnew.info/2019-ncov) is an open source version of [the 2019-nCoV global cases website by Johns Hopkins SCCE](https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6). It uses [their data](https://docs.google.com/spreadsheets/d/1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo/export?format=ods&id=1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo) and [OpenLayers](https://openlayers.org).
 
 Why reinvent the wheel? I don't know...
 
