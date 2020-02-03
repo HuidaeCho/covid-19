@@ -26,7 +26,7 @@ ods = pyods.get_data(io)
 
 confirmed_sheet = ods['Confirmed']
 recovered_sheet = ods['Recovered']
-death_sheet = ods['Death']
+deaths_sheet = ods['Death']
 
 headers = confirmed_sheet[0]
 
@@ -69,7 +69,7 @@ for i in range(1, len(confirmed_sheet)):
 
     confirmed = []
     recovered = []
-    death = []
+    deaths = []
     for j in range(5, len(cols)):
         time = f'{headers[j]}'
 
@@ -86,9 +86,9 @@ for i in range(1, len(confirmed_sheet)):
             'count': count
         })
 
-        death_cols = death_sheet[i]
-        count = death_cols[j] if len(death_cols) > j else ''
-        death.append({
+        deaths_cols = deaths_sheet[i]
+        count = deaths_cols[j] if len(deaths_cols) > j else ''
+        deaths.append({
             'time': time,
             'count': count
         })
@@ -100,7 +100,7 @@ for i in range(1, len(confirmed_sheet)):
         'longitude': longitude,
         'confirmed': confirmed,
         'recovered': recovered,
-        'death': death
+        'deaths': deaths
     })
 
 f = open(data_json, 'w')
@@ -121,7 +121,7 @@ for rec in data:
             'first_confirmed_date': rec['first_confirmed_date'],
             'confirmed': rec['confirmed'],
             'recovered': rec['recovered'],
-            'death': rec['death']
+            'deaths': rec['deaths']
         }
     })
 

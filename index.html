@@ -13,6 +13,8 @@
 <link rel="stylesheet" href="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.css" />
 <script type="text/javascript" src="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.js"></script>
 
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+
 <style type="text/css">
 html {
 	width: 100%;
@@ -28,60 +30,23 @@ body {
 #header {
 	float: left;
 }
-#map {
-	width: 100%;
-}
 h1 {
 	font-size: 150%;
 }
-.ol-popup {
-	position: absolute;
-	background-color: white;
-	-webkit-filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
-	filter: drop-shadow(0 1px 4px rgba(0,0,0,0.2));
-	padding: 15px;
-	border-radius: 10px;
-	border: 1px solid #cccccc;
-	bottom: 12px;
-	left: -50px;
-	min-width: 280px;
+#map {
+	display: inline-block;
 }
-.ol-popup:after, .ol-popup:before {
-	top: 100%;
-	border: solid transparent;
-	content: " ";
-	height: 0;
-	width: 0;
-	position: absolute;
-	pointer-events: none;
+#info {
+	display: inline-block;
+	vertical-align: top;
+	width: 500px;
 }
-.ol-popup:after {
-	border-top-color: white;
-	border-width: 10px;
-	left: 48px;
-	margin-left: -10px;
-}
-.ol-popup:before {
-	border-top-color: #cccccc;
-	border-width: 11px;
-	left: 48px;
-	margin-left: -11px;
-}
-.ol-popup-closer {
-	text-decoration: none;
-	position: absolute;
-	top: 2px;
-	right: 8px;
-}
-.ol-popup-closer:after {
-	content: "✖";
-}
-#popup-header {
+.popup-header {
+	text-align: center;
 	font-weight: bold;
 }
 .numeric {
 	text-align: right;
-	padding-right: 60px;
 }
 .confirmed {
 	background-color: #00000055;
@@ -89,7 +54,7 @@ h1 {
 .recovered {
 	background-color: #00ff0055;
 }
-.death {
+.deaths {
 	background-color: #ff000055;
 }
 </style>
@@ -97,35 +62,30 @@ h1 {
 <body>
 <div id="header">
 <h1>Open Source Reimplementation of the <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">2019-nCoV Global Cases by Johns Hopkins SCCE</a></h1>
+<div>
 This web map reimplements the <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">same map by Johns Hopkins SCCE</a> using their data and <a href="https://openlayers.org">OpenLayers</a>. Click circles for more information. Data is fetched hourly.
 <div>
 <span class="confirmed">Confirmed</span>,
 <span class="recovered">Recovered</span>,
-<span class="death">Death</span>
+<span class="deaths">Deaths</span>
 </div>
 </div>
-<div id="map" class="map"></div>
-<div id="popup" class="ol-popup">
-<a href="#" id="popup-closer" class="ol-popup-closer"></a>
-<div id="popup-content"></div>
+<div id="map"></div>
+<div id="info">
+<div id="summary"></div>
+<div id="plot"></div>
 </div>
 <script>
 var bodyEl = document.body;
-var headerEl = document.getElementById("header");
-var mapEl = document.getElementById("map");
+var headerEl = document.getElementById('header');
+var mapEl = document.getElementById('map');
+var infoEl = document.getElementById('info');
+var summaryEl = document.getElementById('summary');
 mapEl.style.height = (bodyEl.offsetHeight - headerEl.offsetHeight) + 'px';
+mapEl.style.width = (bodyEl.offsetWidth - infoEl.offsetWidth - 5) + 'px';
 
-var popupEl = document.getElementById('popup');
-var popupContentEl = document.getElementById('popup-content');
-var popupCloserEl = document.getElementById('popup-closer');
-
-var overlay = new ol.Overlay({
-	element: popupEl,
-});
-popupCloserEl.onclick = function(){
-	overlay.setPosition(undefined);
-	popupCloserEl.blur();
-	return false;
+var getColor = function(category){
+	return window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor
 }
 var createStyle = function(feature, resolution, category){
 	var timeSeries = feature.get(category);
@@ -137,12 +97,14 @@ var createStyle = function(feature, resolution, category){
 		image: new ol.style.Circle({
 			radius: radius,
 			fill: new ol.style.Fill({
-				color: window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor
+				color: getColor(category)
 			})
 		})
 	});
 	return style;
 }
+
+var popup = new ol.Overlay.Popup();
 
 var map = new ol.Map({
 	target: 'map',
@@ -223,7 +185,7 @@ var map = new ol.Map({
 						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">2019-nCoV Global Cases by Johns Hopkins CSSE</a>'
 					}),
 					style: function(feature, resolution){
-						return createStyle(feature, resolution, 'death');
+						return createStyle(feature, resolution, 'deaths');
 					}
 				}),
 			]
@@ -233,7 +195,7 @@ var map = new ol.Map({
 		center: ol.proj.fromLonLat([37.41, 8.82]),
 		zoom: 1,
 	}),
-	overlays: [overlay],
+	overlays: [popup],
 });
 var layerSwitcher = new ol.control.LayerSwitcher();
 map.addControl(layerSwitcher);
@@ -245,27 +207,174 @@ map.on('singleclick', function(evt){
 	if(feature){
 		country = feature.get('country');
 		province = feature.get('province');
-		first_confirmed_date = feature.get('first_confirmed_date');
+		firstConfirmedDate = feature.get('first_confirmed_date');
 		confirmed = feature.get('confirmed');
-		last_index = confirmed.length - 1;
-		last_updated = confirmed[last_index].time;
-		confirmed = confirmed[last_index].count;
-		recovered = feature.get('recovered')[last_index].count;
-		death = feature.get('death')[last_index].count;
-		if(confirmed) confirmed = Number(confirmed).toLocaleString('en-US');
-		if(recovered) recovered = Number(recovered).toLocaleString('en-US');
-		if(death) death = Number(death).toLocaleString('en-US');
-		popupContentEl.innerHTML =
-			'<div id="popup-header">' + (province == '' ? '' : province + ', ') + country + '</div><table>' +
-			'<tr><td>First confirmed:</td><td>' + first_confirmed_date + '</td></tr>' +
-			'<tr><td>Last updated:</td><td>' + last_updated + '</td></tr>' +
-			(confirmed ? '<tr><td>Confirmed:</td><td class="numeric">' + confirmed + '</td></tr>' : '') +
-			(recovered ? '<tr><td>Recovered:</td><td class="numeric">' + recovered + '</td></tr>' : '') +
-			(death ? '<tr><td>Death:</td><td class="numeric">' + death + '</td></tr>' : '') +
-			'</table>';
-		overlay.setPosition(evt.coordinate);
+		recovered = feature.get('recovered')
+		deaths = feature.get('deaths');
+
+		lastIndex = confirmed.length - 1;
+		lastUpdated = confirmed[lastIndex].time;
+		lastConfirmed = confirmed[lastIndex].count;
+		lastRecovered = recovered[lastIndex].count;
+		lastDeaths = deaths[lastIndex].count;
+
+		if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString('en-US');
+		if(lastRecovered) lastRecovered = lastRecovered.toLocaleString('en-US');
+		if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
+
+		var content =
+			'<div class="popup-header">' + (province == '' ? '' : province + ', ') + country + '</div>' +
+			'<table>' +
+			'<tr><td>First confirmed:</td><td>' + firstConfirmedDate + '</td></tr>' +
+			'<tr><td>Last updated:</td><td>' + lastUpdated + '</td></tr>' +
+			(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="numeric">' + lastConfirmed + '</td></tr>' : '') +
+			(lastRecovered ? '<tr class="recovered"><td>Recovered:</td><td class="numeric">' + lastRecovered + '</td></tr>' : '') +
+			(lastDeaths ? '<tr class="deaths"><td>Deaths:</td><td class="numeric">' + lastDeaths + '</td></tr>' : '') +
+			'</table>' +
+			'<div id="popup-plot"></div>';
+		popup.show(evt.coordinate, content);
+
+		var time = [];
+		var confirmedCounts = [];
+		var recoveredCounts = [];
+		var deathsCounts = [];
+
+		for(var i = 0; i <= lastIndex; i++){
+			var c = confirmed[i].count;
+			var r = recovered[i].count;
+			var d = deaths[i].count;
+			if(c || r || d){
+				time.push(confirmed[i].time);
+				confirmedCounts.push(c);
+				recoveredCounts.push(r);
+				deathsCounts.push(d);
+			}
+		}
+
+		var trends = [];
+		trends.push({
+			name: 'Confirmed',
+			x: time,
+			y: confirmedCounts,
+			marker: {
+				color: getColor('confirmed')
+			}
+		});
+		trends.push({
+			name: 'Recovered',
+			x: time,
+			y: recoveredCounts,
+			marker: {
+				color: getColor('recovered')
+			}
+		});
+		trends.push({
+			name: 'Deaths',
+			x: time,
+			y: deathsCounts,
+			marker: {
+				color: getColor('deaths')
+			}
+		});
+		var layout = {
+			width: 265,
+			height: 100,
+			showlegend: false,
+			margin: {
+				l: 20,
+				r: 0,
+				b: 30,
+				t: 5
+			}
+		};
+		Plotly.newPlot('popup-plot', trends, layout);
+	}else{
+		popup.hide();
 	}
 });
+
+var xhr = new XMLHttpRequest();
+xhr.open('GET', 'geodata.json', true);
+xhr.responseType = 'json';
+xhr.onload = function(){
+	var status = xhr.status;
+	if(status == 200){
+		var data = xhr.response;
+		var features = data.features;
+		var time = [];
+		var confirmedCounts = [];
+		var recoveredCounts = [];
+		var deathsCounts = [];
+		for(var i = 0; i < features.length; i++){
+			var feature = features[i];
+			confirmed = feature.properties.confirmed;
+			recovered = feature.properties.recovered;
+			deaths = feature.properties.deaths;
+			for(var j = 0; j < confirmed.length; j++){
+				c = Number(confirmed[j].count);
+				r = Number(recovered[j].count);
+				d = Number(deaths[j].count);
+				if(i == 0){
+					time.push(confirmed[j].time);
+					confirmedCounts.push(c);
+					recoveredCounts.push(r);
+					deathsCounts.push(d);
+				}else{
+					confirmedCounts[j] += c;
+					recoveredCounts[j] += r;
+					deathsCounts[j] += d;
+				}
+			}
+		}
+		var lastIndex = time.length - 1;
+		var totalConfirmed = confirmedCounts[lastIndex].toLocaleString('en-US');
+		var totalRecovered = recoveredCounts[lastIndex].toLocaleString('en-US');
+		var totalDeaths = deathsCounts[lastIndex].toLocaleString('en-US');
+		summaryEl.innerHTML =
+			'<table>' +
+			'<tr class="confirmed"><td>Total Confirmed:</td><td class="numeric">' + totalConfirmed + '</td></tr>' +
+			'<tr class="recovered"><td>Total Recovered:</td><td class="numeric">' + totalRecovered + '</td></tr>' +
+			'<tr class="deaths"><td>Total Deaths:</td><td class="numeric">' + totalDeaths + '</td></tr>' +
+			'</table>';
+		var trends = [];
+		trends.push({
+			name: 'Confirmed',
+			x: time,
+			y: confirmedCounts,
+			marker: {
+				color: getColor('confirmed')
+			}
+		});
+		trends.push({
+			name: 'Recovered',
+			x: time,
+			y: recoveredCounts,
+			marker: {
+				color: getColor('recovered')
+			}
+		});
+		trends.push({
+			name: 'Deaths',
+			x: time,
+			y: deathsCounts,
+			marker: {
+				color: getColor('deaths')
+			}
+		});
+		var layout = {
+			margin: {
+				l: 20,
+				r: 0,
+				b: 30,
+				t: 20
+			}
+		};
+		Plotly.newPlot('plot', trends, layout);
+	}else{
+		console.log(status);
+	}
+};
+xhr.send();
 </script>
 </body>
 </html>
