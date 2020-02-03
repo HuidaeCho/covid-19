@@ -185,8 +185,9 @@ var map = new ol.Map({
 						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">2019-nCoV Global Cases by Johns Hopkins CSSE</a>'
 					}),
 					style: function(feature, resolution){
-						var suspected = Number(feature.get('suspected'));
-						var radius = Math.log10(suspected+1)*10;
+						var suspected = feature.get('suspected');
+						var radius = Math.pow(Math.log10(suspected+1), 2)*2;
+						//radius *= 42000 / resolution * 0.5;
 						var style = new ol.style.Style({
 							image: new ol.style.Circle({
 								radius: radius,
@@ -207,8 +208,9 @@ var map = new ol.Map({
 						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">2019-nCoV Global Cases by Johns Hopkins CSSE</a>'
 					}),
 					style: function(feature, resolution){
-						var confirmed = Number(feature.get('confirmed'));
-						var radius = Math.log10(confirmed+1)*10;
+						var confirmed = feature.get('confirmed');
+						var radius = Math.pow(Math.log10(confirmed+1), 2)*2;
+						//radius *= 42000 / resolution * 0.5;
 						var style = new ol.style.Style({
 							image: new ol.style.Circle({
 								radius: radius,
@@ -228,8 +230,9 @@ var map = new ol.Map({
 						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">2019-nCoV Global Cases by Johns Hopkins CSSE</a>'
 					}),
 					style: function(feature, resolution){
-						var recovered = Number(feature.get('recovered'));
-						var radius = Math.log10(recovered+1)*10;
+						var recovered = feature.get('recovered');
+						var radius = Math.pow(Math.log10(recovered+1), 2)*2;
+						//radius *= 42000 / resolution * 0.5;
 						var style = new ol.style.Style({
 							image: new ol.style.Circle({
 								radius: radius,
@@ -249,8 +252,9 @@ var map = new ol.Map({
 						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">2019-nCoV Global Cases by Johns Hopkins CSSE</a>'
 					}),
 					style: function(feature, resolution){
-						var deaths = Number(feature.get('deaths'));
-						var radius = Math.log10(deaths+1)*10;
+						var deaths = feature.get('deaths');
+						var radius = Math.pow(Math.log10(deaths+1), 2)*2;
+						//radius *= 42000 / resolution * 0.5;
 						var style = new ol.style.Style({
 							image: new ol.style.Circle({
 								radius: radius,

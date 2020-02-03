@@ -3,8 +3,13 @@ import requests
 import pyexcel_ods3 as pyods
 from io import BytesIO
 import json
+import config
 
 data_url = 'https://docs.google.com/spreadsheets/d/1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo/export?format=ods&id=1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo'
+
+geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
+geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
+
 data_ods = 'data.ods'
 data_json = 'data.json'
 geodata_json = 'geodata.json'
@@ -25,6 +30,7 @@ death_sheet = ods['Death']
 
 headers = confirmed_sheet[0]
 
+coors = {}
 data = []
 
 for i in range(1, len(confirmed_sheet)):
@@ -34,8 +40,33 @@ for i in range(1, len(confirmed_sheet)):
     province = cols[0]
     country = cols[1]
     first_confirmed_date = f'{cols[2]}'
-    latitude = cols[3]
-    longitude = cols[4]
+
+    if config.geocode:
+        if province == '':
+            location = country
+            geocode_url = geocode_country_url.format(country=country)
+        else:
+            location = f'{country},{province}'
+            geocode_url = geocode_province_url.format(country=country, province=province)
+        if not location in coors:
+            res = requests.get(geocode_url)
+            ret = res.json()
+            resources = ret['resourceSets'][0]['resources']
+            if len(resources):
+                coor = resources[0]['geocodePoints'][0]['coordinates']
+                latitude = coor[0]
+                longitude = coor[1]
+            else:
+                latitude = cols[3]
+                longitude = cols[4]
+            coors[location] = {'latitude': latitude, 'longitude': longitude}
+        else:
+            latitude = coors[location].latitude
+            longitude = coors[location].longitude
+    else:
+        latitude = cols[3]
+        longitude = cols[4]
+
     confirmed = []
     recovered = []
     death = []
