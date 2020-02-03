@@ -39,7 +39,7 @@ h1 {
 #info {
 	display: inline-block;
 	vertical-align: top;
-	width: 500px;
+	width: 30%;
 }
 .popup-header {
 	text-align: center;
@@ -279,13 +279,13 @@ map.on('singleclick', function(evt){
 		var layout = {
 			width: 265,
 			height: 100,
-			showlegend: false,
 			margin: {
 				l: 20,
 				r: 0,
 				b: 30,
 				t: 5
-			}
+			},
+			showlegend: false
 		};
 		Plotly.newPlot('popup-plot', trends, layout);
 	}else{
@@ -327,11 +327,13 @@ xhr.onload = function(){
 			}
 		}
 		var lastIndex = time.length - 1;
+		var lastUpdated = time[lastIndex];
 		var totalConfirmed = confirmedCounts[lastIndex].toLocaleString('en-US');
 		var totalRecovered = recoveredCounts[lastIndex].toLocaleString('en-US');
 		var totalDeaths = deathsCounts[lastIndex].toLocaleString('en-US');
 		summaryEl.innerHTML =
 			'<table>' +
+			'<tr><td>Last Updated:</td><td>' + lastUpdated + '</td></tr>' +
 			'<tr class="confirmed"><td>Total Confirmed:</td><td class="numeric">' + totalConfirmed + '</td></tr>' +
 			'<tr class="recovered"><td>Total Recovered:</td><td class="numeric">' + totalRecovered + '</td></tr>' +
 			'<tr class="deaths"><td>Total Deaths:</td><td class="numeric">' + totalDeaths + '</td></tr>' +
@@ -367,7 +369,8 @@ xhr.onload = function(){
 				r: 0,
 				b: 30,
 				t: 20
-			}
+			},
+			showlegend: false
 		};
 		Plotly.newPlot('plot', trends, layout);
 	}else{
