@@ -41,6 +41,9 @@ h1 {
 	vertical-align: top;
 	width: 30%;
 }
+#total-stats {
+	width: 100%;
+}
 .popup-header {
 	text-align: center;
 	font-weight: bold;
@@ -82,7 +85,7 @@ var mapEl = document.getElementById('map');
 var infoEl = document.getElementById('info');
 var summaryEl = document.getElementById('summary');
 mapEl.style.height = (bodyEl.offsetHeight - headerEl.offsetHeight) + 'px';
-mapEl.style.width = (bodyEl.offsetWidth - infoEl.offsetWidth - 5) + 'px';
+mapEl.style.width = (bodyEl.offsetWidth - infoEl.offsetWidth - 11) + 'px';
 
 var getColor = function(category){
 	return window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor
@@ -277,10 +280,10 @@ map.on('singleclick', function(evt){
 			}
 		});
 		var layout = {
-			width: 265,
+			width: 240,
 			height: 100,
 			margin: {
-				l: 20,
+				l: 25,
 				r: 0,
 				b: 30,
 				t: 5
@@ -332,7 +335,7 @@ xhr.onload = function(){
 		var totalRecovered = recoveredCounts[lastIndex].toLocaleString('en-US');
 		var totalDeaths = deathsCounts[lastIndex].toLocaleString('en-US');
 		summaryEl.innerHTML =
-			'<table>' +
+			'<table id="total-stats">' +
 			'<tr><td>Last Updated:</td><td>' + lastUpdated + '</td></tr>' +
 			'<tr class="confirmed"><td>Total Confirmed:</td><td class="numeric">' + totalConfirmed + '</td></tr>' +
 			'<tr class="recovered"><td>Total Recovered:</td><td class="numeric">' + totalRecovered + '</td></tr>' +
@@ -365,7 +368,7 @@ xhr.onload = function(){
 		});
 		var layout = {
 			margin: {
-				l: 20,
+				l: 25,
 				r: 0,
 				b: 30,
 				t: 20
