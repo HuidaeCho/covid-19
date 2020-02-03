@@ -3,13 +3,13 @@ import lxml.html
 import requests
 from config import bing_maps_key
 
-jhu_scce_url = 'https://docs.google.com/spreadsheets/d/1yZv9w9zRKwrGTaR-YzmAqMefw4wMlaXocejdxZaTs6w/htmlview?usp=sharing&sle=true'
+data_url = 'https://docs.google.com/spreadsheets/d/1yZv9w9zRKwrGTaR-YzmAqMefw4wMlaXocejdxZaTs6w/htmlview?usp=sharing&sle=true'
 province_api_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={bing_maps_key}'
 country_api_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={bing_maps_key}'
 
 coors = {}
 
-res = requests.get(jhu_scce_url)
+res = requests.get(data_url)
 root = lxml.html.fromstring(res.content)
 for tab in root.iter('li'):
     day = tab.find('a').text
