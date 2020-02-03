@@ -208,18 +208,18 @@ map.on('singleclick', function(evt){
 		return feature;
 	});
 	if(feature){
-		country = feature.get('country');
-		province = feature.get('province');
-		firstConfirmedDate = feature.get('first_confirmed_date');
-		confirmed = feature.get('confirmed');
-		recovered = feature.get('recovered')
-		deaths = feature.get('deaths');
+		var country = feature.get('country');
+		var province = feature.get('province');
+		var firstConfirmedDate = new Date(feature.get('first_confirmed_date')).toLocaleString('en-US');
+		var confirmed = feature.get('confirmed');
+		var recovered = feature.get('recovered')
+		var deaths = feature.get('deaths');
 
-		lastIndex = confirmed.length - 1;
-		lastUpdated = confirmed[lastIndex].time;
-		lastConfirmed = confirmed[lastIndex].count;
-		lastRecovered = recovered[lastIndex].count;
-		lastDeaths = deaths[lastIndex].count;
+		var lastIndex = confirmed.length - 1;
+		var lastUpdated = new Date(confirmed[lastIndex].time).toLocaleString('en-US');
+		var lastConfirmed = confirmed[lastIndex].count;
+		var lastRecovered = recovered[lastIndex].count;
+		var lastDeaths = deaths[lastIndex].count;
 
 		if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString('en-US');
 		if(lastRecovered) lastRecovered = lastRecovered.toLocaleString('en-US');
@@ -330,7 +330,7 @@ xhr.onload = function(){
 			}
 		}
 		var lastIndex = time.length - 1;
-		var lastUpdated = time[lastIndex];
+		var lastUpdated = new Date(time[lastIndex]).toLocaleString('en-US');
 		var totalConfirmed = confirmedCounts[lastIndex].toLocaleString('en-US');
 		var totalRecovered = recoveredCounts[lastIndex].toLocaleString('en-US');
 		var totalDeaths = deathsCounts[lastIndex].toLocaleString('en-US');
