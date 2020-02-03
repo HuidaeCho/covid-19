@@ -41,12 +41,12 @@ h1 {
 	vertical-align: top;
 	width: 30%;
 }
-#total-stats {
-	width: 100%;
-}
 .popup-header {
 	text-align: center;
 	font-weight: bold;
+}
+.stats {
+	width: 100%;
 }
 .numeric {
 	text-align: right;
@@ -227,7 +227,7 @@ map.on('singleclick', function(evt){
 
 		var content =
 			'<div class="popup-header">' + (province == '' ? '' : province + ', ') + country + '</div>' +
-			'<table>' +
+			'<table class="stats">' +
 			'<tr><td>First confirmed:</td><td>' + firstConfirmedDate + '</td></tr>' +
 			'<tr><td>Last updated:</td><td>' + lastUpdated + '</td></tr>' +
 			(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="numeric">' + lastConfirmed + '</td></tr>' : '') +
@@ -335,7 +335,7 @@ xhr.onload = function(){
 		var totalRecovered = recoveredCounts[lastIndex].toLocaleString('en-US');
 		var totalDeaths = deathsCounts[lastIndex].toLocaleString('en-US');
 		summaryEl.innerHTML =
-			'<table id="total-stats">' +
+			'<table class="stats">' +
 			'<tr><td>Last Updated:</td><td>' + lastUpdated + '</td></tr>' +
 			'<tr class="confirmed"><td>Total Confirmed:</td><td class="numeric">' + totalConfirmed + '</td></tr>' +
 			'<tr class="recovered"><td>Total Recovered:</td><td class="numeric">' + totalRecovered + '</td></tr>' +
