@@ -49,7 +49,7 @@ for i in range(1, len(confirmed_sheet)):
             location = f'{country},{province}'
             geocode_url = geocode_province_url.format(country=country, province=province)
         if not location in coors:
-            res = requests.get(geocode_url)
+            res = requests.get(geocode_url, headers={'referer': config.bing_maps_referer})
             ret = res.json()
             resources = ret['resourceSets'][0]['resources']
             if len(resources):
