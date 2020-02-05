@@ -17,12 +17,12 @@ geodata_json = 'geodata.json'
 res = requests.get(data_url)
 io = BytesIO(res.content)
 
-#f = open(data_ods, 'wb')
-#f.write(res.content)
-#f.close()
-#ods = pyods.get_data(data_ods)
+f = open(data_ods, 'wb')
+f.write(res.content)
+f.close()
+ods = pyods.get_data(data_ods)
 
-ods = pyods.get_data(io)
+#ods = pyods.get_data(io)
 
 confirmed_sheet = ods['Confirmed']
 recovered_sheet = ods['Recovered']
