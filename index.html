@@ -162,7 +162,7 @@ var map = new ol.Map({
 			title: 'Overlays',
 			layers: [
 				new ol.layer.Vector({
-					title: '2019-nCoV confirmed cases',
+					title: 'Confirmed',
 					source: new ol.source.Vector({
 						format: new ol.format.GeoJSON(),
 						url: 'geodata.json',
@@ -173,7 +173,7 @@ var map = new ol.Map({
 					}
 				}),
 				new ol.layer.Vector({
-					title: '2019-nCoV recovered cases',
+					title: 'Recovered',
 					source: new ol.source.Vector({
 						format: new ol.format.GeoJSON(),
 						url: 'geodata.json',
@@ -184,7 +184,7 @@ var map = new ol.Map({
 					}
 				}),
 				new ol.layer.Vector({
-					title: '2019-nCoV death cases',
+					title: 'Deaths',
 					source: new ol.source.Vector({
 						format: new ol.format.GeoJSON(),
 						url: 'geodata.json',
