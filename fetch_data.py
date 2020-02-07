@@ -17,9 +17,10 @@ features_json = 'features.json'
 geodata_json = 'geodata.json'
 
 res = requests.get(data_url)
-f = open(data_ods, 'wb')
-f.write(res.content)
-f.close()
+if not b'unavailable' in res.content:
+    f = open(data_ods, 'wb')
+    f.write(res.content)
+    f.close()
 ods = pyods.get_data(data_ods)
 
 res = requests.get(features_url)
@@ -45,7 +46,7 @@ for i in range(1, len(confirmed_sheet)):
     province = cols[0]
     # don't double-count; these records are now by city in the REST features
     if ((country == 'US' and province in ('Arizona', 'California', 'Illinois', 'Washington')) or
-        (country == 'Canada' and province in ('Ontario'))):
+        (country == 'Canada' and province in ('Ontario'))) or len(cols) < 3:
         continue
     first_confirmed_date = cols[2]
 
@@ -149,16 +150,23 @@ for feature in features:
     attr = feature['attributes']
     country = attr['Country_Region']
     province = attr['Province_State'] if attr['Province_State'] else ''
+    latitude = feature['geometry']['y']
+    longitude = feature['geometry']['x']
     found = False
     for rec in data:
-        if country == rec['country'] and province == rec['province']:
-            found = True
-            break
+        if country == rec['country']:
+            if country == 'Others' or \
+               province == rec['province'] or \
+               (not province and rec['province']) or \
+               (abs(latitude - rec['latitude']) < 0.00001 and
+                abs(longitude - rec['longitude']) < 0.00001):
+                if province and not rec['province']:
+                    rec['province'] = province
+                found = True
+                break
     if found:
         continue
     last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
-    latitude = feature['geometry']['y']
-    longitude = feature['geometry']['x']
     confirmed = [{
         'time': f'{last_updated}',
         'count': attr['Confirmed']

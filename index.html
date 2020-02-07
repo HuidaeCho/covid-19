@@ -317,10 +317,8 @@ xhr.onload = function(){
 			var recovered = feature.properties.recovered;
 			var deaths = feature.properties.deaths;
 			var updated = Date.parse(confirmed[confirmed.length-1].time);
-			if(updated > lastUpdated){
+			if(updated > lastUpdated)
 				lastUpdated = updated;
-				console.log(confirmed[confirmed.length-1].time, updated);
-			}
 			for(var j = 0; j < confirmed.length; j++){
 				var c = Number(confirmed[j].count);
 				var r = Number(recovered[j].count);
@@ -342,6 +340,7 @@ xhr.onload = function(){
 					deathsCounts[k] += d;
 				}
 			}
+			console.log(feature.properties.country, feature.properties.province, confirmed[confirmed.length-1].count);
 		}
 		lastUpdated = new Date(lastUpdated).toLocaleString('en-US');
 		var lastIndex = time.length - 1;
