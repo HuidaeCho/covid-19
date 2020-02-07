@@ -67,6 +67,9 @@ for i in range(1, len(confirmed_sheet)):
         latitude = cols[3]
         longitude = cols[4]
 
+    recovered_col = 5
+    deaths_col = 5
+
     confirmed = []
     recovered = []
     deaths = []
@@ -79,15 +82,28 @@ for i in range(1, len(confirmed_sheet)):
             'count': count
         })
 
+        # some times are missing from the recovered sheet?
+        found = False
         recovered_cols = recovered_sheet[i]
-        count = recovered_cols[j] if len(recovered_cols) > j else ''
+        for k in range(recovered_col, len(recovered_cols)):
+            if time == f'{recovered_sheet[0][k]}':
+                found = True
+                recovered_col = k + 1
+                break
+        count = recovered_cols[k] if found else ''
         recovered.append({
             'time': time,
             'count': count
         })
 
+        found = False
         deaths_cols = deaths_sheet[i]
-        count = deaths_cols[j] if len(deaths_cols) > j else ''
+        for k in range(deaths_col, len(deaths_cols)):
+            if time == f'{deaths_sheet[0][k]}':
+                found = True
+                deaths_col = k + 1
+                break
+        count = deaths_cols[k] if found else ''
         deaths.append({
             'time': time,
             'count': count
