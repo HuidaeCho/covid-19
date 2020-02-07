@@ -77,7 +77,8 @@ This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/o
 <div id="map"></div>
 <div id="info">
 <div id="summary"></div>
-<div id="plot"></div>
+<div id="count-plot"></div>
+<div id="fatality-plot"></div>
 </div>
 <script>
 var bodyEl = document.body;
@@ -342,17 +343,23 @@ xhr.onload = function(){
 			}
 			console.log(feature.properties.country, feature.properties.province, confirmed[confirmed.length-1].count);
 		}
+		var fatalityRates = [];
+		for(var i = 0; i < time.length; i++){
+			fatalityRates.push(Math.round(deathsCounts[i] / confirmedCounts[i] * 10000) / 100);
+		}
 		lastUpdated = new Date(lastUpdated).toLocaleString('en-US');
 		var lastIndex = time.length - 1;
 		var totalConfirmed = confirmedCounts[lastIndex].toLocaleString('en-US');
 		var totalRecovered = recoveredCounts[lastIndex].toLocaleString('en-US');
 		var totalDeaths = deathsCounts[lastIndex].toLocaleString('en-US');
+		var fatalityRate = fatalityRates[lastIndex];
 		summaryEl.innerHTML =
 			'<table class="stats">' +
 			'<tr><td>Last Updated:</td><td>' + lastUpdated + '</td></tr>' +
 			'<tr class="confirmed"><td>Total Confirmed:</td><td class="numeric">' + totalConfirmed + '</td></tr>' +
 			'<tr class="recovered"><td>Total Recovered:</td><td class="numeric">' + totalRecovered + '</td></tr>' +
 			'<tr class="deaths"><td>Total Deaths:</td><td class="numeric">' + totalDeaths + '</td></tr>' +
+			'<tr class="fatility-rate"><td>Fatality Rate:</td><td class="numeric">' + fatalityRate + '%</td></tr>' +
 			'</table>';
 		var trends = [];
 		trends.push({
@@ -380,6 +387,7 @@ xhr.onload = function(){
 			}
 		});
 		var layout = {
+			height: 300,
 			margin: {
 				l: 25,
 				r: 0,
@@ -388,7 +396,28 @@ xhr.onload = function(){
 			},
 			showlegend: false
 		};
-		Plotly.newPlot('plot', trends, layout);
+		Plotly.newPlot('count-plot', trends, layout);
+
+		trends = [];
+		trends.push({
+			name: 'Fatality Rate',
+			x: time,
+			y: fatalityRates
+		});
+		layout = {
+			height: 200,
+			margin: {
+				l: 45,
+				r: 0,
+				b: 30,
+				t: 20
+			},
+			yaxis: {
+				title: 'Fatality Rate'
+			},
+			showlegend: false
+		};
+		Plotly.newPlot('fatality-plot', trends, layout);
 	}else{
 		console.log(status);
 	}
