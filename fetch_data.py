@@ -41,9 +41,13 @@ for i in range(1, len(confirmed_sheet)):
     cols = confirmed_sheet[i]
     if len(cols) == 0:
         continue
-    province = cols[0]
     country = cols[1]
-    first_confirmed_date = f'{cols[2]}'
+    province = cols[0]
+    # don't double-count; these records are now by city in the REST features
+    if ((country == 'US' and province in ('Arizona', 'California', 'Illinois', 'Washington')) or
+        (country == 'Canada' and province in ('Ontario'))):
+        continue
+    first_confirmed_date = cols[2]
 
     if config.geocode:
         if province == '':
@@ -133,7 +137,44 @@ for i in range(1, len(confirmed_sheet)):
     data.append({
         'country': country,
         'province': province,
-        'first_confirmed_date': first_confirmed_date,
+        'first_confirmed_date': f'{first_confirmed_date}',
+        'latitude': latitude,
+        'longitude': longitude,
+        'confirmed': confirmed,
+        'recovered': recovered,
+        'deaths': deaths
+    })
+
+for feature in features:
+    attr = feature['attributes']
+    country = attr['Country_Region']
+    province = attr['Province_State'] if attr['Province_State'] else ''
+    found = False
+    for rec in data:
+        if country == rec['country'] and province == rec['province']:
+            found = True
+            break
+    if found:
+        continue
+    last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
+    latitude = feature['geometry']['y']
+    longitude = feature['geometry']['x']
+    confirmed = [{
+        'time': f'{last_updated}',
+        'count': attr['Confirmed']
+    }]
+    recovered = [{
+        'time': f'{last_updated}',
+        'count': attr['Recovered']
+    }]
+    deaths = [{
+        'time': f'{last_updated}',
+        'count': attr['Deaths']
+    }]
+    data.append({
+        'country': country,
+        'province': province,
+        'first_confirmed_date': f'{last_updated}',
         'latitude': latitude,
         'longitude': longitude,
         'confirmed': confirmed,

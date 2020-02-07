@@ -67,7 +67,7 @@ h1 {
 <div id="header">
 <h1>2019-nCoV Cases</h1>
 <div>
-This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the 2019-nCoV global cases website by Johns Hopkins SCCE</a>. I wanted to develop a similar, but open source version of the website using <a href="https://docs.google.com/spreadsheets/d/1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo/export?format=ods&id=1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo">their data</a> and <a href="https://openlayers.org">OpenLayers</a>. Data is fetched daily at midnight eastern time. Click circles for attributes and visit <a href="https://github.com/HuidaeCho/2019-ncov">the GitHub repository</a> for implementation details. Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a>.
+This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the 2019-nCoV global cases website by Johns Hopkins SCCE</a>. I wanted to develop a similar, but open source version of the website using <a href="https://docs.google.com/spreadsheets/d/1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo/export?format=ods&id=1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo">their data</a> and <a href="https://openlayers.org">OpenLayers</a>. Data is fetched hourly and all times are in EST. Click circles for attributes and visit <a href="https://github.com/HuidaeCho/2019-ncov">the GitHub repository</a> for implementation details. Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a>.
 <div>
 <span class="confirmed">Confirmed</span>
 <span class="recovered">Recovered</span>
@@ -310,16 +310,22 @@ xhr.onload = function(){
 		var confirmedCounts = [];
 		var recoveredCounts = [];
 		var deathsCounts = [];
+		var lastUpdated = 0;
 		for(var i = 0; i < features.length; i++){
 			var feature = features[i];
-			confirmed = feature.properties.confirmed;
-			recovered = feature.properties.recovered;
-			deaths = feature.properties.deaths;
+			var confirmed = feature.properties.confirmed;
+			var recovered = feature.properties.recovered;
+			var deaths = feature.properties.deaths;
+			var updated = Date.parse(confirmed[confirmed.length-1].time);
+			if(updated > lastUpdated){
+				lastUpdated = updated;
+				console.log(confirmed[confirmed.length-1].time, updated);
+			}
 			for(var j = 0; j < confirmed.length; j++){
-				c = Number(confirmed[j].count);
-				r = Number(recovered[j].count);
-				d = Number(deaths[j].count);
-				if(i == 0){
+				var c = Number(confirmed[j].count);
+				var r = Number(recovered[j].count);
+				var d = Number(deaths[j].count);
+				if(j + 1 > time.length){
 					time.push(confirmed[j].time);
 					confirmedCounts.push(c);
 					recoveredCounts.push(r);
@@ -329,10 +335,16 @@ xhr.onload = function(){
 					recoveredCounts[j] += r;
 					deathsCounts[j] += d;
 				}
+				if(j == confirmed.length - 1 && confirmedCounts.length > confirmed.length){
+					var k = confirmedCounts.length - 1;
+					confirmedCounts[k] += c;
+					recoveredCounts[k] += r;
+					deathsCounts[k] += d;
+				}
 			}
 		}
+		lastUpdated = new Date(lastUpdated).toLocaleString('en-US');
 		var lastIndex = time.length - 1;
-		var lastUpdated = new Date(time[lastIndex]).toLocaleString('en-US');
 		var totalConfirmed = confirmedCounts[lastIndex].toLocaleString('en-US');
 		var totalRecovered = recoveredCounts[lastIndex].toLocaleString('en-US');
 		var totalDeaths = deathsCounts[lastIndex].toLocaleString('en-US');
