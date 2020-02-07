@@ -1,28 +1,32 @@
 #!/usr/bin/env python3
 import requests
 import pyexcel_ods3 as pyods
-from io import BytesIO
 import json
+import datetime
 import config
 
 data_url = 'https://docs.google.com/spreadsheets/d/1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo/export?format=ods&id=1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo'
+features_url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json'
 
 geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
 
 data_ods = 'data.ods'
 data_json = 'data.json'
+features_json = 'features.json'
 geodata_json = 'geodata.json'
 
 res = requests.get(data_url)
-io = BytesIO(res.content)
-
 f = open(data_ods, 'wb')
 f.write(res.content)
 f.close()
 ods = pyods.get_data(data_ods)
 
-#ods = pyods.get_data(io)
+res = requests.get(features_url)
+f = open(features_json, 'wb')
+f.write(res.content)
+f.close()
+features = json.loads(res.content)['features']
 
 confirmed_sheet = ods['Confirmed']
 recovered_sheet = ods['Recovered']
@@ -74,11 +78,11 @@ for i in range(1, len(confirmed_sheet)):
     recovered = []
     deaths = []
     for j in range(5, len(cols)):
-        time = f'{headers[j]}'
+        atime = headers[j]
 
         count = cols[j]
         confirmed.append({
-            'time': time,
+            'time': f'{atime}',
             'count': count
         })
 
@@ -86,28 +90,46 @@ for i in range(1, len(confirmed_sheet)):
         found = False
         recovered_cols = recovered_sheet[i]
         for k in range(recovered_col, len(recovered_cols)):
-            if time == f'{recovered_sheet[0][k]}':
+            if atime == recovered_sheet[0][k]:
                 found = True
                 recovered_col = k + 1
                 break
         count = recovered_cols[k] if found else ''
         recovered.append({
-            'time': time,
+            'time': f'{atime}',
             'count': count
         })
 
         found = False
         deaths_cols = deaths_sheet[i]
         for k in range(deaths_col, len(deaths_cols)):
-            if time == f'{deaths_sheet[0][k]}':
+            if atime == deaths_sheet[0][k]:
                 found = True
                 deaths_col = k + 1
                 break
         count = deaths_cols[k] if found else ''
         deaths.append({
-            'time': time,
+            'time': f'{atime}',
             'count': count
         })
+    for feature in features:
+        attr = feature['attributes']
+        if country != attr['Country_Region'] or (province and province != attr['Province_State']):
+            continue
+        last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
+        if atime < last_updated:
+            confirmed.append({
+                'time': f'{last_updated}',
+                'count': attr['Confirmed']
+            }),
+            recovered.append({
+                'time': f'{last_updated}',
+                'count': attr['Recovered']
+            }),
+            deaths.append({
+                'time': f'{last_updated}',
+                'count': attr['Deaths']
+            })
     data.append({
         'country': country,
         'province': province,
