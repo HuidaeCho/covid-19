@@ -122,19 +122,20 @@ for i in range(1, len(confirmed_sheet)):
         if country != attr['Country_Region'] or (province and province != attr['Province_State']):
             continue
         last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
-        if atime < last_updated:
-            confirmed.append({
-                'time': f'{last_updated}',
-                'count': attr['Confirmed']
-            }),
-            recovered.append({
-                'time': f'{last_updated}',
-                'count': attr['Recovered']
-            }),
-            deaths.append({
-                'time': f'{last_updated}',
-                'count': attr['Deaths']
-            })
+        if atime > last_updated:
+            last_updated = atime
+        confirmed.append({
+            'time': f'{last_updated}',
+            'count': attr['Confirmed']
+        }),
+        recovered.append({
+            'time': f'{last_updated}',
+            'count': attr['Recovered']
+        }),
+        deaths.append({
+            'time': f'{last_updated}',
+            'count': attr['Deaths']
+        })
     data.append({
         'country': country,
         'province': province,
@@ -189,6 +190,11 @@ for feature in features:
         'recovered': recovered,
         'deaths': deaths
     })
+data = sorted(data, key=lambda x: (
+    -x['confirmed'][len(x['confirmed'])-1]['count'],
+    x['country'],
+    x['province'],
+    x['first_confirmed_date']))
 
 f = open(data_json, 'w')
 f.write(json.dumps(data))
