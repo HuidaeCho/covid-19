@@ -30,7 +30,7 @@ body {
 	float: left;
 }
 h1 {
-	font-size: 150%;
+	font-size: 2em;
 }
 #map {
 	display: inline-block;
@@ -40,16 +40,27 @@ h1 {
 	vertical-align: top;
 	width: 30%;
 	max-width: 300px;
-	font-size: 95%;
+	font-size: 0.95em;
 }
 .popup-header {
 	text-align: center;
 	font-weight: bold;
 }
+#summary-header {
+	font-size: 2em;
+	font-weight: bold;
+	text-align: center;
+	margin-bottom: 10px;
+}
 .stats {
 	width: 100%;
+	font-size: 1.5em;
+	font-weight: bold;
 }
-.numeric {
+.center {
+	text-align: center;
+}
+.right {
 	text-align: right;
 }
 .confirmed {
@@ -74,18 +85,35 @@ This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/o
 <span class="deaths">Deaths</span>
 </div>
 </div>
+</div>
 <div id="map"></div>
 <div id="info">
-<div id="summary"></div>
+<div id="summary">
+<div id="summary-header">Global Total</div>
+<div class="center">Last Updated: <span id="last-updated"></span></div>
+<table class="stats">
+<tr class="confirmed"><td>Confirmed:</td><td id="total-confirmed" class="right"></td></tr>
+<tr class="recovered"><td>Recovered:</td><td id="total-recovered" class="right"></td></tr>
+<tr class="deaths"><td>Deaths:</td><td id="total-deaths" class="right"></td></tr>
+<tr class="fatility-rate"><td>Fatality Rate:</td><td id="fatality-rate" class="right"></td></tr>
+</table>
+</div>
+<div id="plots">
 <div id="count-plot"></div>
 <div id="fatality-plot"></div>
+</div>
 </div>
 <script>
 var bodyEl = document.body;
 var headerEl = document.getElementById('header');
 var mapEl = document.getElementById('map');
 var infoEl = document.getElementById('info');
-var summaryEl = document.getElementById('summary');
+var lastUpdatedEl = document.getElementById('last-updated');
+var totalConfirmedEl = document.getElementById('total-confirmed');
+var totalRecoveredEl = document.getElementById('total-recovered');
+var totalDeathsEl = document.getElementById('total-deaths');
+var fatalityRateEl = document.getElementById('fatality-rate');
+console.log(bodyEl.offsetHeight, headerEl.offsetHeight);
 mapEl.style.height = (bodyEl.offsetHeight - headerEl.offsetHeight) + 'px';
 mapEl.style.width = (bodyEl.offsetWidth - infoEl.offsetWidth - 11) + 'px';
 
@@ -233,9 +261,9 @@ map.on('singleclick', function(evt){
 			'<table class="stats">' +
 			'<tr><td>First confirmed:</td><td>' + firstConfirmedDate + '</td></tr>' +
 			'<tr><td>Last updated:</td><td>' + lastUpdated + '</td></tr>' +
-			(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="numeric">' + lastConfirmed + '</td></tr>' : '') +
-			(lastRecovered ? '<tr class="recovered"><td>Recovered:</td><td class="numeric">' + lastRecovered + '</td></tr>' : '') +
-			(lastDeaths ? '<tr class="deaths"><td>Deaths:</td><td class="numeric">' + lastDeaths + '</td></tr>' : '') +
+			(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="right">' + lastConfirmed + '</td></tr>' : '') +
+			(lastRecovered ? '<tr class="recovered"><td>Recovered:</td><td class="right">' + lastRecovered + '</td></tr>' : '') +
+			(lastDeaths ? '<tr class="deaths"><td>Deaths:</td><td class="right">' + lastDeaths + '</td></tr>' : '') +
 			'</table>' +
 			'<div id="popup-plot"></div>';
 		popup.show(evt.coordinate, content);
@@ -350,20 +378,12 @@ xhr.onload = function(){
 		for(var i = 0; i < time.length; i++){
 			fatalityRates.push(Math.round(deathsCounts[i] / confirmedCounts[i] * 10000) / 100);
 		}
-		lastUpdated = new Date(lastUpdated).toLocaleString('en-US');
 		var lastIndex = time.length - 1;
-		var totalConfirmed = confirmedCounts[lastIndex].toLocaleString('en-US');
-		var totalRecovered = recoveredCounts[lastIndex].toLocaleString('en-US');
-		var totalDeaths = deathsCounts[lastIndex].toLocaleString('en-US');
-		var fatalityRate = fatalityRates[lastIndex];
-		summaryEl.innerHTML =
-			'<table class="stats">' +
-			'<tr><td>Last Updated:</td><td>' + lastUpdated + '</td></tr>' +
-			'<tr class="confirmed"><td>Total Confirmed:</td><td class="numeric">' + totalConfirmed + '</td></tr>' +
-			'<tr class="recovered"><td>Total Recovered:</td><td class="numeric">' + totalRecovered + '</td></tr>' +
-			'<tr class="deaths"><td>Total Deaths:</td><td class="numeric">' + totalDeaths + '</td></tr>' +
-			'<tr class="fatility-rate"><td>Fatality Rate:</td><td class="numeric">' + fatalityRate + '%</td></tr>' +
-			'</table>';
+		lastUpdatedEl.innerHTML = new Date(lastUpdated).toLocaleString('en-US');
+		totalConfirmedEl.innerHTML = confirmedCounts[lastIndex].toLocaleString('en-US');
+		totalRecoveredEl.innerHTML = recoveredCounts[lastIndex].toLocaleString('en-US');
+		totalDeathsEl.innerHTML = deathsCounts[lastIndex].toLocaleString('en-US');
+		fatalityRateEl.innerHTML = fatalityRates[lastIndex] + '%';
 		var trends = [];
 		trends.push({
 			name: 'Confirmed',
