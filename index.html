@@ -1,20 +1,16 @@
 <!doctype html>
 <html>
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta charset="utf-8" />
+<meta http-equiv="refresh" content="3600" />
 <title>2019-nCoV Cases</title>
-
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/css/ol.css">
 <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
-
 <link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@3.5.0/src/ol-layerswitcher.css" />
 <script src="https://unpkg.com/ol-layerswitcher@3.5.0"></script>
-
 <link rel="stylesheet" href="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.css" />
 <script type="text/javascript" src="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.js"></script>
-
 <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
-
 <style type="text/css">
 html {
 	width: 100%;
@@ -46,16 +42,20 @@ h1 {
 	text-align: center;
 	font-weight: bold;
 }
+.stats {
+	border-collapse: collapse;
+}
 #summary-header {
 	font-size: 2em;
 	font-weight: bold;
 	text-align: center;
 	margin-bottom: 10px;
 }
-.stats {
+.global-stats {
 	width: 100%;
 	font-size: 1.5em;
 	font-weight: bold;
+	border-collapse: collapse;
 }
 .center {
 	text-align: center;
@@ -71,6 +71,34 @@ h1 {
 }
 .deaths {
 	background-color: #ff000055;
+}
+#plots {
+	margin-bottom: 10px;
+}
+#stats-by-province {
+	overflow: auto;
+}
+.stats-by-province {
+	border-top: 1px solid black;
+	padding: 5px;
+	font-size: 0.95em;
+}
+.stats-by-province .province {
+	font-weight: bold;
+	margin-bottom: 5px;
+}
+.stats-by-province .confirmed, .stats-by-province .recovered, .stats-by-province .deaths {
+	margin-left: 10px;
+	background-color: inherit;
+}
+.stats-by-province .confirmed {
+	color: black;
+}
+.stats-by-province .recovered {
+	color: green;
+}
+.stats-by-province .deaths {
+	color: red;
 }
 </style>
 </head>
@@ -91,7 +119,7 @@ This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/o
 <div id="summary">
 <div id="summary-header">Global Total</div>
 <div class="center">Last Updated: <span id="last-updated"></span></div>
-<table class="stats">
+<table class="global-stats">
 <tr class="confirmed"><td>Confirmed:</td><td id="total-confirmed" class="right"></td></tr>
 <tr class="recovered"><td>Recovered:</td><td id="total-recovered" class="right"></td></tr>
 <tr class="deaths"><td>Deaths:</td><td id="total-deaths" class="right"></td></tr>
@@ -102,6 +130,7 @@ This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/o
 <div id="count-plot"></div>
 <div id="fatality-plot"></div>
 </div>
+<div id="stats-by-province"></div>
 </div>
 <script>
 var bodyEl = document.body;
@@ -113,12 +142,17 @@ var totalConfirmedEl = document.getElementById('total-confirmed');
 var totalRecoveredEl = document.getElementById('total-recovered');
 var totalDeathsEl = document.getElementById('total-deaths');
 var fatalityRateEl = document.getElementById('fatality-rate');
-console.log(bodyEl.offsetHeight, headerEl.offsetHeight);
+var summaryEl = document.getElementById('summary');
+var plotsEl = document.getElementById('plots');
+var statsByProvinceEl = document.getElementById('stats-by-province');
 mapEl.style.height = (bodyEl.offsetHeight - headerEl.offsetHeight) + 'px';
 mapEl.style.width = (bodyEl.offsetWidth - infoEl.offsetWidth - 11) + 'px';
 
-var getColor = function(category){
-	return window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor
+var getColor = function(category, opaque=false){
+	var color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
+	if(opaque)
+		color = color.replace(/,[^,]*\)/, ', 1)');
+	return color;
 }
 var createStyle = function(feature, resolution, category){
 	var timeSeries = feature.get(category);
@@ -340,8 +374,11 @@ xhr.onload = function(){
 		var recoveredCounts = [];
 		var deathsCounts = [];
 		var lastUpdated = 0;
+		var statsByProvince = '';
 		for(var i = 0; i < features.length; i++){
 			var feature = features[i];
+			var country = feature.properties.country;
+			var province = feature.properties.province;
 			var confirmed = feature.properties.confirmed;
 			var recovered = feature.properties.recovered;
 			var deaths = feature.properties.deaths;
@@ -369,11 +406,25 @@ xhr.onload = function(){
 					deathsCounts[k] += d;
 				}
 			}
-			if(feature.properties.province)
-				console.log(feature.properties.province + ', ' + feature.properties.country, confirmed[confirmed.length-1].count);
-			else
-				console.log(feature.properties.country, confirmed[confirmed.length-1].count);
+			var name = province ? province + ', ' + country : country;
+			var lastIndex = confirmed.length - 1;
+			var lastConfirmed = confirmed[lastIndex].count;
+			var lastRecovered = recovered[lastIndex].count;
+			var lastDeaths = deaths[lastIndex].count;
+
+			if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString('en-US');
+			if(lastRecovered) lastRecovered = lastRecovered.toLocaleString('en-US');
+			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
+
+			statsByProvince += '<div class="stats-by-province"><div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
+			if(lastRecovered)
+				statsByProvince += '<div class="recovered">' + lastRecovered + ' recovered</div>';
+			if(lastDeaths)
+				statsByProvince += '<div class="deaths">' + lastDeaths + ' death' + (lastDeaths > 1 ? 's' : '') + '</div></div>';
+			statsByProvince += '</div>';
 		}
+		statsByProvinceEl.innerHTML = statsByProvince;
+
 		var fatalityRates = [];
 		for(var i = 0; i < time.length; i++){
 			fatalityRates.push(Math.round(deathsCounts[i] / confirmedCounts[i] * 10000) / 100);
@@ -410,7 +461,7 @@ xhr.onload = function(){
 			}
 		});
 		var layout = {
-			height: 300,
+			height: 200,
 			margin: {
 				l: 25,
 				r: 0,
@@ -428,7 +479,7 @@ xhr.onload = function(){
 			y: fatalityRates
 		});
 		layout = {
-			height: 200,
+			height: 100,
 			margin: {
 				l: 45,
 				r: 0,
@@ -441,6 +492,7 @@ xhr.onload = function(){
 			showlegend: false
 		};
 		Plotly.newPlot('fatality-plot', trends, layout);
+		statsByProvinceEl.style.height = (bodyEl.offsetHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 10) + 'px';
 	}else{
 		console.log(status);
 	}
