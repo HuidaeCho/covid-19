@@ -341,7 +341,10 @@ xhr.onload = function(){
 					deathsCounts[k] += d;
 				}
 			}
-			console.log(feature.properties.country, feature.properties.province, confirmed[confirmed.length-1].count);
+			if(feature.properties.province)
+				console.log(feature.properties.province + ', ' + feature.properties.country, confirmed[confirmed.length-1].count);
+			else
+				console.log(feature.properties.country, confirmed[confirmed.length-1].count);
 		}
 		var fatalityRates = [];
 		for(var i = 0; i < time.length; i++){
