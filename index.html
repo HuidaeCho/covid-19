@@ -298,7 +298,11 @@ var layerSwitcher = new ol.control.LayerSwitcher();
 map.addControl(layerSwitcher);
 
 map.on('singleclick', function(evt){
-	var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer){
+	showStatsAtPixel(evt.pixel);
+});
+
+var showStatsAtPixel = function(pixel){
+	var feature = map.forEachFeatureAtPixel(pixel, function(feature, layer){
 		return feature;
 	});
 	if(feature){
@@ -329,7 +333,9 @@ map.on('singleclick', function(evt){
 			(lastDeaths ? '<tr class="deaths"><td>Deaths:</td><td class="right">' + lastDeaths + '</td></tr>' : '') +
 			'</table>' +
 			'<div id="popup-plot"></div>';
-		popup.show(evt.coordinate, content);
+
+		var coor = map.getCoordinateFromPixel(pixel);
+		popup.show(coor, content);
 
 		var time = [];
 		var confirmedCounts = [];
@@ -388,7 +394,16 @@ map.on('singleclick', function(evt){
 	}else{
 		popup.hide();
 	}
-});
+};
+
+var showStatsAtLatLong = function(latLong){
+	var coor = ol.proj.transform(latLong, 'EPSG:4326', 'EPSG:3857');
+	map.getView().setCenter(coor);
+	setTimeout(function(){
+		var pixel = map.getPixelFromCoordinate(coor);
+		showStatsAtPixel(pixel);
+	}, 100);
+};
 
 var xhr = new XMLHttpRequest();
 xhr.open('GET', 'geodata.json', true);
@@ -408,6 +423,8 @@ xhr.onload = function(){
 			var feature = features[i];
 			var country = feature.properties.country;
 			var province = feature.properties.province;
+			var latitude = feature.geometry.coordinates[1];
+			var longitude = feature.geometry.coordinates[0];
 			var confirmed = feature.properties.confirmed;
 			var recovered = feature.properties.recovered;
 			var deaths = feature.properties.deaths;
@@ -445,7 +462,7 @@ xhr.onload = function(){
 			if(lastRecovered) lastRecovered = lastRecovered.toLocaleString('en-US');
 			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
 
-			statsByProvince += '<div class="stats-by-province"><div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
+			statsByProvince += '<div class="stats-by-province" onclick="showStatsAtLatLong([' + longitude + ', ' + latitude + '])"><div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
 			if(lastRecovered)
 				statsByProvince += '<div class="recovered">' + lastRecovered + ' recovered</div>';
 			if(lastDeaths)
