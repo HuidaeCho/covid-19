@@ -420,6 +420,8 @@ xhr.onload = function(){
 		var deathsCounts = [];
 		var lastUpdated = 0;
 		var statsByProvince = '';
+		var maxConfirmed = 0;
+		var maxCoor;
 		for(var i = 0; i < features.length; i++){
 			var feature = features[i];
 			var id = feature.id;
@@ -470,8 +472,14 @@ xhr.onload = function(){
 			if(lastDeaths)
 				statsByProvince += '<div class="deaths">' + lastDeaths + ' death' + (lastDeaths > 1 ? 's' : '') + '</div></div>';
 			statsByProvince += '</div>';
+
+			if(lastConfirmed > maxConfirmed){
+				maxConfirmed = lastConfirmed;
+				maxCoor = [longitude, latitude];
+			}
 		}
 		statsByProvinceEl.innerHTML = statsByProvince;
+		map.getView().setCenter(ol.proj.fromLonLat(maxCoor));
 
 		var fatalityRates = [];
 		for(var i = 0; i < time.length; i++){
