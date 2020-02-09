@@ -6,8 +6,6 @@
 <meta http-equiv="refresh" content="3600" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/css/ol.css">
 <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
-<link rel="stylesheet" href="https://unpkg.com/ol-layerswitcher@3.5.0/src/ol-layerswitcher.css" />
-<script src="https://unpkg.com/ol-layerswitcher@3.5.0"></script>
 <link rel="stylesheet" href="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.css" />
 <script type="text/javascript" src="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.js"></script>
 <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
@@ -211,7 +209,7 @@ var map = new ol.Map({
 			layers: [
 				new ol.layer.Group({
 					title: 'Water color with labels',
-					type: 'base',
+					baseLayer: true,
 					combine: true,
 					layers: [
 						new ol.layer.Tile({
@@ -224,27 +222,30 @@ var map = new ol.Map({
 								layer: 'terrain-labels'
 							})
 						})
-					]
+					],
+					visible: false
 				}),
 				new ol.layer.Tile({
 					title: 'Water color',
-					type: 'base',
+					baseLayer: true,
 					source: new ol.source.Stamen({
 						layer: 'watercolor'
-					})
+					}),
+					visible: false
 				}),
 				new ol.layer.Tile({
 					title: 'Bing aerial',
-					type: 'base',
+					baseLayer: true,
 					source: new ol.source.BingMaps({
 						// XXX: Add your Bing Maps key here and secure it from the Bing Maps Dev Center at https://www.bingmapsportal.com
 						key: 'AhuHr9JixtsyKu9uSOQ8W0lIr7_gC2KiFxOlmshvRDb_BSWDkhnGX7oeS5zJzHo0',
 						imagerySet: 'AerialWithLabelsOnDemand',
-					})
+					}),
+					visible: false
 				}),
 				new ol.layer.Tile({
 					title: 'Open Street',
-					type: 'base',
+					baseLayer: true,
 					source: new ol.source.OSM()
 				})
 			]
