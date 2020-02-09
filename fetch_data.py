@@ -42,14 +42,15 @@ for i in range(1, len(confirmed_sheet)):
     cols = confirmed_sheet[i]
     if len(cols) == 0:
         continue
-    country = cols[1]
-    province = cols[0]
+    col = 0
+    province = cols[col]; col += 1
+    country = cols[col]; col += 1
     # don't double-count; these records are now by city in the REST features
     if ((country == 'US' and
          province in ('Arizona', 'California', 'Illinois', 'Washington')) or
         (country == 'Canada' and province in ('Ontario'))) or len(cols) < 3:
         continue
-    first_confirmed_date = cols[2]
+    #first_confirmed_date = cols[col]; col += 1
 
     if config.geocode:
         if province == '':
@@ -77,16 +78,16 @@ for i in range(1, len(confirmed_sheet)):
             latitude = coors[location].latitude
             longitude = coors[location].longitude
     else:
-        latitude = cols[3]
-        longitude = cols[4]
+        latitude = cols[col]; col += 1
+        longitude = cols[col]; col += 1
 
-    recovered_col = 5
-    deaths_col = 5
+    recovered_col = col
+    deaths_col = col
 
     confirmed = []
     recovered = []
     deaths = []
-    for j in range(5, len(cols)):
+    for j in range(col, len(cols)):
         atime = headers[j]
 
         count = cols[j]
@@ -146,7 +147,7 @@ for i in range(1, len(confirmed_sheet)):
     data.append({
         'country': country,
         'province': province,
-        'first_confirmed_date': f'{first_confirmed_date}',
+#        'first_confirmed_date': f'{first_confirmed_date}',
         'latitude': latitude,
         'longitude': longitude,
         'confirmed': confirmed,
@@ -190,7 +191,7 @@ for feature in features:
     data.append({
         'country': country,
         'province': province,
-        'first_confirmed_date': f'{last_updated}',
+#        'first_confirmed_date': f'{last_updated}',
         'latitude': latitude,
         'longitude': longitude,
         'confirmed': confirmed,
@@ -200,8 +201,8 @@ for feature in features:
 data = sorted(data, key=lambda x: (
     -x['confirmed'][len(x['confirmed'])-1]['count'],
     x['country'],
-    x['province'],
-    x['first_confirmed_date']))
+    x['province']))
+#    x['first_confirmed_date']))
 
 f = open(data_json, 'w')
 f.write(json.dumps(data))
@@ -220,7 +221,7 @@ for i in range(0, len(data)):
         'properties': {
             'country': rec['country'],
             'province': rec['province'],
-            'first_confirmed_date': rec['first_confirmed_date'],
+#            'first_confirmed_date': rec['first_confirmed_date'],
             'confirmed': rec['confirmed'],
             'recovered': rec['recovered'],
             'deaths': rec['deaths']
