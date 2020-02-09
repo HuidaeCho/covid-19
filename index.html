@@ -250,7 +250,7 @@ var map = new ol.Map({
 			]
 		}),
 		new ol.layer.Group({
-			title: 'Overlays',
+			title: '2019-nCoV cases',
 			layers: [
 				new ol.layer.Vector({
 					title: 'Confirmed',
@@ -298,111 +298,109 @@ var layerSwitcher = new ol.control.LayerSwitcher();
 map.addControl(layerSwitcher);
 
 map.on('singleclick', function(evt){
-	showStatsAtPixel(evt.pixel);
-});
-
-var showStatsAtPixel = function(pixel){
-	var feature = map.forEachFeatureAtPixel(pixel, function(feature, layer){
+	var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer){
 		return feature;
 	});
-	if(feature){
-		var country = feature.get('country');
-		var province = feature.get('province');
-		var firstConfirmedDate = new Date(feature.get('first_confirmed_date')).toLocaleString('en-US');
-		var confirmed = feature.get('confirmed');
-		var recovered = feature.get('recovered')
-		var deaths = feature.get('deaths');
-
-		var lastIndex = confirmed.length - 1;
-		var lastUpdated = new Date(confirmed[lastIndex].time).toLocaleString('en-US');
-		var lastConfirmed = confirmed[lastIndex].count;
-		var lastRecovered = recovered[lastIndex].count;
-		var lastDeaths = deaths[lastIndex].count;
-
-		if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString('en-US');
-		if(lastRecovered) lastRecovered = lastRecovered.toLocaleString('en-US');
-		if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
-
-		var content =
-			'<div class="popup-header">' + (province == '' ? '' : province + ', ') + country + '</div>' +
-			'<table class="stats">' +
-			'<tr><td>First Confirmed:</td><td>' + firstConfirmedDate + '</td></tr>' +
-			'<tr><td>Last Updated:</td><td>' + lastUpdated + '</td></tr>' +
-			(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="right">' + lastConfirmed + '</td></tr>' : '') +
-			(lastRecovered ? '<tr class="recovered"><td>Recovered:</td><td class="right">' + lastRecovered + '</td></tr>' : '') +
-			(lastDeaths ? '<tr class="deaths"><td>Deaths:</td><td class="right">' + lastDeaths + '</td></tr>' : '') +
-			'</table>' +
-			'<div id="popup-plot"></div>';
-
-		var coor = map.getCoordinateFromPixel(pixel);
-		popup.show(coor, content);
-
-		var time = [];
-		var confirmedCounts = [];
-		var recoveredCounts = [];
-		var deathsCounts = [];
-
-		for(var i = 0; i <= lastIndex; i++){
-			var c = confirmed[i].count;
-			var r = recovered[i].count;
-			var d = deaths[i].count;
-			if(c || r || d){
-				time.push(confirmed[i].time);
-				confirmedCounts.push(c);
-				recoveredCounts.push(r);
-				deathsCounts.push(d);
-			}
-		}
-
-		var trends = [];
-		trends.push({
-			name: 'Confirmed',
-			x: time,
-			y: confirmedCounts,
-			marker: {
-				color: getColor('confirmed')
-			}
-		});
-		trends.push({
-			name: 'Recovered',
-			x: time,
-			y: recoveredCounts,
-			marker: {
-				color: getColor('recovered')
-			}
-		});
-		trends.push({
-			name: 'Deaths',
-			x: time,
-			y: deathsCounts,
-			marker: {
-				color: getColor('deaths')
-			}
-		});
-		var layout = {
-			width: 240,
-			height: 100,
-			margin: {
-				l: 25,
-				r: 0,
-				b: 30,
-				t: 5
-			},
-			showlegend: false
-		};
-		Plotly.newPlot('popup-plot', trends, layout);
-	}else{
+	if(feature)
+		showStats(feature, evt.coordinate);
+	else
 		popup.hide();
+});
+
+var showStats = function(feature, coor){
+	var country = feature.get('country');
+	var province = feature.get('province');
+	var firstConfirmedDate = new Date(feature.get('first_confirmed_date')).toLocaleString('en-US');
+	var confirmed = feature.get('confirmed');
+	var recovered = feature.get('recovered')
+	var deaths = feature.get('deaths');
+
+	var lastIndex = confirmed.length - 1;
+	var lastUpdated = new Date(confirmed[lastIndex].time).toLocaleString('en-US');
+	var lastConfirmed = confirmed[lastIndex].count;
+	var lastRecovered = recovered[lastIndex].count;
+	var lastDeaths = deaths[lastIndex].count;
+
+	if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString('en-US');
+	if(lastRecovered) lastRecovered = lastRecovered.toLocaleString('en-US');
+	if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
+
+	var content =
+		'<div class="popup-header">' + (province == '' ? '' : province + ', ') + country + '</div>' +
+		'<table class="stats">' +
+		'<tr><td>First Confirmed:</td><td>' + firstConfirmedDate + '</td></tr>' +
+		'<tr><td>Last Updated:</td><td>' + lastUpdated + '</td></tr>' +
+		(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="right">' + lastConfirmed + '</td></tr>' : '') +
+		(lastRecovered ? '<tr class="recovered"><td>Recovered:</td><td class="right">' + lastRecovered + '</td></tr>' : '') +
+		(lastDeaths ? '<tr class="deaths"><td>Deaths:</td><td class="right">' + lastDeaths + '</td></tr>' : '') +
+		'</table>' +
+		'<div id="popup-plot"></div>';
+
+	popup.show(coor, content);
+
+	var time = [];
+	var confirmedCounts = [];
+	var recoveredCounts = [];
+	var deathsCounts = [];
+
+	for(var i = 0; i <= lastIndex; i++){
+		var c = confirmed[i].count;
+		var r = recovered[i].count;
+		var d = deaths[i].count;
+		if(c || r || d){
+			time.push(confirmed[i].time);
+			confirmedCounts.push(c);
+			recoveredCounts.push(r);
+			deathsCounts.push(d);
+		}
 	}
+
+	var trends = [];
+	trends.push({
+		name: 'Confirmed',
+		x: time,
+		y: confirmedCounts,
+		marker: {
+			color: getColor('confirmed')
+		}
+	});
+	trends.push({
+		name: 'Recovered',
+		x: time,
+		y: recoveredCounts,
+		marker: {
+			color: getColor('recovered')
+		}
+	});
+	trends.push({
+		name: 'Deaths',
+		x: time,
+		y: deathsCounts,
+		marker: {
+			color: getColor('deaths')
+		}
+	});
+	var layout = {
+		width: 240,
+		height: 100,
+		margin: {
+			l: 25,
+			r: 0,
+			b: 30,
+			t: 5
+		},
+		showlegend: false
+	};
+	Plotly.newPlot('popup-plot', trends, layout);
 };
 
-var showStatsAtLatLong = function(latLong){
-	var coor = ol.proj.transform(latLong, 'EPSG:4326', 'EPSG:3857');
+var layerSource = map.getLayers().item(1).getLayers().item(0).getSource();
+
+var showStatsById = function(id){
+	var feature = layerSource.getFeatureById(id);
+	var coor = feature.getGeometry().getCoordinates();
 	map.getView().setCenter(coor);
-	setTimeout(function(){
-		var pixel = map.getPixelFromCoordinate(coor);
-		showStatsAtPixel(pixel);
-	}, 100);
+	showStats(feature, coor);
 };
 
 var xhr = new XMLHttpRequest();
@@ -421,6 +419,7 @@ xhr.onload = function(){
 		var statsByProvince = '';
 		for(var i = 0; i < features.length; i++){
 			var feature = features[i];
+			var id = feature.id;
 			var country = feature.properties.country;
 			var province = feature.properties.province;
 			var latitude = feature.geometry.coordinates[1];
@@ -462,7 +461,7 @@ xhr.onload = function(){
 			if(lastRecovered) lastRecovered = lastRecovered.toLocaleString('en-US');
 			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
 
-			statsByProvince += '<div class="stats-by-province" onclick="showStatsAtLatLong([' + longitude + ', ' + latitude + '])"><div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
+			statsByProvince += '<div class="stats-by-province" onclick="showStatsById(' + id + ')"><div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
 			if(lastRecovered)
 				statsByProvince += '<div class="recovered">' + lastRecovered + ' recovered</div>';
 			if(lastDeaths)
@@ -539,9 +538,8 @@ xhr.onload = function(){
 		};
 		Plotly.newPlot('fatality-plot', trends, layout);
 		statsByProvinceEl.style.height = (bodyEl.offsetHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 10) + 'px';
-	}else{
+	}else
 		console.log(status);
-	}
 };
 xhr.send();
 </script>

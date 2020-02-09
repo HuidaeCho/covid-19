@@ -201,8 +201,10 @@ f.write(json.dumps(data))
 f.close()
 
 features = []
-for rec in data:
+for i in range(0, len(data)):
+    rec = data[i]
     features.append({
+        'id': i,
         'type': 'Feature',
         'geometry': {
             'type': 'Point',
