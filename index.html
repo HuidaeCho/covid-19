@@ -90,6 +90,7 @@ h1 {
 	border-top: 1px solid black;
 	padding: 5px;
 	font-size: 0.95em;
+	cursor: pointer;
 }
 .stats-by-province .province {
 	font-weight: bold;
@@ -302,6 +303,9 @@ var view = map.getView();
 var layerSwitcher = new ol.control.LayerSwitcher();
 map.addControl(layerSwitcher);
 
+map.on('pointermove', function(evt){
+	map.getTargetElement().style.cursor = map.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
+});
 map.on('singleclick', function(evt){
 	var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer){
 		return feature;
