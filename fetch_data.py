@@ -45,7 +45,8 @@ for i in range(1, len(confirmed_sheet)):
     country = cols[1]
     province = cols[0]
     # don't double-count; these records are now by city in the REST features
-    if ((country == 'US' and province in ('Arizona', 'California', 'Illinois', 'Washington')) or
+    if ((country == 'US' and
+         province in ('Arizona', 'California', 'Illinois', 'Washington')) or
         (country == 'Canada' and province in ('Ontario'))) or len(cols) < 3:
         continue
     first_confirmed_date = cols[2]
@@ -56,9 +57,12 @@ for i in range(1, len(confirmed_sheet)):
             geocode_url = geocode_country_url.format(country=country)
         else:
             location = f'{country},{province}'
-            geocode_url = geocode_province_url.format(country=country, province=province)
+            geocode_url = geocode_province_url.format(country=country,
+                    province=province)
         if not location in coors:
-            res = requests.get(geocode_url, headers={'referer': config.bing_maps_referer})
+            res = requests.get(geocode_url, headers={
+                'referer': config.bing_maps_referer
+            })
             ret = res.json()
             resources = ret['resourceSets'][0]['resources']
             if len(resources):
@@ -119,7 +123,10 @@ for i in range(1, len(confirmed_sheet)):
         })
     for feature in features:
         attr = feature['attributes']
-        if country != attr['Country_Region'] or (province and province != attr['Province_State']):
+        if country == attr['Country_Region'] and country == 'Others':
+            province = attr['Province_State']
+        if country != attr['Country_Region'] or \
+           (province and province != attr['Province_State']):
             continue
         last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
         if atime > last_updated:
