@@ -206,6 +206,7 @@ var map = new ol.Map({
 	layers: [
 		new ol.layer.Group({
 			title: 'Base maps',
+			openInLayerSwitcher: true,
 			layers: [
 				new ol.layer.Group({
 					title: 'Water color with labels',
@@ -252,6 +253,7 @@ var map = new ol.Map({
 		}),
 		new ol.layer.Group({
 			title: '2019-nCoV cases',
+			openInLayerSwitcher: true,
 			layers: [
 				new ol.layer.Vector({
 					title: 'Confirmed',
