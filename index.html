@@ -298,6 +298,7 @@ var map = new ol.Map({
 	}),
 	overlays: [popup],
 });
+var view = map.getView();
 var layerSwitcher = new ol.control.LayerSwitcher();
 map.addControl(layerSwitcher);
 
@@ -403,7 +404,7 @@ var layerSource = map.getLayers().item(1).getLayers().item(0).getSource();
 var showStatsById = function(id){
 	var feature = layerSource.getFeatureById(id);
 	var coor = feature.getGeometry().getCoordinates();
-	map.getView().setCenter(coor);
+	view.animate({center: coor});
 	showStats(feature, coor);
 };
 
@@ -480,7 +481,7 @@ xhr.onload = function(){
 			}
 		}
 		statsByProvinceEl.innerHTML = statsByProvince;
-		map.getView().setCenter(ol.proj.fromLonLat(maxCoor));
+		view.animate({center: ol.proj.fromLonLat(maxCoor)});
 
 		var fatalityRates = [];
 		for(var i = 0; i < time.length; i++){
