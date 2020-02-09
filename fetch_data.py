@@ -97,27 +97,25 @@ for i in range(1, len(confirmed_sheet)):
         })
 
         # some times are missing from the recovered sheet?
-        found = False
+        count = recovered[len(recovered)-1]['count'] if len(recovered) else ''
         recovered_cols = recovered_sheet[i]
         for k in range(recovered_col, len(recovered_cols)):
             if atime == recovered_sheet[0][k]:
-                found = True
+                count = recovered_cols[k]
                 recovered_col = k + 1
                 break
-        count = recovered_cols[k] if found else ''
         recovered.append({
             'time': f'{atime}',
             'count': count
         })
 
-        found = False
+        count = deaths[len(deaths)-1]['count'] if len(deaths) else ''
         deaths_cols = deaths_sheet[i]
         for k in range(deaths_col, len(deaths_cols)):
             if atime == deaths_sheet[0][k]:
-                found = True
+                count = deaths_cols[k]
                 deaths_col = k + 1
                 break
-        count = deaths_cols[k] if found else ''
         deaths.append({
             'time': f'{atime}',
             'count': count
