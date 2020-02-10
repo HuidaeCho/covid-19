@@ -92,7 +92,7 @@ for i in range(1, len(confirmed_sheet)):
 
         count = cols[j]
         confirmed.append({
-            'time': f'{atime}',
+            'time': f'{atime} EST',
             'count': count
         })
 
@@ -105,7 +105,7 @@ for i in range(1, len(confirmed_sheet)):
                 recovered_col = k + 1
                 break
         recovered.append({
-            'time': f'{atime}',
+            'time': f'{atime} EST',
             'count': count
         })
 
@@ -117,7 +117,7 @@ for i in range(1, len(confirmed_sheet)):
                 deaths_col = k + 1
                 break
         deaths.append({
-            'time': f'{atime}',
+            'time': f'{atime} EST',
             'count': count
         })
     for feature in features:
@@ -131,15 +131,15 @@ for i in range(1, len(confirmed_sheet)):
         if atime > last_updated:
             last_updated = atime
         confirmed.append({
-            'time': f'{last_updated}',
+            'time': f'{last_updated} EST',
             'count': attr['Confirmed']
         }),
         recovered.append({
-            'time': f'{last_updated}',
+            'time': f'{last_updated} EST',
             'count': attr['Recovered']
         }),
         deaths.append({
-            'time': f'{last_updated}',
+            'time': f'{last_updated} EST',
             'count': attr['Deaths']
         })
     data.append({
@@ -175,15 +175,15 @@ for feature in features:
         continue
     last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
     confirmed = [{
-        'time': f'{last_updated}',
+        'time': f'{last_updated} EST',
         'count': attr['Confirmed']
     }]
     recovered = [{
-        'time': f'{last_updated}',
+        'time': f'{last_updated} EST',
         'count': attr['Recovered']
     }]
     deaths = [{
-        'time': f'{last_updated}',
+        'time': f'{last_updated} EST',
         'count': attr['Deaths']
     }]
     data.append({
