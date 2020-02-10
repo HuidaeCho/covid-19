@@ -147,7 +147,7 @@ h1 {
 <h1>2019-nCoV Cases</h1>
 <div>
 <div class="desktop">
-This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the 2019-nCoV global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>. I wanted to develop an open source version of their website using their <a href="https://docs.google.com/spreadsheets/d/1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo/export?format=ods&id=1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo">time series</a>, <a href="https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">REST API</a>, and <a href="https://openlayers.org">OpenLayers</a>. Data is fetched hourly and all times are in EST. Click circles for more information and visit <a href="https://github.com/HuidaeCho/2019-ncov">the GitHub repository</a> for implementation details. I am not responsible for any damages caused by using this website. Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a>.
+This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the 2019-nCoV global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>. I wanted to develop an open source version of their website using their <a href="https://docs.google.com/spreadsheets/d/1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo/export?format=ods&id=1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo">time series</a>, <a href="https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">REST API</a>, and <a href="https://openlayers.org">OpenLayers</a>. Data is fetched hourly and all times are local except for plots in EST. Click circles for more information and visit <a href="https://github.com/HuidaeCho/2019-ncov">the GitHub repository</a> for implementation details. I am not responsible for any damages caused by using this website. Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a>.
 </div>
 <div class="mobile">
 <div>Times in EST. <a href="https://github.com/HuidaeCho/2019-ncov">GitHub repository</a>. Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a>.</div>
@@ -334,13 +334,13 @@ map.on('singleclick', function(evt){
 var showStats = function(feature, coor){
 	var country = feature.get('country');
 	var province = feature.get('province');
-	var firstConfirmedDate = feature.get('first_confirmed_date') ? new Date(feature.get('first_confirmed_date').replace(/-/g, '/')).toLocaleDateString('en-US') : '';
+	var firstConfirmedDate = feature.get('first_confirmed_date') ? new Date(feature.get('first_confirmed_date')).toLocaleDateString('en-US') : '';
 	var confirmed = feature.get('confirmed');
 	var recovered = feature.get('recovered')
 	var deaths = feature.get('deaths');
 
 	var lastIndex = confirmed.length - 1;
-	var lastUpdated = new Date(confirmed[lastIndex].time.replace(/-/g, '/')).toLocaleString('en-US');
+	var lastUpdated = new Date(confirmed[lastIndex].time).toLocaleString('en-US');
 	var lastConfirmed = confirmed[lastIndex].count;
 	var lastRecovered = recovered[lastIndex].count;
 	var lastDeaths = deaths[lastIndex].count;
@@ -375,7 +375,7 @@ var showStats = function(feature, coor){
 		var r = recovered[i].count;
 		var d = deaths[i].count;
 		if(c || r || d){
-			time.push(confirmed[i].time);
+			time.push(confirmed[i].time.replace(' EST', ''));
 			confirmedCounts.push(c);
 			recoveredCounts.push(r);
 			deathsCounts.push(d);
@@ -456,7 +456,7 @@ xhr.onload = function(){
 			var confirmed = feature.properties.confirmed;
 			var recovered = feature.properties.recovered;
 			var deaths = feature.properties.deaths;
-			var updated = Date.parse(confirmed[confirmed.length-1].time.replace(/-/g, '/'));
+			var updated = Date.parse(confirmed[confirmed.length-1].time);
 			if(updated > lastUpdated)
 				lastUpdated = updated;
 			for(var j = 0; j < confirmed.length; j++){
@@ -464,7 +464,7 @@ xhr.onload = function(){
 				var r = Number(recovered[j].count);
 				var d = Number(deaths[j].count);
 				if(j + 1 > time.length){
-					time.push(confirmed[j].time);
+					time.push(confirmed[j].time.replace(' EST', ''));
 					confirmedCounts.push(c);
 					recoveredCounts.push(r);
 					deathsCounts.push(d);
