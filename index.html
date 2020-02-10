@@ -44,11 +44,6 @@ h1 {
 .mobile {
 	display: block;
 }
-.inline-block {
-	display: inline-block;
-	vertical-align: top;
-	margin-right: 5px;
-}
 #map {
 	display: inline-block;
 }
@@ -105,6 +100,16 @@ h1 {
 	padding: 5px;
 	font-size: 0.95em;
 	cursor: pointer;
+}
+.stats-by-province > div {
+	display: inline-block;
+	vertical-align: top;
+}
+.stats-by-province > div:first-child {
+	width: 20px;
+}
+.stats-by-province > div:nth-child(2) {
+	max-width: 250px;
 }
 .stats-by-province .province {
 	font-weight: bold;
@@ -351,8 +356,8 @@ var showStats = function(feature, coor){
 	var name = province ? province + ', ' + country : country;
 	var content =
 		'<div class="popup-header">' +
-		(province ? '<a href="?' + name.replace(/ /g, '+') + '">' + province + '</a>, ' : '') +
-		'<a href="?' + country.replace(/ /g, '+') + '">' + country + '</a></div>' +
+		(province ? '<a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + province + '</a>, ' : '') +
+		'<a href="?' + country.replace(/ /g, '%20') + '">' + country + '</a></div>' +
 		'<table class="stats">' +
 		(firstConfirmedDate ? '<tr><td>First Confirmed:</td><td>' + firstConfirmedDate + '</td></tr>' : '') +
 		'<tr><td>Last Updated:</td><td>' + lastUpdated + '</td></tr>' +
@@ -490,10 +495,10 @@ xhr.onload = function(){
 			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
 
 			statsByProvince += '<div class="stats-by-province">' +
-				'<div class="inline-block">' +
-				(province ? '<div><a class="fa fa-link" href="?' + name.replace(/ /g, '+') + '"></a></div>' : '') +
-				'<div><a class="fa fa-flag" href="?' + country.replace(/ /g, '+') + '"></a></div></div>' +
-				'<div class="inline-block" onclick="showStatsById(' + id + ')">' +
+				'<div>' +
+				(province ? '<div><a class="fa fa-link" href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"></a></div>' : '') +
+				'<div><a class="fa fa-flag" href="?' + country.replace(/ /g, '%20') + '"></a></div></div>' +
+				'<div onclick="showStatsById(' + id + ')">' +
 				'<div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
 			if(lastRecovered)
 				statsByProvince += '<div class="recovered">' + lastRecovered + ' recovered</div>';
@@ -580,7 +585,7 @@ xhr.onload = function(){
 
 		var query = window.location.search.match(/^\?(.+)$/);
 		if(query){
-			query = query[1].replace(/\+|%20/g, ' ');
+			query = query[1].replace(/\+|%20/g, ' ').replace(/%22/g, '"');
 			var extent = new ol.extent.createEmpty();
 			var found = 0;
 			var featureId;
