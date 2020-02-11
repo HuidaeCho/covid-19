@@ -41,9 +41,13 @@ deaths_sheet = ods['Death']
 # I found some columns with different times
 headers = confirmed_sheet[0]
 
-coors = {}
+# create a new list for the output JSON object
 data = []
 
+# use this dictionary to avoid geocoding the same province multiple times
+coors = {}
+
+# for each province
 for i in range(1, len(confirmed_sheet)):
     cols = confirmed_sheet[i]
     if len(cols) == 0:
@@ -58,6 +62,8 @@ for i in range(1, len(confirmed_sheet)):
         continue
     #first_confirmed_date = cols[col]; col += 1
 
+    # retrieve coordinates from the geocoding server if desired;
+    # otherwise, just use coordinates from the spreadsheet
     if config.geocode:
         if province == '':
             location = country
@@ -87,9 +93,12 @@ for i in range(1, len(confirmed_sheet)):
         latitude = cols[col]; col += 1
         longitude = cols[col]; col += 1
 
+    # need these two variables to find matching times because not all columns
+    # from different sheets have the same times in the same order
     recovered_col = col
     deaths_col = col
 
+    # create and populate three lists with time series data
     confirmed = []
     recovered = []
     deaths = []
@@ -98,6 +107,7 @@ for i in range(1, len(confirmed_sheet)):
 
         count = cols[j]
         confirmed.append({
+            # YYYY/MM/DD HH:MM:SS EST for iOS
             'time': f'{atime.strftime("%Y/%m/%d %H:%M:%S EST")}',
             'count': count
         })
@@ -141,6 +151,8 @@ for i in range(1, len(confirmed_sheet)):
         latitude = feature['geometry']['y']
         longitude = feature['geometry']['x']
 
+        # I found this case where a time from the spreadsheet is more recent
+        # than the last updated time from the REST server
         last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
         if atime > last_updated:
             last_updated = atime
@@ -168,12 +180,14 @@ for i in range(1, len(confirmed_sheet)):
         'deaths': deaths
     })
 
+# try to find newly confirmed provinces from the REST server
 for feature in features:
     attr = feature['attributes']
     country = attr['Country_Region']
     province = attr['Province_State'] if attr['Province_State'] else ''
     latitude = feature['geometry']['y']
     longitude = feature['geometry']['x']
+    # need to skip existing provinces
     found = False
     for rec in data:
         if country == rec['country']:
@@ -188,6 +202,9 @@ for feature in features:
                 break
     if found:
         continue
+
+    # just found a new province that is not in the spreadsheet, but is in the
+    # REST server; add this record
     last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
     confirmed = [{
         'time': f'{last_updated.strftime("%Y/%m/%d %H:%M:%S EST")}',
@@ -211,17 +228,22 @@ for feature in features:
         'recovered': recovered,
         'deaths': deaths
     })
+
+# sort records by confirmed, country, and province
 data = sorted(data, key=lambda x: (
     -x['confirmed'][len(x['confirmed'])-1]['count'],
     x['country'],
     x['province']))
 #    x['first_confirmed_date']))
 
+# write the JSON object
 f = open(data_json, 'w')
 f.write(json.dumps(data))
 f.close()
 
+# create a new list to store all the features
 features = []
+# create a feature collection
 for i in range(0, len(data)):
     rec = data[i]
     features.append({
@@ -241,6 +263,7 @@ for i in range(0, len(data)):
         }
     })
 
+# finally, build the output GeoJSON object and save it
 geodata = {
     'type': 'FeatureCollection',
     'features': features
