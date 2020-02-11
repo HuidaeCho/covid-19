@@ -4,6 +4,10 @@
 
 Why reinvent the wheel? Why not!
 
+## Disclaimer
+
+Data that `fetch_data.py` collects from [CSSE's website](https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) is copyrighted by [Johns Hopkins CSSE](https://systems.jhu.edu). Post-processing of the data by the script may introduce errors and the author is not responsible for any damages caused by using the processed data and the web map.
+
 ## License
 
 Copyright (C) 2020, Huidae Cho <<https://idea.isnew.info>>
