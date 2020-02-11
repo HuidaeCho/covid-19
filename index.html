@@ -14,7 +14,7 @@
 <style type="text/css">
 html {
 	width: 100%;
-	height: calc(100% - 3px);
+	height: 100%;
 }
 body {
 	width: calc(100% - 4px);
@@ -458,7 +458,7 @@ var showStats = function(feature, coor){
 	var name = province ? province + ', ' + country : country;
 	var content =
 		'<div id="popup"><h3>' +
-		(province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + province + '</a></div>' : '') +
+		(province ? '<a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + province + '</a>, ' : '') +
 		'<a href="?' + country.replace(/ /g, '%20') + '">' + country + '</a></h3>' +
 		'<table id="popup-stats">' +
 		(firstConfirmedDate ? '<tr><td>First Confirmed:</td><td>' + firstConfirmedDate + '</td></tr>' : '') +
