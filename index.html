@@ -298,17 +298,22 @@ var getColor = function(category, opaque=false){
 var calculateConfirmedRadius = function(confirmed){
 	return Math.log10(confirmed + 1) * 10;
 }
+var minOthersRadius = calculateConfirmedRadius(1);
 var createStyle = function(feature, resolution, category){
 	var timeSeries = feature.get(category);
 	lastIndex = timeSeries.length - 1;
 	time = timeSeries[lastIndex].time;
 	count = timeSeries[lastIndex].count;
-	var radius;
+	var radius = 0;
 	if(category == 'confirmed')
 		radius = calculateConfirmedRadius(count);
-	else{
+	else if(count){
 		var confirmed = feature.get('confirmed')[lastIndex].count;
-		radius = count / confirmed * calculateConfirmedRadius(confirmed);
+		var confirmedRadius = calculateConfirmedRadius(confirmed);
+		// the radius of raw proportion looks too small;
+		// add a minimum size
+		count += (minOthersRadius * confirmed / confirmedRadius - 1) * (1 - (count - 1) / (confirmed - 1));
+		radius = count / confirmed * confirmedRadius;
 	}
 	var style = new ol.style.Style({
 		image: new ol.style.Circle({
