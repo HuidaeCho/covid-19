@@ -16,23 +16,29 @@ data_json = 'data.json'
 features_json = 'features.json'
 geodata_json = 'geodata.json'
 
+# download the spreadsheet file
 res = requests.get(data_url)
+# sometimes, the spreadsheet becomes unavailable?
 if not b'unavailable' in res.content:
     f = open(data_ods, 'wb')
     f.write(res.content)
     f.close()
 ods = pyods.get_data(data_ods)
 
+# download features from the REST server
 res = requests.get(features_url)
 f = open(features_json, 'wb')
 f.write(res.content)
 f.close()
 features = json.loads(res.content)['features']
 
+# three sheets
 confirmed_sheet = ods['Confirmed']
 recovered_sheet = ods['Recovered']
 deaths_sheet = ods['Death']
 
+# here assume all three sheets have the same header row, kind of...
+# I found some columns with different times
 headers = confirmed_sheet[0]
 
 coors = {}
@@ -120,13 +126,21 @@ for i in range(1, len(confirmed_sheet)):
             'time': f'{atime.strftime("%Y/%m/%d %H:%M:%S EST")}',
             'count': count
         })
+
+    # try to find most up-to-date info from the REST server
     for feature in features:
         attr = feature['attributes']
+        # assume there is only one others and always update its province
         if country == attr['Country_Region'] and country == 'Others':
             province = attr['Province_State']
+        # need an exact match
         if country != attr['Country_Region'] or \
            (province and province != attr['Province_State']):
             continue
+        # grab new coordinates from the REST server
+        latitude = feature['geometry']['y']
+        longitude = feature['geometry']['x']
+
         last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
         if atime > last_updated:
             last_updated = atime
@@ -142,6 +156,7 @@ for i in range(1, len(confirmed_sheet)):
             'time': f'{last_updated.strftime("%Y/%m/%d %H:%M:%S EST")}',
             'count': attr['Deaths']
         })
+
     data.append({
         'country': country,
         'province': province,
