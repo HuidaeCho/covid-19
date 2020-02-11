@@ -36,7 +36,7 @@ a:hover {
 h1 {
 	display: inline-block;
 	vertical-align: top;
-	width: 50%;
+	width: 70%;
 	margin: 0;
 	font-size: 1.3em;
 	line-height: 1;
@@ -53,7 +53,7 @@ h3 {
 .follow-me {
 	display: inline-block;
 	vertical-align: top;
-	width: calc(50% - 6px);
+	width: calc(30% - 6px);
 	text-align: right;
 }
 .follow-me .author {
@@ -76,11 +76,8 @@ h3 {
 	font-size: 1.5em;
 	margin-bottom: -2px;
 }
-.desktop {
+.desktop-block, .desktop-inline {
 	display: none;
-}
-.mobile {
-	display: block;
 }
 #map {
 	display: inline-block;
@@ -182,10 +179,13 @@ h3 {
 	#legend > .iconify {
 		margin-bottom: -3px;
 	}
-	.desktop {
+	.desktop-block {
 		display: block;
 	}
-	.mobile {
+	.desktop-inline {
+		display: inline;
+	}
+	.mobile-block, .mobile-inline {
 		display: none;
 	}
 	#popup {
@@ -227,7 +227,7 @@ h3 {
 </head>
 <body>
 <div id="header">
-<h1>2019 Novel Coronavirus (2019-nCoV) Cases</h1>
+<h1>2019 Novel Coronavirus <span class="desktop-inline">(2019-nCoV)</span> Cases</h1>
 <div class="follow-me">
 <div class="icons">
 <a href="https://github.com/HuidaeCho/2019-ncov"><span class="iconify" data-icon="fa-solid:code-branch"></span></a>
@@ -238,13 +238,13 @@ h3 {
 </div>
 <div class="author">Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a></div>
 </div>
-<div class="desktop">
+<div class="desktop-block">
 This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the 2019-nCoV global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
 I wanted to develop an open source version of their website.
 Data is fetched hourly and all times are local except for plots in EST.
 I am not responsible for any damages caused by using this website.
 </div>
-<div class="mobile">
+<div class="mobile-block">
 Motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the JHU CSSE website</a>.
 Times local except for plots in EST.
 </div>
@@ -270,7 +270,7 @@ Times local except for plots in EST.
 <div id="stats-by-province"></div>
 </div>
 <script>
-var isMobile = window.getComputedStyle(document.getElementsByClassName('mobile')[0]).display == 'block';
+var isMobile = window.getComputedStyle(document.getElementsByClassName('mobile-block')[0]).display == 'block';
 var bodyEl = document.body;
 var headerEl = document.getElementById('header');
 var mapEl = document.getElementById('map');
