@@ -3,6 +3,7 @@
 <head>
 <title>2019-nCoV Cases</title>
 <meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta http-equiv="refresh" content="3600" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/css/ol.css">
 <script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
@@ -13,14 +14,16 @@
 <style type="text/css">
 html {
 	width: 100%;
-	height: 100%;
+	height: calc(100% - 3px);
 }
 body {
-	width: 99%;
-	height: 99%;
+	width: calc(100% - 4px);
+	height: calc(100% - 4px);
+	margin: 0;
+	padding: 2px;
 	overflow: hidden;
 	font-family: sans-serif;
-	font-size: 149%;
+	font-size: 0.69em;
 }
 a {
 	color: #0000cc;
@@ -31,12 +34,43 @@ a:hover {
 	text-decoration: underline;
 }
 h1 {
-	font-size: 2em;
-	margin-top: 0;
-	margin-bottom: 5px;
+	display: inline-block;
+	vertical-align: top;
+	width: 50%;
+	margin: 0;
+	font-size: 1.3em;
+	line-height: 1;
+}
+h2 {
+	font-size: 1.2em;
+	text-align: center;
+	margin: 0 0 0.1em 0;
+}
+h3 {
+	font-size: 1.2em;
+	margin: 0 0 2px 0;
+}
+.follow-me {
+	display: inline-block;
+	vertical-align: top;
+	width: calc(50% - 6px);
+	text-align: right;
+}
+.follow-me .author {
+	display: none;
+	font-size: 0.8em;
+}
+.follow-me .icons {
+	font-size: 1.5em;
+	line-height: 0;
+	margin: 0;
 }
 #header {
 	line-height: 1.3;
+}
+.legend {
+	text-align: right;
+	font-size: 0.8em;
 }
 .desktop {
 	display: none;
@@ -54,24 +88,19 @@ h1 {
 	max-width: 300px;
 	font-size: 0.95em;
 }
-.popup-header {
-	text-align: center;
-	font-weight: bold;
-	margin-bottom: 5px;
+#popup {
+	width: 100px;
+	font-size: 0.8em;
 }
-.popup-stats {
-	border-collapse: collapse;
-	width: 275px;
-}
-#summary-header {
-	font-size: 1.5em;
-	font-weight: bold;
-	text-align: center;
-	margin-bottom: 10px;
-}
-.global-stats {
+#popup-stats {
 	width: 100%;
-	font-size: 1.3em;
+	border-collapse: collapse;
+}
+#summary {
+	font-size: 0.8em;
+}
+#global-stats {
+	width: 100%;
 	font-weight: bold;
 	border-collapse: collapse;
 }
@@ -88,30 +117,21 @@ h1 {
 	background-color: #ff000055;
 }
 #plots {
-	margin-bottom: 10px;
+	margin-bottom: 0;
 }
 #stats-by-province {
 	overflow: auto;
+	font-size: 0.8em;
 }
 .stats-by-province {
 	border-top: 1px solid black;
-	padding: 5px;
+	padding: 0;
 	font-size: 0.95em;
 	cursor: pointer;
 }
-.stats-by-province > div {
-	display: inline-block;
-	vertical-align: top;
-}
-.stats-by-province > div:first-child {
-	width: 20px;
-}
-.stats-by-province > div:nth-child(2) {
-	max-width: 250px;
-}
 .stats-by-province .province {
 	font-weight: bold;
-	margin-bottom: 5px;
+	margin-bottom: 0;
 }
 .stats-by-province .confirmed, .stats-by-province .recovered, .stats-by-province .deaths {
 	margin-left: 10px;
@@ -126,9 +146,31 @@ h1 {
 .stats-by-province .deaths {
 	color: red;
 }
-@media screen and (min-width: 981px) {
+.ol-control {
+	font-size: 0.5em;
+}
+@media screen and (min-width: 640px) {
+	html {
+		height: 100%;
+	}
 	body {
-		font-size: 100%;
+		width: calc(100% - 10px);
+		height: calc(100% - 10px);
+		padding: 5px;
+		font-size: 1em;
+	}
+	h1 {
+		font-size: 2em;
+	}
+	h2 {
+		font-size: 1.5em;
+		margin: 0 0 0.2em 0;
+	}
+	h3 {
+		margin: 0 0 5px 0;
+	}
+	.follow-me .author {
+		display: inline;
 	}
 	#header {
 		line-height: 1.5;
@@ -139,49 +181,75 @@ h1 {
 	.mobile {
 		display: none;
 	}
+	#popup {
+		width: 200px;
+	}
+	#summary {
+		font-size: 1em;
+	}
+	#global-stats {
+		font-size: 1.3em;
+	}
+	#plots {
+		margin-bottom: 10px;
+	}
+	.stats-by-province > div {
+		display: inline-block;
+		vertical-align: top;
+	}
+	.stats-by-province > div:first-child {
+		width: 20px;
+	}
+	.stats-by-province > div:nth-child(2) {
+		max-width: 250px;
+	}
+	.stats-by-province {
+		padding: 5px;
+	}
+	.stats-by-province .province {
+		margin-bottom: 5px;
+	}
+	.ol-control {
+		font-size: 1em;
+	}
+	.ol-attribution {
+		font-size: 0.7em;
+	}
 }
 </style>
 </head>
 <body>
 <div id="header">
 <h1>2019-nCoV Cases</h1>
-<div>
-<div class="desktop">
-This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the 2019-nCoV global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
-I wanted to develop an open source version of their website using their <a href="https://docs.google.com/spreadsheets/d/1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo/export?format=ods&id=1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo">time series</a>, <a href="https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">REST API</a>, and <a href="https://openlayers.org">OpenLayers</a>.
-Visit <a href="https://github.com/HuidaeCho/2019-ncov"><span class="iconify" data-icon="fa-brands:git"></span></a> for implementation details.
-Data is fetched hourly and all times are local except for plots in EST.
-I am not responsible for any damages caused by using this website.
-Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a>.
-Follow me on
-<a href="https://github.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:github"></span></a>
-<a href="https://twitter.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:twitter"></a>
-<a href="https://researchgate.net/profile/Huidae_Cho"><span class="iconify" data-icon="fa-brands:researchgate"></span></a>
-<a href="https://linkedin.com/in/HuidaeCho"><span class="iconify" data-icon="fa-brands:linkedin"></span></a>.
-</div>
-<div class="mobile">
-<div>
-All times local except for plots in EST.
-Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a>.
-<a href="https://github.com/HuidaeCho/2019-ncov"><span class="iconify" data-icon="fa-brands:git"></span></a>
+<div class="follow-me">
+<div class="icons">
+<a href="https://github.com/HuidaeCho/2019-ncov"><span class="iconify" data-icon="fa-solid:code-branch"></span></a>
 <a href="https://github.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:github"></span></a>
 <a href="https://twitter.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:twitter"></a>
 <a href="https://researchgate.net/profile/Huidae_Cho"><span class="iconify" data-icon="fa-brands:researchgate"></span></a>
 <a href="https://linkedin.com/in/HuidaeCho"><span class="iconify" data-icon="fa-brands:linkedin"></span></a>
 </div>
-<div>Data sources: <a href="https://systems.jhu.edu">JHU CSSE</a> <a href="https://docs.google.com/spreadsheets/d/1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo/export?format=ods&id=1UF2pSkFTURko2OvfHWWlFpDFAr1UxCBA4JLwlSP6KFo">time series</a>, <a href="https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">REST API</a>.</div>
+<div class="author">Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a></div>
 </div>
-<div>
-<span class="iconify" data-icon="fa:link"></span> <a href="?Mainland%20China">Mainland China</a>
+<div class="desktop">
+This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the 2019-nCoV global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
+I wanted to develop an open source version of their website.
+Data is fetched hourly and all times are local except for plots in EST.
+I am not responsible for any damages caused by using this website.
 </div>
+<div class="mobile">
+Motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the JHU CSSE website</a>.
+Times local except for plots in EST.
 </div>
+<div class="legend">Size: confirmed logarithmic, others proportional to confirmed</div>
+<div><span class="iconify" data-icon="fa:link"></span> <a href="?Mainland%20China">Mainland China</a></div>
 </div>
 <div id="map"></div>
 <div id="info">
 <div id="summary">
-<div id="summary-header">Global Total</div>
+<h2>Global Total</h2>
 <div>Last Updated: <span id="last-updated"></span></div>
-<table class="global-stats">
+<table id="global-stats">
 <tr class="confirmed"><td>Confirmed:</td><td id="total-confirmed" class="right"></td></tr>
 <tr class="recovered"><td>Recovered:</td><td id="total-recovered" class="right"></td></tr>
 <tr class="deaths"><td>Deaths:</td><td id="total-deaths" class="right"></td></tr>
@@ -195,6 +263,7 @@ Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a>.
 <div id="stats-by-province"></div>
 </div>
 <script>
+var isMobile = window.getComputedStyle(document.getElementsByClassName('mobile')[0]).display == 'block';
 var bodyEl = document.body;
 var headerEl = document.getElementById('header');
 var mapEl = document.getElementById('map');
@@ -207,8 +276,11 @@ var fatalityRateEl = document.getElementById('fatality-rate');
 var summaryEl = document.getElementById('summary');
 var plotsEl = document.getElementById('plots');
 var statsByProvinceEl = document.getElementById('stats-by-province');
-mapEl.style.height = (bodyEl.offsetHeight - headerEl.offsetHeight) + 'px';
-mapEl.style.width = (bodyEl.offsetWidth - infoEl.offsetWidth - 11) + 'px';
+var bodyStyle = window.getComputedStyle(bodyEl);
+var bodyWidth = Number(bodyStyle.width.replace('px', ''));
+var bodyHeight = Number(bodyStyle.height.replace('px', ''));
+mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 16)) + 'px';
+mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 3 : 6)) + 'px';
 
 var getColor = function(category, opaque=false){
 	var color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
@@ -216,12 +288,21 @@ var getColor = function(category, opaque=false){
 		color = color.replace(/,[^,]*\)/, ', 1)');
 	return color;
 }
+var calculateConfirmedRadius = function(confirmed){
+	return Math.log10(confirmed + 1) * 10;
+}
 var createStyle = function(feature, resolution, category){
 	var timeSeries = feature.get(category);
 	lastIndex = timeSeries.length - 1;
 	time = timeSeries[lastIndex].time;
 	count = timeSeries[lastIndex].count;
-	var radius = Math.log10(count+1)*10;
+	var radius;
+	if(category == 'confirmed')
+		radius = calculateConfirmedRadius(count);
+	else{
+		var confirmed = feature.get('confirmed')[lastIndex].count;
+		radius = count / confirmed * calculateConfirmedRadius(confirmed);
+	}
 	var style = new ol.style.Style({
 		image: new ol.style.Circle({
 			radius: radius,
@@ -369,17 +450,16 @@ var showStats = function(feature, coor){
 
 	var name = province ? province + ', ' + country : country;
 	var content =
-		'<div class="popup-header">' +
-		(province ? '<a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + province + '</a>, ' : '') +
-		'<a href="?' + country.replace(/ /g, '%20') + '">' + country + '</a></div>' +
-		'<table class="popup-stats">' +
+		'<div id="popup"><h3>' +
+		(province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + province + '</a></div>' : '') +
+		'<a href="?' + country.replace(/ /g, '%20') + '">' + country + '</a></h3>' +
+		'<table id="popup-stats">' +
 		(firstConfirmedDate ? '<tr><td>First Confirmed:</td><td>' + firstConfirmedDate + '</td></tr>' : '') +
-		'<tr><td>Last Updated:</td><td>' + lastUpdated + '</td></tr>' +
 		(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="right">' + lastConfirmed + '</td></tr>' : '') +
 		(lastRecovered ? '<tr class="recovered"><td>Recovered:</td><td class="right">' + lastRecovered + '</td></tr>' : '') +
 		(lastDeaths ? '<tr class="deaths"><td>Deaths:</td><td class="right">' + lastDeaths + '</td></tr>' : '') +
 		'</table>' +
-		'<div id="popup-plot"></div>';
+		'<div id="popup-plot"></div></div>';
 
 	popup.show(coor, content);
 
@@ -426,17 +506,20 @@ var showStats = function(feature, coor){
 		}
 	});
 	var layout = {
-		width: 275,
-		height: 100,
+		width: document.getElementById('popup-stats').offsetWidth + 5,
+		height: isMobile ? 50 : 100,
 		margin: {
-			l: 30,
+			l: isMobile ? 20 : 30,
 			r: 5,
-			b: 30,
+			b: isMobile ? 20 : 30,
 			t: 5
+		},
+		font: {
+			size: window.getComputedStyle(document.getElementById('popup-stats')).fontSize.replace('px', '')
 		},
 		showlegend: false
 	};
-	Plotly.newPlot('popup-plot', trends, layout);
+	Plotly.newPlot('popup-plot', trends, layout, {displayModeBar: false});
 };
 
 var layerSource = map.getLayers().item(1).getLayers().item(0).getSource();
@@ -509,15 +592,15 @@ xhr.onload = function(){
 			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
 
 			statsByProvince += '<div class="stats-by-province">' +
-				'<div>' +
-				(province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
-				'<div><a href="?' + country.replace(/ /g, '%20') + '"><span class="iconify" data-icon="fa:flag"></span></a></div></div>' +
+				(isMobile ? '' :
+				 '<div>' + (province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
+				 '<div><a href="?' + country.replace(/ /g, '%20') + '"><span class="iconify" data-icon="fa:flag"></span></a></div></div>') +
 				'<div onclick="showStatsById(' + id + ')">' +
 				'<div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
 			if(lastRecovered)
 				statsByProvince += '<div class="recovered">' + lastRecovered + ' recovered</div>';
 			if(lastDeaths)
-				statsByProvince += '<div class="deaths">' + lastDeaths + ' death' + (lastDeaths > 1 ? 's' : '') + '</div></div>';
+				statsByProvince += '<div class="deaths">' + lastDeaths + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
 			statsByProvince += '</div></div>';
 
 			if(lastConfirmed > maxConfirmed){
@@ -563,17 +646,21 @@ xhr.onload = function(){
 				color: getColor('deaths')
 			}
 		});
+		var fontSize = isMobile ? 6 : 12;
 		var layout = {
-			height: 200,
+			height: isMobile ? 50 : 150,
 			margin: {
-				l: 25,
+				l: isMobile ? 15 : 25,
 				r: 0,
-				b: 30,
-				t: 20
+				b: isMobile ? 20 : 30,
+				t: 0
+			},
+			font: {
+				size: fontSize
 			},
 			showlegend: false
 		};
-		Plotly.newPlot('count-plot', trends, layout);
+		Plotly.newPlot('count-plot', trends, layout, {displayModeBar: false});
 
 		trends = [];
 		trends.push({
@@ -582,20 +669,23 @@ xhr.onload = function(){
 			y: fatalityRates
 		});
 		layout = {
-			height: 100,
+			height: isMobile ? 50 : 100,
 			margin: {
-				l: 45,
+				l: isMobile ? 15 : 30,
 				r: 0,
-				b: 30,
-				t: 20
+				b: isMobile ? 20 : 30,
+				t: isMobile ? 0 : 10
 			},
 			yaxis: {
 				title: 'Fatality Rate'
 			},
+			font: {
+				size: fontSize
+			},
 			showlegend: false
 		};
-		Plotly.newPlot('fatality-plot', trends, layout);
-		statsByProvinceEl.style.height = (bodyEl.offsetHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 10) + 'px';
+		Plotly.newPlot('fatality-plot', trends, layout, {displayModeBar: false});
+		statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
 
 		var query = window.location.search.match(/^\?(.+)$/);
 		if(query){
