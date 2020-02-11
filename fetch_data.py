@@ -147,6 +147,7 @@ for i in range(1, len(confirmed_sheet)):
         if country != attr['Country_Region'] or \
            (province and province != attr['Province_State']):
             continue
+
         # grab new coordinates from the REST server
         latitude = feature['geometry']['y']
         longitude = feature['geometry']['x']
