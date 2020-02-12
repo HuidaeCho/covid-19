@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-<title>2019 Novel Coronavirus (2019-nCoV) Cases</title>
+<title>Coronavirus Disease 2019 (COVID-19 or 2019-nCoV) Cases</title>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta http-equiv="refresh" content="3600" />
@@ -221,10 +221,10 @@ h3 {
 </head>
 <body>
 <div id="header">
-<h1>2019 Novel Coronavirus <span class="desktop-inline">(2019-nCoV)</span> Cases</h1>
+<h1>Coronavirus Disease 2019 <span class="desktop-inline">(COVID-19 or 2019-nCoV)</span> Cases</h1>
 <div class="follow-me">
 <div class="icons">
-<a href="https://github.com/HuidaeCho/2019-ncov"><span class="iconify" data-icon="fa-solid:code-branch"></span></a>
+<a href="https://github.com/HuidaeCho/covid-19"><span class="iconify" data-icon="fa-solid:code-branch"></span></a>
 <a href="https://github.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:github"></span></a>
 <a href="https://twitter.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:twitter"></a>
 <a href="https://researchgate.net/profile/Huidae_Cho"><span class="iconify" data-icon="fa-brands:researchgate"></span></a>
@@ -233,7 +233,7 @@ h3 {
 <div class="author">Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a></div>
 </div>
 <div class="desktop-block">
-This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the 2019-nCoV global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
+This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the COVID-19 global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
 I wanted to develop an open source version of their website.
 Data is fetched hourly and all times are local except for plots in EST.
 I am not responsible for any damages caused by using this website.
@@ -374,7 +374,7 @@ var map = new ol.Map({
 			]
 		}),
 		new ol.layer.Group({
-			title: '2019-nCoV cases',
+			title: 'COVID-19 cases',
 			openInLayerSwitcher: true,
 			layers: [
 				new ol.layer.Vector({
@@ -382,7 +382,7 @@ var map = new ol.Map({
 					source: new ol.source.Vector({
 						format: new ol.format.GeoJSON(),
 						url: 'geodata.json',
-						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">2019-nCoV Global Cases by Johns Hopkins CSSE</a>'
+						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">Coronavirus COVID-19 Global Cases by Johns Hopkins CSSE</a>'
 					}),
 					style: function(feature, resolution){
 						return createStyle(feature, resolution, 'confirmed');
@@ -393,7 +393,7 @@ var map = new ol.Map({
 					source: new ol.source.Vector({
 						format: new ol.format.GeoJSON(),
 						url: 'geodata.json',
-						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">2019-nCoV Global Cases by Johns Hopkins CSSE</a>'
+						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">Coronavirus COVID-19 Global Cases by Johns Hopkins CSSE</a>'
 					}),
 					style: function(feature, resolution){
 						return createStyle(feature, resolution, 'recovered');
@@ -404,7 +404,7 @@ var map = new ol.Map({
 					source: new ol.source.Vector({
 						format: new ol.format.GeoJSON(),
 						url: 'geodata.json',
-						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">2019-nCoV Global Cases by Johns Hopkins CSSE</a>'
+						attributions: '&copy; Data source: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">Coronavirus COVID-19 Global Cases by Johns Hopkins CSSE</a>'
 					}),
 					style: function(feature, resolution){
 						return createStyle(feature, resolution, 'deaths');
