@@ -497,22 +497,24 @@ var showStats = function(feature, coor){
 			color: getColor('confirmed')
 		}
 	});
-	trends.push({
-		name: 'Recovered',
-		x: time,
-		y: recoveredCounts,
-		marker: {
-			color: getColor('recovered')
-		}
-	});
-	trends.push({
-		name: 'Deaths',
-		x: time,
-		y: deathsCounts,
-		marker: {
-			color: getColor('deaths')
-		}
-	});
+	if(recoveredCounts[recoveredCounts.length - 1] > 0)
+		trends.push({
+			name: 'Recovered',
+			x: time,
+			y: recoveredCounts,
+			marker: {
+				color: getColor('recovered')
+			}
+		});
+	if(deathsCounts[deathsCounts.length - 1] > 0)
+		trends.push({
+			name: 'Deaths',
+			x: time,
+			y: deathsCounts,
+			marker: {
+				color: getColor('deaths')
+			}
+		});
 	var layout = {
 		width: document.getElementById('popup-stats').offsetWidth + 5,
 		height: isMobile ? 50 : 100,
