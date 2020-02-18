@@ -481,7 +481,7 @@ var showStats = function(feature, coor){
 		var r = recovered[i].count;
 		var d = deaths[i].count;
 		if(c || r || d){
-			time.push(confirmed[i].time.replace(/\//g, '-').replace(' EST', ''));
+			time.push(confirmed[i].time.replace(/\//g, '-').replace(/ .*/, ''));
 			confirmedCounts.push(c);
 			recoveredCounts.push(r);
 			deathsCounts.push(d);
@@ -573,7 +573,7 @@ xhr.onload = function(){
 				var r = Number(recovered[j].count);
 				var d = Number(deaths[j].count);
 				if(j + 1 > time.length){
-					time.push(confirmed[j].time.replace(/\//g, '-').replace(' EST', ''));
+					time.push(confirmed[j].time.replace(/\//g, '-').replace(/ .*/, ''));
 					confirmedCounts.push(c);
 					recoveredCounts.push(r);
 					deathsCounts.push(d);
