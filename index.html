@@ -256,12 +256,12 @@ Times local except for plots in EST.
 <tr class="confirmed"><td>Confirmed:</td><td id="total-confirmed" class="right"></td></tr>
 <tr class="recovered"><td>Recovered:</td><td id="total-recovered" class="right"></td></tr>
 <tr class="deaths"><td>Deaths:</td><td id="total-deaths" class="right"></td></tr>
-<tr class="fatility-rate"><td>Fatality Rate<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>:</td><td id="fatality-rate" class="right"></td></tr>
+<tr class="fatility-rate"><td>CFR<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>:</td><td id="cfr" class="right"></td></tr>
 </table>
 </div>
 <div id="plots">
 <div id="count-plot"></div>
-<div id="fatality-plot"></div>
+<div id="cfr-plot"></div>
 </div>
 <div id="stats-by-province"></div>
 </div>
@@ -275,7 +275,7 @@ var lastUpdatedEl = document.getElementById('last-updated');
 var totalConfirmedEl = document.getElementById('total-confirmed');
 var totalRecoveredEl = document.getElementById('total-recovered');
 var totalDeathsEl = document.getElementById('total-deaths');
-var fatalityRateEl = document.getElementById('fatality-rate');
+var cfrEl = document.getElementById('cfr');
 var summaryEl = document.getElementById('summary');
 var plotsEl = document.getElementById('plots');
 var statsByProvinceEl = document.getElementById('stats-by-province');
@@ -619,16 +619,22 @@ xhr.onload = function(){
 		statsByProvinceEl.innerHTML = statsByProvince;
 		view.animate({center: ol.proj.fromLonLat(maxCoor)});
 
-		var fatalityRates = [];
-		for(var i = 0; i < time.length; i++){
-			fatalityRates.push(Math.round(deathsCounts[i] / confirmedCounts[i] * 10000) / 100);
+		var cfrMethod = 2;
+		var averageDaysFromConfirmedToDeath = 14;
+		var cfrs = [];
+		if(cfrMethod == 1){
+			for(var i = averageDaysFromConfirmedToDeath; i < time.length; i++)
+				cfrs.push(Math.round(deathsCounts[i] / confirmedCounts[i - averageDaysFromConfirmedToDeath] * 10000) / 100);
+		}else{
+			for(var i = 0; i < time.length; i++)
+				cfrs.push(Math.round(deathsCounts[i] / (recoveredCounts[i] + deathsCounts[i]) * 10000) / 100);
 		}
 		var lastIndex = time.length - 1;
 		lastUpdatedEl.innerHTML = new Date(lastUpdated).toLocaleString('en-US');
 		totalConfirmedEl.innerHTML = confirmedCounts[lastIndex].toLocaleString('en-US');
 		totalRecoveredEl.innerHTML = recoveredCounts[lastIndex].toLocaleString('en-US');
 		totalDeathsEl.innerHTML = deathsCounts[lastIndex].toLocaleString('en-US');
-		fatalityRateEl.innerHTML = fatalityRates[lastIndex] + '%';
+		cfrEl.innerHTML = cfrs[cfrs.length - 1] + '%';
 		var trends = [];
 		trends.push({
 			name: 'Confirmed',
@@ -672,27 +678,27 @@ xhr.onload = function(){
 
 		trends = [];
 		trends.push({
-			name: 'Fatality Rate',
+			name: 'CFR',
 			x: time,
-			y: fatalityRates
+			y: cfrs
 		});
 		layout = {
 			height: isMobile ? 50 : 100,
 			margin: {
-				l: isMobile ? 15 : 30,
+				l: isMobile ? 17 : 35,
 				r: 0,
 				b: isMobile ? 20 : 30,
 				t: isMobile ? 0 : 10
 			},
 			yaxis: {
-				title: 'Fatality Rate'
+				title: 'CFR'
 			},
 			font: {
 				size: fontSize
 			},
 			showlegend: false
 		};
-		Plotly.newPlot('fatality-plot', trends, layout, {displayModeBar: false});
+		Plotly.newPlot('cfr-plot', trends, layout, {displayModeBar: false});
 		statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
 
 		var query = window.location.search.match(/^\?(.+)$/);
