@@ -266,6 +266,8 @@ Times local except for plots in EST.
 <div id="stats-by-province"></div>
 </div>
 <script>
+// XXX: Add your Bing Maps key here and secure it from the Bing Maps Dev Center at https://www.bingmapsportal.com
+var bingMapsKey = 'AhuHr9JixtsyKu9uSOQ8W0lIr7_gC2KiFxOlmshvRDb_BSWDkhnGX7oeS5zJzHo0';
 var isMobile = window.getComputedStyle(document.getElementsByClassName('mobile-block')[0]).display == 'block';
 var bodyEl = document.body;
 var headerEl = document.getElementById('header');
@@ -362,8 +364,7 @@ var map = new ol.Map({
 					title: 'Bing aerial',
 					baseLayer: true,
 					source: new ol.source.BingMaps({
-						// XXX: Add your Bing Maps key here and secure it from the Bing Maps Dev Center at https://www.bingmapsportal.com
-						key: 'AhuHr9JixtsyKu9uSOQ8W0lIr7_gC2KiFxOlmshvRDb_BSWDkhnGX7oeS5zJzHo0',
+						key: bingMapsKey,
 						imagerySet: 'AerialWithLabelsOnDemand',
 					}),
 					visible: false
@@ -438,31 +439,61 @@ map.on('singleclick', function(evt){
 		popup.hide();
 });
 
-var showStats = function(feature, coor){
-	var country = feature.get('country');
-	var province = feature.get('province');
-	var firstConfirmedDate = feature.get('first_confirmed_date') ? new Date(feature.get('first_confirmed_date')).toLocaleDateString('en-US') : '';
-	var confirmed = feature.get('confirmed');
-	var recovered = feature.get('recovered')
-	var deaths = feature.get('deaths');
+var calculateStats = function(feature, all=false){
+	var country = feature.get ? feature.get('country') : feature.properties.country;
+	var province = feature.get ? feature.get('province') : feature.properties.province;
+	var confirmed = feature.get ? feature.get('confirmed') : feature.properties.confirmed;
+	var recovered = feature.get ? feature.get('recovered') : feature.properties.recovered;
+	var deaths = feature.get ? feature.get('deaths') : feature.properties.deaths;
 
-	var lastIndex = confirmed.length - 1;
-	var lastUpdated = new Date(confirmed[lastIndex].time).toLocaleString('en-US');
-	var lastConfirmed = confirmed[lastIndex].count;
-	var lastRecovered = recovered[lastIndex].count;
-	var lastDeaths = deaths[lastIndex].count;
+	var time = [];
+	var confirmedCounts = [];
+	var recoveredCounts = [];
+	var deathsCounts = [];
+
+	for(var i = 0; i <= confirmed.length - 1; i++){
+		var c = confirmed[i].count;
+		var r = recovered[i].count;
+		var d = deaths[i].count;
+		if(all || c || r || d){
+			time.push(confirmed[i].time.replace(/\//g, '-').replace(/ .*/, ''));
+			confirmedCounts.push(c);
+			recoveredCounts.push(r);
+			deathsCounts.push(d);
+		}
+	}
+
+	return {
+		country: country,
+		province: province,
+		time: time,
+		confirmed: confirmedCounts,
+		recovered: recoveredCounts,
+		deaths: deathsCounts
+	};
+};
+
+var showStats = function(feature, coor){
+	var stats = calculateStats(feature);
+	showPopup(stats, coor);
+};
+
+var showPopup = function(stats, coor){
+	var lastIndex = stats.confirmed.length - 1;
+	var lastConfirmed = stats.confirmed[lastIndex];
+	var lastRecovered = stats.recovered[lastIndex];
+	var lastDeaths = stats.deaths[lastIndex];
 
 	if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString('en-US');
 	if(lastRecovered) lastRecovered = lastRecovered.toLocaleString('en-US');
 	if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
 
-	var name = province ? province + ', ' + country : country;
+	var name = stats.province ? stats.province + ', ' + stats.country : stats.country;
 	var content =
 		'<div id="popup"><h3>' +
-		(province ? '<a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + province + '</a>, ' : '') +
-		'<a href="?' + country.replace(/ /g, '%20') + '">' + country + '</a></h3>' +
+		(stats.province ? '<a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + stats.province + '</a>, ' : '') +
+		'<a href="?' + stats.country.replace(/ /g, '%20') + '">' + stats.country + '</a></h3>' +
 		'<table id="popup-stats">' +
-		(firstConfirmedDate ? '<tr><td>First Confirmed:</td><td>' + firstConfirmedDate + '</td></tr>' : '') +
 		(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="right">' + lastConfirmed + '</td></tr>' : '') +
 		(lastRecovered ? '<tr class="recovered"><td>Recovered:</td><td class="right">' + lastRecovered + '</td></tr>' : '') +
 		(lastDeaths ? '<tr class="deaths"><td>Deaths:</td><td class="right">' + lastDeaths + '</td></tr>' : '') +
@@ -471,46 +502,29 @@ var showStats = function(feature, coor){
 
 	popup.show(coor, content);
 
-	var time = [];
-	var confirmedCounts = [];
-	var recoveredCounts = [];
-	var deathsCounts = [];
-
-	for(var i = 0; i <= lastIndex; i++){
-		var c = confirmed[i].count;
-		var r = recovered[i].count;
-		var d = deaths[i].count;
-		if(c || r || d){
-			time.push(confirmed[i].time.replace(/\//g, '-').replace(/ .*/, ''));
-			confirmedCounts.push(c);
-			recoveredCounts.push(r);
-			deathsCounts.push(d);
-		}
-	}
-
 	var trends = [];
 	trends.push({
 		name: 'Confirmed',
-		x: time,
-		y: confirmedCounts,
+		x: stats.time,
+		y: stats.confirmed,
 		marker: {
 			color: getColor('confirmed')
 		}
 	});
-	if(recoveredCounts[recoveredCounts.length - 1] > 0)
+	if(stats.recovered[stats.recovered.length - 1] > 0)
 		trends.push({
 			name: 'Recovered',
-			x: time,
-			y: recoveredCounts,
+			x: stats.time,
+			y: stats.recovered,
 			marker: {
 				color: getColor('recovered')
 			}
 		});
-	if(deathsCounts[deathsCounts.length - 1] > 0)
+	if(stats.deaths[stats.deaths.length - 1] > 0)
 		trends.push({
 			name: 'Deaths',
-			x: time,
-			y: deathsCounts,
+			x: stats.time,
+			y: stats.deaths,
 			marker: {
 				color: getColor('deaths')
 			}
@@ -709,6 +723,12 @@ xhr.onload = function(){
 			var extent = new ol.extent.createEmpty();
 			var found = 0;
 			var featureId;
+			var stats = {
+				time: [],
+				confirmed: [],
+				recovered: [],
+				deaths: []
+			};
 			features.forEach(function(feature){
 				var id = feature.id;
 				var country = feature.properties.country;
@@ -723,6 +743,19 @@ xhr.onload = function(){
 				   country.indexOf(query) >= 0){
 					found++;
 					featureId = id;
+					var s = calculateStats(feature, true);
+					if(stats.time.length == 0){
+						stats.time = s.time;
+						stats.confirmed = s.confirmed;
+						stats.recovered = s.recovered;
+						stats.deaths = s.deaths;
+					}else{
+						for(var i = 0; i < s.time.length; i++){
+							stats.confirmed[i] += s.confirmed[i];
+							stats.recovered[i] += s.recovered[i];
+							stats.deaths[i] += s.deaths[i];
+						}
+					}
 					ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
 				}
 			});
@@ -730,12 +763,31 @@ xhr.onload = function(){
 				var options = {duration: 1000};
 				if(found == 1){
 					options.maxZoom = 6;
+					view.fit(extent, options);
 					setTimeout(function(){
 						showStatsById(featureId);
 					}, 1000);
-				}else
-					options.padding = [200, 200, 200, 200];
-				view.fit(extent, options);
+				}else{
+					var geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + (query == 'Mainland China' ? 'China' : query) + '&key=' + bingMapsKey;
+					var geocodeXhr = new XMLHttpRequest();
+					geocodeXhr.open('GET', geocodeUrl, true);
+					geocodeXhr.responseType = 'json';
+					geocodeXhr.onload = function(){
+						var status = geocodeXhr.status;
+						if(status == 200){
+							var resource = geocodeXhr.response.resourceSets[0].resources[0];
+							var coor = ol.proj.fromLonLat(resource.geocodePoints[0].coordinates.reverse());
+							var c1 = ol.proj.fromLonLat([resource.bbox[1], resource.bbox[0]]);
+							var c2 = ol.proj.fromLonLat([resource.bbox[3], resource.bbox[2]]);
+							extent = [c1[0], c1[1], c2[0], c2[1]];
+							stats.country = query;
+							showPopup(stats, coor);
+						}else
+							console.log(status);
+						view.fit(extent);
+					};
+					geocodeXhr.send();
+				}
 			}
 		}
 	}else

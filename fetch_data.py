@@ -137,6 +137,10 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
 
             last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
             last_updated = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S EST")}'
+            # I found this case where a time from the spreadsheet is more
+            # recent than the last updated time from the REST server
+            if time > last_updated:
+                last_updated = time
             confirmed.append({
                 'time': last_updated,
                 'count': int(attr['Confirmed'])
