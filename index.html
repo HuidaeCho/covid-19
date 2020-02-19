@@ -336,7 +336,7 @@ var map = new ol.Map({
 			openInLayerSwitcher: true,
 			layers: [
 				new ol.layer.Group({
-					title: 'Water color with labels',
+					title: 'Water color',
 					baseLayer: true,
 					combine: true,
 					layers: [
@@ -351,14 +351,6 @@ var map = new ol.Map({
 							})
 						})
 					],
-					visible: false
-				}),
-				new ol.layer.Tile({
-					title: 'Water color',
-					baseLayer: true,
-					source: new ol.source.Stamen({
-						layer: 'watercolor'
-					}),
 					visible: false
 				}),
 				new ol.layer.Tile({
