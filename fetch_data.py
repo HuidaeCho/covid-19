@@ -12,6 +12,7 @@ features_url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/servic
 confirmed_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv'
 recovered_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv'
 deaths_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
+kcdc_url = 'http://ncov.mohw.go.kr/bdBoardList.do'
 
 geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
@@ -152,6 +153,10 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             })
 
         file = 'data/' + (province + ', ' if province else '') + country + '.csv'
+        if country == 'South Korea':
+            res = requests.get(kcdc_url)
+            print(res.content.decode())
+
         if os.path.exists(file):
             with open(file) as f:
                 reader = csv.reader(f)
