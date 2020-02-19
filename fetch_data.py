@@ -4,6 +4,7 @@ import io
 import csv
 import json
 import datetime
+import re
 import os
 import config
 
@@ -18,6 +19,23 @@ geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRe
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
 
 geodata_json = 'geodata.json'
+
+def fetch_kcdc(file):
+    res = requests.get(kcdc_url).content.decode()
+    m = re.search('현황\(([0-9]+)\.([0-9]+)일 ([0-9]+)시 기준\).*\(확진환자\) ([0-9]+)명.*\(확진환자 격리해제\) ([0-9]+)명',
+            res, re.DOTALL)
+    if m:
+        year = 2020
+        month = int(m[1])
+        date = int(m[2])
+        hour = int(m[3])
+        confirmed = int(m[4])
+        recovered = int(m[5])
+        deaths = 0
+        last_updated = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
+        with open(file, 'w') as f:
+            f.write('time,confirmed,recovered,deaths\n')
+            f.write(f'{last_updated},{confirmed},{recovered},{deaths}\n')
 
 # download features from the REST server
 res = requests.get(features_url)
@@ -154,9 +172,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
 
         file = 'data/' + (province + ', ' if province else '') + country + '.csv'
         if country == 'South Korea':
-            res = requests.get(kcdc_url)
-            print(res.content.decode())
-
+            fetch_kcdc(file)
         if os.path.exists(file):
             with open(file) as f:
                 reader = csv.reader(f)
@@ -276,6 +292,5 @@ geodata = {
     'features': features
 }
 
-f = open(geodata_json, 'w')
-f.write(json.dumps(geodata))
-f.close()
+with open(geodata_json, 'w') as f:
+    f.write(json.dumps(geodata))
