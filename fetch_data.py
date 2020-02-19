@@ -14,6 +14,7 @@ confirmed_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/maste
 recovered_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv'
 deaths_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
 kcdc_url = 'http://ncov.mohw.go.kr/bdBoardList.do'
+kcdc_re = '현황\(([0-9]+)\.([0-9]+)일 ([0-9]+)시 기준\).*\(확진환자\) ([0-9]+)명.*\(확진환자 격리해제\) ([0-9]+)명'
 
 geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
@@ -22,8 +23,7 @@ geodata_json = 'geodata.json'
 
 def fetch_kcdc(file):
     res = requests.get(kcdc_url).content.decode()
-    m = re.search('현황\(([0-9]+)\.([0-9]+)일 ([0-9]+)시 기준\).*\(확진환자\) ([0-9]+)명.*\(확진환자 격리해제\) ([0-9]+)명',
-            res, re.DOTALL)
+    m = re.search(kcdc_re, res, re.DOTALL)
     if m:
         year = 2020
         month = int(m[1])
