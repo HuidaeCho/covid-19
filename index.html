@@ -93,6 +93,9 @@ h3 {
 	width: 100px;
 	font-size: 0.8em;
 }
+#popup-last-updated {
+	font-size: 0.95em;
+}
 #popup-stats {
 	width: 100%;
 	border-collapse: collapse;
@@ -235,16 +238,16 @@ h3 {
 <div class="desktop-block">
 This web map was motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the COVID-19 global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
 I wanted to develop an open source version of their website.
-Data is fetched hourly and all times are local except for plots in EST.
+Data is fetched hourly and all times are local except for plots in UTC.
 I am not responsible for any damages caused by using this website.
 <a href="/covid-19.html">Suggestions?</a>
 </div>
 <div class="mobile-block">
 Motivated by <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">the JHU CSSE website</a>.
-Times local except for plots in EST.
+Local times except for plots in UTC.
 <a href="/covid-19.html">Suggestions?</a>
 </div>
-<div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Size: confirmed logarithmic, others proportional to confirmed</div>
+<div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Confirmed: logarithmic radius, Others: area proportional to confirmed</div>
 <div><span class="iconify" data-icon="fa:link"></span> <a href="?Mainland%20China">Mainland China</a></div>
 </div>
 <div id="map"></div>
@@ -256,7 +259,7 @@ Times local except for plots in EST.
 <tr class="confirmed"><td>Confirmed:</td><td id="total-confirmed" class="right"></td></tr>
 <tr class="recovered"><td>Recovered:</td><td id="total-recovered" class="right"></td></tr>
 <tr class="deaths"><td>Deaths:</td><td id="total-deaths" class="right"></td></tr>
-<tr class="fatility-rate"><td>CFR<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>:</td><td id="cfr" class="right"></td></tr>
+<tr class="cfr"><td>CFR<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>:</td><td id="cfr" class="right"></td></tr>
 </table>
 </div>
 <div id="plots">
@@ -308,11 +311,9 @@ var createStyle = function(feature, resolution, category){
 	else if(count){
 		var confirmed = feature.get('confirmed')[lastIndex].count;
 		var confirmedRadius = calculateConfirmedRadius(confirmed);
-		// the radius of raw proportion looks too small;
-		// add a minimum size
-		count += (minOthersRadius * confirmed / confirmedRadius - 1) * (1 - (count - 1) / (confirmed - 1));
-		radius = count / confirmed * confirmedRadius;
+		radius = Math.sqrt(count / confirmed) * confirmedRadius;
 	}
+	radius *= Math.log10(maxResolution / resolution) + 1;
 	var style = new ol.style.Style({
 		image: new ol.style.Circle({
 			radius: radius,
@@ -423,6 +424,7 @@ var map = new ol.Map({
 	overlays: [popup],
 });
 var view = map.getView();
+var maxResolution = view.getResolution();
 var layerSwitcher = new ol.control.LayerSwitcher();
 map.addControl(layerSwitcher);
 
@@ -466,6 +468,7 @@ var calculateStats = function(feature, all=false){
 	return {
 		country: country,
 		province: province,
+		lastUpdated: Date.parse(confirmed[confirmed.length-1].time),
 		time: time,
 		confirmed: confirmedCounts,
 		recovered: recoveredCounts,
@@ -479,20 +482,22 @@ var showStats = function(feature, coor){
 };
 
 var showPopup = function(stats, coor){
+	var lastUpdated = stats.lastUpdated;
 	var lastIndex = stats.confirmed.length - 1;
 	var lastConfirmed = stats.confirmed[lastIndex];
 	var lastRecovered = stats.recovered[lastIndex];
 	var lastDeaths = stats.deaths[lastIndex];
 
-	if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString('en-US');
-	if(lastRecovered) lastRecovered = lastRecovered.toLocaleString('en-US');
-	if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
+	if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
+	if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
+	if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
 
 	var name = stats.province ? stats.province + ', ' + stats.country : stats.country;
 	var content =
 		'<div id="popup"><h3>' +
 		(stats.province ? '<a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + stats.province + '</a>, ' : '') +
 		'<a href="?' + stats.country.replace(/ /g, '%20') + '">' + stats.country + '</a></h3>' +
+		'<div id="popup-last-updated">Last Updated: ' + new Date(lastUpdated).toLocaleString() + '</div>' +
 		'<table id="popup-stats">' +
 		(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="right">' + lastConfirmed + '</td></tr>' : '') +
 		(lastRecovered ? '<tr class="recovered"><td>Recovered:</td><td class="right">' + lastRecovered + '</td></tr>' : '') +
@@ -611,9 +616,9 @@ xhr.onload = function(){
 			var lastRecovered = recovered[lastIndex].count;
 			var lastDeaths = deaths[lastIndex].count;
 
-			if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString('en-US');
-			if(lastRecovered) lastRecovered = lastRecovered.toLocaleString('en-US');
-			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString('en-US');
+			if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
+			if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
+			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
 
 			statsByProvince += '<div class="stats-by-province">' +
 				(isMobile ? '' :
@@ -646,10 +651,10 @@ xhr.onload = function(){
 				cfrs.push(Math.round(deathsCounts[i] / (recoveredCounts[i] + deathsCounts[i]) * 10000) / 100);
 		}
 		var lastIndex = time.length - 1;
-		lastUpdatedEl.innerHTML = new Date(lastUpdated).toLocaleString('en-US');
-		totalConfirmedEl.innerHTML = confirmedCounts[lastIndex].toLocaleString('en-US');
-		totalRecoveredEl.innerHTML = recoveredCounts[lastIndex].toLocaleString('en-US');
-		totalDeathsEl.innerHTML = deathsCounts[lastIndex].toLocaleString('en-US');
+		lastUpdatedEl.innerHTML = new Date(lastUpdated).toLocaleString();
+		totalConfirmedEl.innerHTML = confirmedCounts[lastIndex].toLocaleString();
+		totalRecoveredEl.innerHTML = recoveredCounts[lastIndex].toLocaleString();
+		totalDeathsEl.innerHTML = deathsCounts[lastIndex].toLocaleString();
 		cfrEl.innerHTML = cfrs[cfrs.length - 1] + '%';
 		var trends = [];
 		trends.push({
@@ -745,11 +750,14 @@ xhr.onload = function(){
 					featureId = id;
 					var s = calculateStats(feature, true);
 					if(stats.time.length == 0){
+						stats.lastUpdated = s.lastUpdated;
 						stats.time = s.time;
 						stats.confirmed = s.confirmed;
 						stats.recovered = s.recovered;
 						stats.deaths = s.deaths;
 					}else{
+						if(s.lastUpdated > stats.lastUpdated)
+							stats.lastUpdated = s.lastUpdated;
 						for(var i = 0; i < s.time.length; i++){
 							stats.confirmed[i] += s.confirmed[i];
 							stats.recovered[i] += s.recovered[i];
