@@ -99,19 +99,19 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         for j in range(col, len(confirmed_row)):
             date = confirmed_header[j].split('/')
             time = datetime.datetime(2000 + int(date[2]), int(date[0]),
-                    int(date[1]), tzinfo=datetime.timezone.utc)
+                    int(date[1]), 23, 59, tzinfo=datetime.timezone.utc)
             # YYYY/MM/DD UTC for iOS
-            time = f'{time.strftime("%Y/%m/%d UTC")}'
+            time_str = f'{time.strftime("%Y/%m/%d %H:%M:%S UTC")}'
             confirmed.append({
-                'time': time,
+                'time': time_str,
                 'count': int(confirmed_row[j])
             })
             recovered.append({
-                'time': time,
+                'time': time_str,
                 'count': int(recovered_row[j])
             })
             deaths.append({
-                'time': time,
+                'time': time_str,
                 'count': int(deaths_row[j])
             })
 
@@ -131,22 +131,22 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             longitude = feature['geometry']['x']
 
             last_updated = datetime.datetime.fromtimestamp(
-                    attr['Last_Update']/1000)
-            last_updated = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S EST")}'
+                    attr['Last_Update']/1000, tz=datetime.timezone.utc)
             # I found this case where a time from the spreadsheet is more
             # recent than the last updated time from the REST server
             if time > last_updated:
                 last_updated = time
+            last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
             confirmed.append({
-                'time': last_updated,
+                'time': last_updated_str,
                 'count': int(attr['Confirmed'])
             }),
             recovered.append({
-                'time': last_updated,
+                'time': last_updated_str,
                 'count': int(attr['Recovered'])
             }),
             deaths.append({
-                'time': last_updated,
+                'time': last_updated_str,
                 'count': int(attr['Deaths'])
             })
 
@@ -187,20 +187,21 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         if found:
             continue
 
-        # just found a new province that is not in the spreadsheet, but is in the
-        # REST server; add this record
-        last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
-        last_updated = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S EST")}'
+        # just found a new province that is not in the spreadsheet, but is in
+        # the REST server; add this record
+        last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000,
+                tz=datetime.timezone.utc)
+        last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
         confirmed = [{
-            'time': last_updated,
+            'time': last_updated_str,
             'count': int(attr['Confirmed'])
         }]
         recovered = [{
-            'time': last_updated,
+            'time': last_updated_str,
             'count': int(attr['Recovered'])
         }]
         deaths = [{
-            'time': last_updated,
+            'time': last_updated_str,
             'count': int(attr['Deaths'])
         }]
         data.append({
