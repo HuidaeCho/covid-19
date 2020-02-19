@@ -341,11 +341,13 @@ var map = new ol.Map({
 					combine: true,
 					layers: [
 						new ol.layer.Tile({
+							title: 'Base map',
 							source: new ol.source.Stamen({
 								layer: 'watercolor'
 							})
 						}),
 						new ol.layer.Tile({
+							title: 'Labels',
 							source: new ol.source.Stamen({
 								layer: 'terrain-labels'
 							})
