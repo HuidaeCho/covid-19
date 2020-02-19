@@ -73,11 +73,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         col = 0
         province = confirmed_row[col]; col += 1
         country = confirmed_row[col]; col += 1
-        # don't double-count; these records are now by city in the REST features
-        if ((country == 'US' and
-             province in ('Arizona', 'California', 'Illinois', 'Washington')) or
-            (country == 'Canada' and province in ('Ontario'))) or \
-           len(confirmed_row) < 3:
+        if len(confirmed_row) <= col:
             continue
 
         # retrieve coordinates from the geocoding server if desired;
