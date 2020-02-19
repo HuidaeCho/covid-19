@@ -98,8 +98,8 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         deaths = []
         for j in range(col, len(confirmed_row)):
             date = confirmed_header[j].split('/')
-            time = datetime.datetime(2000 + int(date[2]), int(date[0]), int(date[1]),
-                    tzinfo=datetime.timezone.utc)
+            time = datetime.datetime(2000 + int(date[2]), int(date[0]),
+                    int(date[1]), tzinfo=datetime.timezone.utc)
             # YYYY/MM/DD UTC for iOS
             time = f'{time.strftime("%Y/%m/%d UTC")}'
             confirmed.append({
@@ -118,14 +118,9 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         # try to find most up-to-date info from the REST server
         for feature in features:
             attr = feature['attributes']
-            # Diamond Princess is a country in the REST API, but it's a
-            # province in Others in the CSV files; Others in the REST API is
-            # empty!
-            if attr['Country_Region'] == 'Others':
-                continue
-            if country == 'Others' and attr['Country_Region'] == 'Diamond Princess':
-                country = 'Diamond Princess'
-                province = ''
+            if country == 'Others' and attr['Province_State'] and \
+               'Diamond Princess' in attr['Province_State']:
+                province = attr['Province_State']
             # need an exact match
             if country != attr['Country_Region'] or \
                (province and province != attr['Province_State']):
@@ -135,7 +130,8 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             latitude = feature['geometry']['y']
             longitude = feature['geometry']['x']
 
-            last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000)
+            last_updated = datetime.datetime.fromtimestamp(
+                    attr['Last_Update']/1000)
             last_updated = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S EST")}'
             # I found this case where a time from the spreadsheet is more
             # recent than the last updated time from the REST server
