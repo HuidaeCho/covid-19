@@ -4,6 +4,7 @@ import io
 import csv
 import json
 import datetime
+import os
 import config
 
 features_url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json'
@@ -149,6 +150,29 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                 'time': last_updated_str,
                 'count': int(attr['Deaths'])
             })
+
+        file = 'data/' + (province + ', ' if province else '') + country + '.csv'
+        if os.path.exists(file):
+            with open(file) as f:
+                reader = csv.reader(f)
+                reader.__next__()
+                for row in reader:
+                    last_updated = datetime.datetime.fromisoformat(row[0])
+                    if last_updated > time:
+                        last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+                        index = len(confirmed) - 1
+                        confirmed[index] = {
+                            'time': last_updated_str,
+                            'count': int(row[1])
+                        }
+                        recovered[index] = {
+                            'time': last_updated_str,
+                            'count': int(row[2])
+                        }
+                        deaths[index] = {
+                            'time': last_updated_str,
+                            'count': int(row[3])
+                        }
 
         data.append({
             'country': country,
