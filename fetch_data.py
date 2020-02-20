@@ -66,7 +66,7 @@ def fetch_kcdc():
     confirmed = int(m[4])
     recovered = int(m[5])
     deaths = 0
-    last_updated = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
+    last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
 
     file = get_data_filename('South Korea')
     if os.path.exists(file):
@@ -76,13 +76,13 @@ def fetch_kcdc():
             row = reader.__next__()
             time = datetime.datetime.fromisoformat(row[0]).astimezone(
                     datetime.timezone.utc)
-            if time >= datetime.datetime.fromisoformat(last_updated).astimezone(
-                    datetime.timezone.utc):
+            if time >= datetime.datetime.fromisoformat(last_updated_iso).\
+                    astimezone(datetime.timezone.utc):
                 return
 
     with open(file, 'w') as f:
         f.write('time,confirmed,recovered,deaths\n')
-        f.write(f'{last_updated},{confirmed},{recovered},{deaths}\n')
+        f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
 def fetch_dxy():
     res = requests.get(dxy_url).content.decode()
@@ -91,7 +91,7 @@ def fetch_dxy():
         return
     last_updated = datetime.datetime.fromtimestamp(int(m[1])/1000,
             tz=datetime.timezone.utc)
-    last_updated = f'{last_updated.strftime("%Y-%m-%d %H:%M:%S+00:00")}'
+    last_updated_iso = f'{last_updated.strftime("%Y-%m-%d %H:%M:%S+00:00")}'
     records = json.loads(m[2])
     for record in records:
         province = record['provinceShortName']
@@ -107,9 +107,19 @@ def fetch_dxy():
             country = province
 
         file = get_data_filename(country, province)
+        if os.path.exists(file):
+            with open(file) as f:
+                reader = csv.reader(f)
+                reader.__next__()
+                row = reader.__next__()
+                time = datetime.datetime.fromisoformat(row[0]).astimezone(
+                        datetime.timezone.utc)
+                if time >= last_updated:
+                    continue
+
         with open(file, 'w') as f:
             f.write('time,confirmed,recovered,deaths\n')
-            f.write(f'{last_updated},{confirmed},{recovered},{deaths}\n')
+            f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
 fetch_kcdc()
 fetch_dxy()
