@@ -47,7 +47,7 @@ h2 {
 	margin: 0 0 0.1em 0;
 }
 h3 {
-	font-size: 1.2em;
+	font-size: 1em;
 	margin: 0 0 2px 0;
 }
 .follow-me {
@@ -122,7 +122,7 @@ h3 {
 	background-color: #00ff0055;
 }
 .deaths {
-	background-color: #ff000055;
+	background-color: #ff0000aa;
 }
 #plots {
 	margin-bottom: 0;
@@ -309,29 +309,67 @@ var getColor = function(category, opaque=false){
 var calculateConfirmedRadius = function(confirmed){
 	return Math.log10(confirmed + 1) * 10;
 }
-var minOthersRadius = calculateConfirmedRadius(1);
-var createStyle = function(feature, resolution, category){
-	var timeSeries = feature.get(category);
-	lastIndex = timeSeries.length - 1;
-	time = timeSeries[lastIndex].time;
-	count = timeSeries[lastIndex].count;
-	var radius = 0;
-	if(category == 'confirmed')
-		radius = calculateConfirmedRadius(count);
-	else if(count){
-		var confirmed = feature.get('confirmed')[lastIndex].count;
+var createStyle = function(feature, resolution){
+	var radiusFactor = Math.log10(maxResolution / resolution) * 0.5 + 1;
+	var confirmed = feature.get('confirmed');
+	var recovered = feature.get('recovered');
+	var deaths = feature.get('deaths');
+	var lastIndex = confirmed.length - 1;
+	confirmed = confirmed[lastIndex].count;
+	recovered = recovered[lastIndex].count;
+	deaths = deaths[lastIndex].count;
+
+	var style;
+	if(true){
 		var confirmedRadius = calculateConfirmedRadius(confirmed);
-		radius = Math.sqrt(count / confirmed) * confirmedRadius;
-	}
-	radius *= Math.log10(maxResolution / resolution) + 1;
-	var style = new ol.style.Style({
-		image: new ol.style.Circle({
-			radius: radius,
-			fill: new ol.style.Fill({
-				color: getColor(category)
+		var recoveredRadius = Math.sqrt(recovered / confirmed) * confirmedRadius;
+		var deathsRadius = Math.sqrt(deaths / confirmed) * confirmedRadius;
+		confirmedRadius *= radiusFactor;
+		recoveredRadius *= radiusFactor;
+		deathsRadius *= radiusFactor;
+		style = [
+			new ol.style.Style({
+				image: new ol.style.Circle({
+					radius: confirmedRadius,
+					fill: new ol.style.Fill({
+						color: getColor('confirmed')
+					})
+				})
+			}),
+			new ol.style.Style({
+				image: new ol.style.Circle({
+					radius: recoveredRadius,
+					fill: new ol.style.Fill({
+						color: getColor('recovered')
+					})
+				})
+			}),
+			new ol.style.Style({
+				image: new ol.style.Circle({
+					radius: deathsRadius,
+					fill: new ol.style.Fill({
+						color: getColor('deaths')
+					})
+				})
 			})
-		})
-	});
+		];
+	}else{
+		var data = [recovered, confirmed - recovered - deaths, deaths];
+		var radius = calculateConfirmedRadius(confirmed);
+		radius *= radiusFactor;
+		style = new ol.style.Style({
+			image: new ol.style.Chart({
+				type: 'pie',
+				radius: radius,
+				data: data,
+				colors: [getColor('recovered'), getColor('confirmed'), getColor('deaths')],
+				stroke: new ol.style.Stroke({
+					color: '#0000',
+					width: 1
+				})
+			})
+		});
+	}
 	return style;
 }
 
@@ -381,44 +419,16 @@ var map = new ol.Map({
 				})
 			]
 		}),
-		new ol.layer.Group({
+		new ol.layer.Vector({
 			title: 'COVID-19 cases',
-			openInLayerSwitcher: true,
-			layers: [
-				new ol.layer.Vector({
-					title: 'Confirmed',
-					source: new ol.source.Vector({
-						format: new ol.format.GeoJSON(),
-						url: 'geodata.json',
-						attributions: dataSources
-					}),
-					style: function(feature, resolution){
-						return createStyle(feature, resolution, 'confirmed');
-					}
-				}),
-				new ol.layer.Vector({
-					title: 'Recovered',
-					source: new ol.source.Vector({
-						format: new ol.format.GeoJSON(),
-						url: 'geodata.json',
-						attributions: dataSources
-					}),
-					style: function(feature, resolution){
-						return createStyle(feature, resolution, 'recovered');
-					}
-				}),
-				new ol.layer.Vector({
-					title: 'Deaths',
-					source: new ol.source.Vector({
-						format: new ol.format.GeoJSON(),
-						url: 'geodata.json',
-						attributions: dataSources
-					}),
-					style: function(feature, resolution){
-						return createStyle(feature, resolution, 'deaths');
-					}
-				}),
-			]
+			source: new ol.source.Vector({
+				format: new ol.format.GeoJSON(),
+				url: 'geodata.json',
+				attributions: dataSources
+			}),
+			style: function(feature, resolution){
+				return createStyle(feature, resolution);
+			}
 		})
 	],
 	view: new ol.View({
@@ -555,7 +565,7 @@ var showPopup = function(stats, coor){
 	Plotly.newPlot('popup-plot', trends, layout, {displayModeBar: false});
 };
 
-var layerSource = map.getLayers().item(1).getLayers().item(0).getSource();
+var layerSource = map.getLayers().item(1).getSource();
 
 var showStatsById = function(id){
 	var feature = layerSource.getFeatureById(id);
