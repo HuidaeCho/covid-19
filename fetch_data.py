@@ -226,7 +226,6 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                 row = reader.__next__()
                 last_updated = datetime.datetime.fromisoformat(row[0]).\
                         astimezone(datetime.timezone.utc)
-                print(last_updated, time)
                 if last_updated > time:
                     last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
                     index = len(confirmed) - 1

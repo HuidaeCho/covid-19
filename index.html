@@ -274,6 +274,11 @@ Local times except for plots in UTC.
 <div id="stats-by-province"></div>
 </div>
 <script>
+var dataSources = '&copy; Data sources: ' +
+	'<a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">CSSE</a>' +
+	', <a href="https://ncov.dxy.cn/ncovh5/view/pneumonia">DXY</a>' +
+	', <a href="http://ncov.mohw.go.kr/bdBoardList.do">KCDC</a>' +
+	'';
 // XXX: Add your Bing Maps key here and secure it from the Bing Maps Dev Center at https://www.bingmapsportal.com
 var bingMapsKey = 'AhuHr9JixtsyKu9uSOQ8W0lIr7_gC2KiFxOlmshvRDb_BSWDkhnGX7oeS5zJzHo0';
 var isMobile = window.getComputedStyle(document.getElementsByClassName('mobile-block')[0]).display == 'block';
@@ -385,7 +390,7 @@ var map = new ol.Map({
 					source: new ol.source.Vector({
 						format: new ol.format.GeoJSON(),
 						url: 'geodata.json',
-						attributions: '&copy; Data sources: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">JHU CSSE</a>, <a href="http://ncov.mohw.go.kr/bdBoardList.do">KCDC</a>'
+						attributions: dataSources
 					}),
 					style: function(feature, resolution){
 						return createStyle(feature, resolution, 'confirmed');
@@ -396,7 +401,7 @@ var map = new ol.Map({
 					source: new ol.source.Vector({
 						format: new ol.format.GeoJSON(),
 						url: 'geodata.json',
-						attributions: '&copy; Data sources: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">JHU CSSE</a>, <a href="http://ncov.mohw.go.kr/bdBoardList.do">KCDC</a>'
+						attributions: dataSources
 					}),
 					style: function(feature, resolution){
 						return createStyle(feature, resolution, 'recovered');
@@ -407,7 +412,7 @@ var map = new ol.Map({
 					source: new ol.source.Vector({
 						format: new ol.format.GeoJSON(),
 						url: 'geodata.json',
-						attributions: '&copy; Data sources: <a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">JHU CSSE</a>, <a href="http://ncov.mohw.go.kr/bdBoardList.do">KCDC</a>'
+						attributions: dataSources
 					}),
 					style: function(feature, resolution){
 						return createStyle(feature, resolution, 'deaths');
