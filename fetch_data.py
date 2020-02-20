@@ -24,18 +24,32 @@ geodata_json = 'geodata.json'
 def fetch_kcdc(file):
     res = requests.get(kcdc_url).content.decode()
     m = re.search(kcdc_re, res, re.DOTALL)
-    if m:
-        year = 2020
-        month = int(m[1])
-        date = int(m[2])
-        hour = int(m[3])
-        confirmed = int(m[4])
-        recovered = int(m[5])
-        deaths = 0
-        last_updated = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
-        with open(file, 'w') as f:
-            f.write('time,confirmed,recovered,deaths\n')
-            f.write(f'{last_updated},{confirmed},{recovered},{deaths}\n')
+    if not m:
+        return
+
+    year = 2020
+    month = int(m[1])
+    date = int(m[2])
+    hour = int(m[3])
+    confirmed = int(m[4])
+    recovered = int(m[5])
+    deaths = 0
+    last_updated = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
+
+    if os.path.exists(file):
+        with open(file) as f:
+            reader = csv.reader(f)
+            reader.__next__()
+            row = reader.__next__()
+            time = datetime.datetime.fromisoformat(row[0]).astimezone(
+                    datetime.timezone.utc)
+            if time >= datetime.datetime.fromisoformat(last_updated).astimezone(
+                    datetime.timezone.utc):
+                return
+
+    with open(file, 'w') as f:
+        f.write('time,confirmed,recovered,deaths\n')
+        f.write(f'{last_updated},{confirmed},{recovered},{deaths}\n')
 
 # download features from the REST server
 res = requests.get(features_url)
@@ -70,6 +84,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
 
         if len(confirmed_row) == 0:
             continue
+
         col = 0
         province = confirmed_row[col]; col += 1
         country = confirmed_row[col]; col += 1
@@ -173,24 +188,24 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             with open(file) as f:
                 reader = csv.reader(f)
                 reader.__next__()
-                for row in reader:
-                    last_updated = datetime.datetime.fromisoformat(row[0]).\
-                            astimezone(datetime.timezone.utc)
-                    if last_updated > time:
-                        last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-                        index = len(confirmed) - 1
-                        confirmed[index] = {
-                            'time': last_updated_str,
-                            'count': int(row[1])
-                        }
-                        recovered[index] = {
-                            'time': last_updated_str,
-                            'count': int(row[2])
-                        }
-                        deaths[index] = {
-                            'time': last_updated_str,
-                            'count': int(row[3])
-                        }
+                row = reader.__next__()
+                last_updated = datetime.datetime.fromisoformat(row[0]).\
+                        astimezone(datetime.timezone.utc)
+                if last_updated > time:
+                    last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+                    index = len(confirmed) - 1
+                    confirmed[index] = {
+                        'time': last_updated_str,
+                        'count': int(row[1])
+                    }
+                    recovered[index] = {
+                        'time': last_updated_str,
+                        'count': int(row[2])
+                    }
+                    deaths[index] = {
+                        'time': last_updated_str,
+                        'count': int(row[3])
+                    }
 
         data.append({
             'country': country,
