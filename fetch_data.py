@@ -6,6 +6,7 @@ import json
 import datetime
 import re
 import os
+from en import en
 import config
 
 features_url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json'
@@ -16,12 +17,41 @@ deaths_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/c
 kcdc_url = 'http://ncov.mohw.go.kr/bdBoardList.do'
 kcdc_re = '현황\(([0-9]+)\.([0-9]+)일 ([0-9]+)시 기준\).*\(확진환자\) ([0-9]+)명.*\(확진환자 격리해제\) ([0-9]+)명'
 
+dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
+#dxy_re = '截至 ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}).*window\.getAreaStat = (.*?)\}catch\(e\)'
+dxy_re = '"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
+
 geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
 
 geodata_json = 'geodata.json'
 
-def fetch_kcdc(file):
+def geocode(country, province, latitude, longitude):
+    global coors
+    if province == '':
+        location = country
+        geocode_url = geocode_country_url.format(country=country)
+    else:
+        location = f'{country},{province}'
+        geocode_url = geocode_province_url.format(country=country,
+                province=province)
+    if not location in coors:
+        res = requests.get(geocode_url, headers={
+            'referer': config.bing_maps_referer
+        })
+        ret = res.json()
+        resources = ret['resourceSets'][0]['resources']
+        if len(resources):
+            coor = resources[0]['geocodePoints'][0]['coordinates']
+            latitude = coor[0]
+            longitude = coor[1]
+        coors[location] = {'latitude': latitude, 'longitude': longitude}
+    else:
+        latitude = coors[location].latitude
+        longitude = coors[location].longitude
+    return latitude, longitude
+
+def fetch_kcdc():
     res = requests.get(kcdc_url).content.decode()
     m = re.search(kcdc_re, res, re.DOTALL)
     if not m:
@@ -36,6 +66,7 @@ def fetch_kcdc(file):
     deaths = 0
     last_updated = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
 
+    file = 'data/South Korea.csv'
     if os.path.exists(file):
         with open(file) as f:
             reader = csv.reader(f)
@@ -50,6 +81,36 @@ def fetch_kcdc(file):
     with open(file, 'w') as f:
         f.write('time,confirmed,recovered,deaths\n')
         f.write(f'{last_updated},{confirmed},{recovered},{deaths}\n')
+
+def fetch_dxy():
+    res = requests.get(dxy_url).content.decode()
+    m = re.search(dxy_re, res, re.DOTALL)
+    if not m:
+        return
+    last_updated = datetime.datetime.fromtimestamp(int(m[1])/1000,
+            tz=datetime.timezone.utc)
+    last_updated = f'{last_updated.strftime("%Y-%m-%d %H:%M:%S+00:00")}'
+    records = json.loads(m[2])
+    for record in records:
+        province = record['provinceShortName']
+        if not province in en:
+            return
+        province = en[province]
+        confirmed = record['confirmedCount']
+        recovered = record['curedCount']
+        deaths = record['deadCount']
+
+        country = 'Mainland China'
+        if province in ('Hong Kong', 'Macau', 'Taiwan'):
+            country = province
+
+        file = f'data/{province}, {country}.csv'
+        with open(file, 'w') as f:
+            f.write('time,confirmed,recovered,deaths\n')
+            f.write(f'{last_updated},{confirmed},{recovered},{deaths}\n')
+
+fetch_kcdc()
+fetch_dxy()
 
 # download features from the REST server
 res = requests.get(features_url)
@@ -93,35 +154,11 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
 
         # retrieve coordinates from the geocoding server if desired;
         # otherwise, just use coordinates from the spreadsheet
+        latitude = confirmed_row[col]; col += 1
+        longitude = confirmed_row[col]; col += 1
         if config.geocode:
-            if province == '':
-                location = country
-                geocode_url = geocode_country_url.format(country=country)
-            else:
-                location = f'{country},{province}'
-                geocode_url = geocode_province_url.format(country=country,
-                        province=province)
-            if not location in coors:
-                res = requests.get(geocode_url, headers={
-                    'referer': config.bing_maps_referer
-                })
-                ret = res.json()
-                resources = ret['resourceSets'][0]['resources']
-                if len(resources):
-                    coor = resources[0]['geocodePoints'][0]['coordinates']
-                    latitude = coor[0]
-                    longitude = coor[1]
-                else:
-                    latitude = confirmed_row[3]
-                    longitude = confirmed_row[4]
-                coors[location] = {'latitude': latitude, 'longitude': longitude}
-            else:
-                latitude = coors[location].latitude
-                longitude = coors[location].longitude
-            col += 2
-        else:
-            latitude = confirmed_row[col]; col += 1
-            longitude = confirmed_row[col]; col += 1
+            latitude, longitude = geocode(country, province,
+                    latitude, longitude)
 
         # create and populate three lists with time series data
         confirmed = []
@@ -182,8 +219,6 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             })
 
         file = 'data/' + (province + ', ' if province else '') + country + '.csv'
-        if country == 'South Korea':
-            fetch_kcdc(file)
         if os.path.exists(file):
             with open(file) as f:
                 reader = csv.reader(f)
@@ -191,6 +226,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                 row = reader.__next__()
                 last_updated = datetime.datetime.fromisoformat(row[0]).\
                         astimezone(datetime.timezone.utc)
+                print(last_updated, time)
                 if last_updated > time:
                     last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
                     index = len(confirmed) - 1
