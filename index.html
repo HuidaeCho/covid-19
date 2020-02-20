@@ -90,7 +90,7 @@ h3 {
 	font-size: 0.95em;
 }
 .highlighted {
-	background-color: #0000ff55;
+	background-color: #0000ff22;
 }
 #popup {
 	width: 100px;
@@ -138,6 +138,9 @@ h3 {
 	padding: 0;
 	font-size: 0.95em;
 	cursor: pointer;
+}
+.stats-by-province > div:nth-child(2) {
+	width: 100%;
 }
 .stats-by-province .province {
 	font-weight: bold;
@@ -805,7 +808,7 @@ xhr.onload = function(){
 					options.maxZoom = 6;
 					view.fit(extent, options);
 					setTimeout(function(){
-						showStatsById(featureId);
+						showStatsById(featureIds[0]);
 					}, 1000);
 				}else{
 					var geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + (query == 'Mainland China' ? 'China' : query) + '&key=' + bingMapsKey;
