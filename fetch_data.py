@@ -18,7 +18,6 @@ kcdc_url = 'http://ncov.mohw.go.kr/bdBoardList.do'
 kcdc_re = '현황\(([0-9]+)\.([0-9]+)일 ([0-9]+)시 기준\).*\(확진환자\) ([0-9]+)명.*\(확진환자 격리해제\) ([0-9]+)명'
 
 dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
-#dxy_re = '截至 ([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}).*window\.getAreaStat = (.*?)\}catch\(e\)'
 dxy_re = '"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
 
 geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
