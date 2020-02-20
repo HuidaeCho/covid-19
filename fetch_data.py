@@ -50,6 +50,9 @@ def geocode(country, province, latitude, longitude):
         longitude = coors[location].longitude
     return latitude, longitude
 
+def get_filename(country, province=None):
+    return 'data/' + (province + ', ' if province else '') + country + '.csv'
+
 def fetch_kcdc():
     res = requests.get(kcdc_url).content.decode()
     m = re.search(kcdc_re, res, re.DOTALL)
@@ -65,7 +68,7 @@ def fetch_kcdc():
     deaths = 0
     last_updated = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
 
-    file = 'data/South Korea.csv'
+    file = get_filename('South Korea')
     if os.path.exists(file):
         with open(file) as f:
             reader = csv.reader(f)
@@ -103,7 +106,7 @@ def fetch_dxy():
         if province in ('Hong Kong', 'Macau', 'Taiwan'):
             country = province
 
-        file = f'data/{province}, {country}.csv'
+        file = get_filename(country, province)
         with open(file, 'w') as f:
             f.write('time,confirmed,recovered,deaths\n')
             f.write(f'{last_updated},{confirmed},{recovered},{deaths}\n')
@@ -217,7 +220,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                 'count': int(attr['Deaths'])
             })
 
-        file = 'data/' + (province + ', ' if province else '') + country + '.csv'
+        file = get_filename(country, province)
         if os.path.exists(file):
             with open(file) as f:
                 reader = csv.reader(f)
