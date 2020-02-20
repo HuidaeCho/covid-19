@@ -91,10 +91,10 @@ h3 {
 }
 #popup {
 	width: 100px;
-	font-size: 0.8em;
 }
 #popup-last-updated {
-	font-size: 0.95em;
+	text-align: right;
+	font-size: 0.9em;
 }
 #popup-stats {
 	width: 100%;
@@ -106,7 +106,11 @@ h3 {
 #global-stats {
 	width: 100%;
 	font-weight: bold;
+	font-size: 1.5em;
 	border-collapse: collapse;
+}
+#last-updated {
+	text-align: right;
 }
 .right {
 	text-align: right;
@@ -125,7 +129,6 @@ h3 {
 }
 #stats-by-province {
 	overflow: auto;
-	font-size: 0.8em;
 }
 .stats-by-province {
 	border-top: 1px solid black;
@@ -195,10 +198,12 @@ h3 {
 		font-size: 1em;
 	}
 	#global-stats {
-		font-size: 1.3em;
 	}
 	#plots {
 		margin-bottom: 10px;
+	}
+	#stats-by-province {
+		font-size: 0.8em;
 	}
 	.stats-by-province > div {
 		display: inline-block;
@@ -254,7 +259,7 @@ Local times except for plots in UTC.
 <div id="info">
 <div id="summary">
 <h2>Global Total</h2>
-<div>Last Updated: <span id="last-updated"></span></div>
+<div id="last-updated"></div>
 <table id="global-stats">
 <tr class="confirmed"><td>Confirmed:</td><td id="total-confirmed" class="right"></td></tr>
 <tr class="recovered"><td>Recovered:</td><td id="total-recovered" class="right"></td></tr>
@@ -491,7 +496,7 @@ var showPopup = function(stats, coor){
 		'<div id="popup"><h3>' +
 		(stats.province ? '<a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + stats.province + '</a>, ' : '') +
 		'<a href="?' + stats.country.replace(/ /g, '%20') + '">' + stats.country + '</a></h3>' +
-		'<div id="popup-last-updated">Last Updated: ' + new Date(lastUpdated).toLocaleString() + '</div>' +
+		'<div id="popup-last-updated">' + new Date(lastUpdated).toLocaleString() + '</div>' +
 		'<table id="popup-stats">' +
 		(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="right">' + lastConfirmed + '</td></tr>' : '') +
 		(lastRecovered ? '<tr class="recovered"><td>Recovered:</td><td class="right">' + lastRecovered + '</td></tr>' : '') +
