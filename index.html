@@ -89,6 +89,9 @@ h3 {
 	max-width: 300px;
 	font-size: 0.95em;
 }
+.highlighted {
+	background-color: #0000ff55;
+}
 #popup {
 	width: 100px;
 }
@@ -449,10 +452,13 @@ map.on('singleclick', function(evt){
 	var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer){
 		return feature;
 	});
-	if(feature)
+	if(feature){
+		window.location.hash = 'feature-' + feature.getId();
 		showStats(feature, evt.coordinate);
-	else
+	}else{
+		highlightProvinceStats([]);
 		popup.hide();
+	}
 });
 
 var calculateStats = function(feature, all=false){
@@ -490,7 +496,19 @@ var calculateStats = function(feature, all=false){
 	};
 };
 
+var highlightedFeatureIds = [];
+var highlightProvinceStats = function(featureIds){
+	highlightedFeatureIds.forEach(function(featureId){
+		document.getElementById('feature-' + featureId).classList.remove('highlighted');
+	});
+	highlightedFeatureIds = featureIds;
+	highlightedFeatureIds.forEach(function(featureId){
+		document.getElementById('feature-' + featureId).classList.add('highlighted');
+	});
+};
+
 var showStats = function(feature, coor){
+	highlightProvinceStats([feature.getId()]);
 	var stats = calculateStats(feature);
 	showPopup(stats, coor);
 };
@@ -634,7 +652,7 @@ xhr.onload = function(){
 			if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
 			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
 
-			statsByProvince += '<div class="stats-by-province">' +
+			statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
 				(isMobile ? '' :
 				 '<div>' + (province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
 				 '<div><a href="?' + country.replace(/ /g, '%20') + '"><span class="iconify" data-icon="fa:flag"></span></a></div></div>') +
@@ -740,8 +758,7 @@ xhr.onload = function(){
 		if(query){
 			query = query[1].replace(/\+|%20/g, ' ').replace(/%22/g, '"');
 			var extent = new ol.extent.createEmpty();
-			var found = 0;
-			var featureId;
+			var featureIds = [];
 			var stats = {
 				time: [],
 				confirmed: [],
@@ -755,14 +772,13 @@ xhr.onload = function(){
 				var latitude = feature.geometry.coordinates[1];
 				var longitude = feature.geometry.coordinates[0];
 				var coor = ol.proj.fromLonLat([longitude, latitude]);
-				if(feature.id == query - 1 ||
-				   feature.id == features.length + Number(query) ||
+				if(id == query - 1 ||
+				   id == features.length + Number(query) ||
 				   province + ', ' + country == query ||
 				   province.indexOf(query) >= 0 ||
 				   country.indexOf(query) >= 0){
-					found++;
-					featureId = id;
 					var s = calculateStats(feature, true);
+					featureIds.push(id);
 					if(stats.time.length == 0){
 						stats.lastUpdated = s.lastUpdated;
 						stats.time = s.time;
@@ -781,9 +797,11 @@ xhr.onload = function(){
 					ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
 				}
 			});
-			if(found){
+			if(featureIds.length){
+				window.location.hash = 'feature-' + featureIds[0];
+				highlightProvinceStats(featureIds);
 				var options = {duration: 1000};
-				if(found == 1){
+				if(featureIds.length == 1){
 					options.maxZoom = 6;
 					view.fit(extent, options);
 					setTimeout(function(){
