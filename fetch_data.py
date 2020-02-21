@@ -258,23 +258,15 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                         'count': int(row[3])
                     }
 
-        found = False
         for feature in geodata['features']:
             props = feature['properties']
             if props['country'] == country and props['province'] == province:
-                m = len(props['confirmed'])
-                n = len(confirmed)
-                print(m, n)
-                if m == n:
-                    continue
-                for i in range(m, n):
-                    props.confirmed.append(confirmed[i])
-                    props.recovered.append(recovered[i])
-                    props.deaths.append(deaths[i])
-                found = True
+                for i in range(0, len(props['confirmed'])):
+                    if confirmed[i]['time'] == props['confirmed'][i]['time']:
+                        confirmed[i]['count'] = props['confirmed'][i]['count']
+                        recovered[i]['count'] = props['recovered'][i]['count']
+                        deaths[i]['count'] = props['deaths'][i]['count']
                 break
-        if found:
-            continue
 
         data.append({
             'country': country,
