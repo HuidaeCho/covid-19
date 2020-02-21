@@ -112,6 +112,9 @@ h3 {
 	font-size: 1.5em;
 	border-collapse: collapse;
 }
+.cfr {
+	font-weight: bold;
+}
 #last-updated {
 	text-align: right;
 }
@@ -203,7 +206,8 @@ h3 {
 	#summary {
 		font-size: 1em;
 	}
-	#global-stats {
+	.cfr {
+		font-size: 1.2em;
 	}
 	#plots {
 		margin-bottom: 10px;
@@ -270,8 +274,8 @@ Local times except for plots in UTC.
 <tr class="confirmed"><td>Confirmed:</td><td id="total-confirmed" class="right"></td></tr>
 <tr class="recovered"><td>Recovered:</td><td id="total-recovered" class="right"></td></tr>
 <tr class="deaths"><td>Deaths:</td><td id="total-deaths" class="right"></td></tr>
-<tr class="cfr"><td>CFR<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>:</td><td id="cfr" class="right"></td></tr>
 </table>
+<div class="cfr">CFR<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>: <span id="cfr"></span></div>
 </div>
 <div id="plots">
 <div id="count-plot"></div>
@@ -675,22 +679,23 @@ xhr.onload = function(){
 		statsByProvinceEl.innerHTML = statsByProvince;
 		view.animate({center: ol.proj.fromLonLat(maxCoor)});
 
-		var cfrMethod = 2;
-		var averageDaysFromConfirmedToDeath = 14;
-		var cfrs = [];
-		if(cfrMethod == 1){
-			for(var i = averageDaysFromConfirmedToDeath; i < time.length; i++)
-				cfrs.push(Math.round(deathsCounts[i] / confirmedCounts[i - averageDaysFromConfirmedToDeath] * 10000) / 100);
-		}else{
-			for(var i = 0; i < time.length; i++)
-				cfrs.push(Math.round(deathsCounts[i] / (recoveredCounts[i] + deathsCounts[i]) * 10000) / 100);
+		var averageDaysFromConfirmedToDeath = 14; // median days from first symptom to death
+		var cfrs1 = [];
+		var cfrs2 = [];
+		for(var i = 0; i < time.length; i++){
+			if(i < averageDaysFromConfirmedToDeath)
+				cfrs1.push(null);
+			else
+				cfrs1.push(Math.round(deathsCounts[i] / confirmedCounts[i - averageDaysFromConfirmedToDeath] * 1000) / 10);
 		}
+		for(var i = 0; i < time.length; i++)
+			cfrs2.push(Math.round(deathsCounts[i] / (recoveredCounts[i] + deathsCounts[i]) * 1000) / 10);
 		var lastIndex = time.length - 1;
 		lastUpdatedEl.innerHTML = new Date(lastUpdated).toLocaleString();
 		totalConfirmedEl.innerHTML = confirmedCounts[lastIndex].toLocaleString();
 		totalRecoveredEl.innerHTML = recoveredCounts[lastIndex].toLocaleString();
 		totalDeathsEl.innerHTML = deathsCounts[lastIndex].toLocaleString();
-		cfrEl.innerHTML = cfrs[cfrs.length - 1] + '%';
+		cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrs1[cfrs1.length - 1] + '%' + (isMobile ? '' : ', ') + '<sup>d/(d+r)</sup>' + cfrs2[cfrs2.length - 1] + '%';
 		var trends = [];
 		trends.push({
 			name: 'Confirmed',
@@ -723,7 +728,7 @@ xhr.onload = function(){
 				l: isMobile ? 15 : 25,
 				r: isMobile ? 6 : 10,
 				b: isMobile ? 20 : 30,
-				t: 0
+				t: isMobile ? 3 : 10
 			},
 			font: {
 				size: fontSize
@@ -734,9 +739,14 @@ xhr.onload = function(){
 
 		trends = [];
 		trends.push({
-			name: 'CFR',
+			name: 'T=' + averageDaysFromConfirmedToDeath,
 			x: time,
-			y: cfrs
+			y: cfrs1
+		});
+		trends.push({
+			name: 'd/(d+r)',
+			x: time,
+			y: cfrs2
 		});
 		layout = {
 			height: isMobile ? 50 : 100,
