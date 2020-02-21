@@ -103,6 +103,9 @@ h3 {
 	width: 100%;
 	border-collapse: collapse;
 }
+#popup-plot {
+	font-size: 0.6em;
+}
 #summary {
 	font-size: 0.8em;
 }
@@ -583,7 +586,7 @@ var showPopup = function(stats, coor){
 			t: 5
 		},
 		font: {
-			size: window.getComputedStyle(document.getElementById('popup-stats')).fontSize.replace('px', '')
+			size: window.getComputedStyle(document.getElementById('popup-plot')).fontSize.replace('px', '')
 		},
 		showlegend: false
 	};
