@@ -92,15 +92,14 @@ def fetch_dxy():
     last_updated = datetime.datetime.fromtimestamp(int(m[1])/1000,
             tz=datetime.timezone.utc)
     last_updated_iso = f'{last_updated.strftime("%Y-%m-%d %H:%M:%S+00:00")}'
-    records = json.loads(m[2])
-    for record in records:
-        province = record['provinceShortName']
+    for rec in json.loads(m[2]):
+        province = rec['provinceShortName']
         if not province in en:
             return
         province = en[province]
-        confirmed = record['confirmedCount']
-        recovered = record['curedCount']
-        deaths = record['deadCount']
+        confirmed = rec['confirmedCount']
+        recovered = rec['curedCount']
+        deaths = rec['deadCount']
 
         country = 'Mainland China'
         if province in ('Hong Kong', 'Macau', 'Taiwan'):
@@ -127,6 +126,11 @@ fetch_dxy()
 # download features from the REST server
 res = requests.get(features_url)
 features = json.loads(res.content)['features']
+
+# read existing data
+if os.path.exists(geodata_json):
+    with open(geodata_json) as f:
+        geodata = json.load(f)
 
 # create a new list for the output JSON object
 data = []
@@ -253,6 +257,24 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                         'time': last_updated_str,
                         'count': int(row[3])
                     }
+
+        found = False
+        for feature in geodata['features']:
+            props = feature['properties']
+            if props['country'] == country and props['province'] == province:
+                m = len(props['confirmed'])
+                n = len(confirmed)
+                print(m, n)
+                if m == n:
+                    continue
+                for i in range(m, n):
+                    props.confirmed.append(confirmed[i])
+                    props.recovered.append(recovered[i])
+                    props.deaths.append(deaths[i])
+                found = True
+                break
+        if found:
+            continue
 
         data.append({
             'country': country,
