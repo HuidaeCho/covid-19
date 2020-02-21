@@ -256,7 +256,8 @@ h3 {
 <div class="desktop-block">
 This web map was motivated by <a href="https://arcg.is/0fHmTX">the COVID-19 global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
 I wanted to develop an open source version of their website.
-Data is fetched every 30 minutes and all times are local except for plots in UTC.
+Data is fetched every 30 minutes from <span id="data-sources"></span>.
+All times are local except for plots in UTC.
 I am not responsible for any damages caused by using this website.
 <a href="/covid-19.html">Suggestions?</a>
 </div>
@@ -287,8 +288,8 @@ Local times except for plots in UTC.
 <div id="stats-by-province"></div>
 </div>
 <script>
-var dataSources = '&copy; Data sources: ' +
-	'<a href="https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6">CSSE</a>' +
+var dataSources = '<a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series">CSSE<sup>1</sup></a>' +
+	', <a href="https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">CSSE<sup>2</sup></a>' +
 	', <a href="https://ncov.dxy.cn/ncovh5/view/pneumonia">DXY</a>' +
 	', <a href="http://ncov.mohw.go.kr/bdBoardList.do">KCDC</a>' +
 	'';
@@ -297,6 +298,7 @@ var bingMapsKey = 'AhuHr9JixtsyKu9uSOQ8W0lIr7_gC2KiFxOlmshvRDb_BSWDkhnGX7oeS5zJz
 var isMobile = window.getComputedStyle(document.getElementsByClassName('mobile-block')[0]).display == 'block';
 var bodyEl = document.body;
 var headerEl = document.getElementById('header');
+var dataSourcesEl = document.getElementById('data-sources');
 var mapEl = document.getElementById('map');
 var infoEl = document.getElementById('info');
 var lastUpdatedEl = document.getElementById('last-updated');
@@ -310,6 +312,7 @@ var statsByProvinceEl = document.getElementById('stats-by-province');
 var bodyStyle = window.getComputedStyle(bodyEl);
 var bodyWidth = Number(bodyStyle.width.replace('px', ''));
 var bodyHeight = Number(bodyStyle.height.replace('px', ''));
+dataSourcesEl.innerHTML = dataSources.replace(/(, )([^,]+)$/, '$1and $2');
 mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) + 'px';
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
 
@@ -437,7 +440,7 @@ var map = new ol.Map({
 			source: new ol.source.Vector({
 				format: new ol.format.GeoJSON(),
 				url: 'geodata.json',
-				attributions: dataSources
+				attributions: '&copy; Data sources: ' + dataSources
 			}),
 			style: function(feature, resolution){
 				return createStyle(feature, resolution);
