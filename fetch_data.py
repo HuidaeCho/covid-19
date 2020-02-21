@@ -131,6 +131,10 @@ features = json.loads(res.content)['features']
 if os.path.exists(geodata_json):
     with open(geodata_json) as f:
         geodata = json.load(f)
+else:
+    geodata = {
+        'features': []
+    }
 
 # create a new list for the output JSON object
 data = []
