@@ -174,8 +174,8 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
 
         # retrieve coordinates from the geocoding server if desired;
         # otherwise, just use coordinates from the spreadsheet
-        latitude = confirmed_row[col]; col += 1
-        longitude = confirmed_row[col]; col += 1
+        latitude = float(confirmed_row[col]); col += 1
+        longitude = float(confirmed_row[col]); col += 1
         if config.geocode:
             latitude, longitude = geocode(country, province,
                     latitude, longitude)
@@ -265,7 +265,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         for feature in geodata['features']:
             props = feature['properties']
             if props['country'] == country and props['province'] == province:
-                for i in range(0, len(props['confirmed'])):
+                for i in range(0, min(len(confirmed), len(props['confirmed']))):
                     if confirmed[i]['time'] == props['confirmed'][i]['time']:
                         confirmed[i]['count'] = props['confirmed'][i]['count']
                         recovered[i]['count'] = props['recovered'][i]['count']
