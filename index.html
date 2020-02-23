@@ -102,9 +102,7 @@ h3 {
 #popup-stats {
 	width: 100%;
 	border-collapse: collapse;
-}
-#popup-plot {
-	font-size: 0.6em;
+	font-weight: bold;
 }
 #summary {
 	font-size: 0.8em;
@@ -216,7 +214,7 @@ h3 {
 		margin-bottom: 10px;
 	}
 	#stats-by-province {
-		font-size: 0.8em;
+		font-size: 0.9em;
 	}
 	.stats-by-province > div {
 		display: inline-block;
@@ -579,6 +577,7 @@ var showPopup = function(stats, coor){
 				color: getColor('deaths')
 			}
 		});
+	var fontSize = isMobile ? 6 : 12;
 	var layout = {
 		width: document.getElementById('popup-stats').offsetWidth + 5,
 		height: isMobile ? 50 : 100,
@@ -589,7 +588,7 @@ var showPopup = function(stats, coor){
 			t: 5
 		},
 		font: {
-			size: window.getComputedStyle(document.getElementById('popup-plot')).fontSize.replace('px', '')
+			size: fontSize
 		},
 		showlegend: false
 	};
