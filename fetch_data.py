@@ -15,7 +15,7 @@ confirmed_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/maste
 recovered_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv'
 deaths_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
 kcdc_url = 'http://ncov.mohw.go.kr/bdBoardList.do'
-kcdc_re = '현황\(([0-9]+)\.([0-9]+)일 ([0-9]+)시 기준\).*\(확진환자\) ([0-9]+)명.*\(확진환자 격리해제\) ([0-9]+)명.*\(사망자\) ([0-9]+)명'
+kcdc_re = '현황\(([0-9]+)\.([0-9]+)일.*([0-9]+)시 기준\).*\(확진환자\) ([0-9]+)명.*\(확진환자 격리해제\) ([0-9]+)명.*\(사망자\) ([0-9]+)명'
 
 dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
 dxy_re = '"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
