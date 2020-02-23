@@ -634,9 +634,9 @@ xhr.onload = function(){
 			if(updated > lastUpdated)
 				lastUpdated = updated;
 			for(var j = 0; j < confirmed.length; j++){
-				var c = Number(confirmed[j].count);
-				var r = Number(recovered[j].count);
-				var d = Number(deaths[j].count);
+				var c = confirmed[j].count;
+				var r = recovered[j].count;
+				var d = deaths[j].count;
 				if(j + 1 > time.length){
 					time.push(confirmed[j].time.replace(/\//g, '-').replace(/ .*/, ''));
 					confirmedCounts.push(c);
