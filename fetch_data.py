@@ -254,17 +254,17 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                 c = int(row[1])
                 r = int(row[2])
                 d = int(row[3])
-                if c > confirmed[index]:
+                if c > confirmed[index]['count']:
                     confirmed[index] = {
                         'time': last_updated_str,
                         'count': c
                     }
-                if r > recovered[index]:
+                if r > recovered[index]['count']:
                     recovered[index] = {
                         'time': last_updated_str,
                         'count': r
                     }
-                if d > deaths[index]:
+                if d > deaths[index]['count']:
                     deaths[index] = {
                         'time': last_updated_str,
                         'count': d
