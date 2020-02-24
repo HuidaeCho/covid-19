@@ -250,18 +250,24 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                         astimezone(datetime.timezone.utc)
                 if last_updated > time:
                     last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-                    index = len(confirmed) - 1
+                index = len(confirmed) - 1
+                c = int(row[1])
+                r = int(row[2])
+                d = int(row[3])
+                if c > confirmed[index]:
                     confirmed[index] = {
                         'time': last_updated_str,
-                        'count': int(row[1])
+                        'count': c
                     }
+                if r > recovered[index]:
                     recovered[index] = {
                         'time': last_updated_str,
-                        'count': int(row[2])
+                        'count': r
                     }
+                if d > deaths[index]:
                     deaths[index] = {
                         'time': last_updated_str,
-                        'count': int(row[3])
+                        'count': d
                     }
 
         for feature in geodata['features']:
