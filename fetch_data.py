@@ -168,6 +168,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
 
         col = 0
         province = confirmed_row[col]; col += 1
+        province = '' if province == 'None' else province
         country = confirmed_row[col]; col += 1
         if len(confirmed_row) <= col:
             continue
