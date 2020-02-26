@@ -276,9 +276,12 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             if props['country'] == country and props['province'] == province:
                 for i in range(0, min(len(confirmed), len(props['confirmed']))):
                     if confirmed[i]['time'] == props['confirmed'][i]['time']:
-                        confirmed[i]['count'] = props['confirmed'][i]['count']
-                        recovered[i]['count'] = props['recovered'][i]['count']
-                        deaths[i]['count'] = props['deaths'][i]['count']
+                        confirmed[i]['count'] = max(confirmed[i]['count'],
+                                props['confirmed'][i]['count'])
+                        recovered[i]['count'] = max(recovered[i]['count'],
+                                props['recovered'][i]['count'])
+                        deaths[i]['count'] = max(deaths[i]['count'],
+                                props['deaths'][i]['count'])
                 break
 
         data.append({
