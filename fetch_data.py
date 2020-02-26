@@ -63,9 +63,9 @@ def fetch_kcdc():
     month = int(m[1])
     date = int(m[2])
     hour = int(m[3])
-    confirmed = int(m[4])
-    recovered = int(m[5])
-    deaths = int(m[6])
+    confirmed = int(m[4].replace(',', ''))
+    recovered = int(m[5].replace(',', ''))
+    deaths = int(m[6].replace(',', ''))
     last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
 
     file = get_data_filename('South Korea')
