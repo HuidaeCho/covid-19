@@ -25,13 +25,22 @@ geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryReg
 
 geodata_json = 'geodata.json'
 
-def geocode(country, province, latitude, longitude):
-    global coors
+# use this dictionary to avoid geocoding the same province multiple times
+coors_json = 'coors.json'
+
+def geocode(country, province, latitude=None, longitude=None):
+    # read existing data
+    if os.path.exists(coors_json):
+        with open(coors_json) as f:
+            coors = json.load(f)
+    else:
+        coors = {}
+
     if province == '':
         location = country
         geocode_url = geocode_country_url.format(country=country)
     else:
-        location = f'{country},{province}'
+        location = f'{province}, {country}'
         geocode_url = geocode_province_url.format(country=country,
                 province=province)
     if not location in coors:
@@ -45,9 +54,14 @@ def geocode(country, province, latitude, longitude):
             latitude = coor[0]
             longitude = coor[1]
         coors[location] = {'latitude': latitude, 'longitude': longitude}
+
+        if latitude is not None and longitude is not None:
+            with open(coors_json, 'w') as f:
+                f.write(json.dumps(coors))
     else:
-        latitude = coors[location].latitude
-        longitude = coors[location].longitude
+        latitude = coors[location]['latitude']
+        longitude = coors[location]['longitude']
+
     return latitude, longitude
 
 def get_data_filename(country, province=None):
@@ -139,9 +153,6 @@ else:
 
 # create a new list for the output JSON object
 data = []
-
-# use this dictionary to avoid geocoding the same province multiple times
-coors = {}
 
 # download CSV files
 confirmed_res = requests.get(confirmed_url)
