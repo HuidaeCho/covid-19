@@ -16,6 +16,9 @@ recovered_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/maste
 deaths_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
 kcdc_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do'
 kcdc_re = '현황\(([0-9]+)\.([0-9]+)일.*?([0-9]+)시 기준\).*\(확진환자\) ([0-9,]+)명.*\(확진환자 격리해제\) ([0-9,]+)명.*\(사망자\) ([0-9,]+)명'
+kcdc_provinces_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do?brdGubun=13'
+kcdc_provinces_re = '([0-9]{4})년 ([0-9]+)월 ([0-9]+)일.*?([0-9]+)시.*기준.*?<tr class="sumline">.*?</tr>.*?(<tr>.+?)</tbody>'
+kcdc_provinces_subre = '>([^>]+)<[^>]+><[^>]+?s_type1[^>]+> *([0-9,]+) *<.+?s_type2[^>]+> *([0-9,]+) *<.+?s_type3[^>]+> *([0-9,]+) *<'
 
 dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
 dxy_re = '"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
@@ -67,7 +70,40 @@ def geocode(country, province, latitude=None, longitude=None):
 def get_data_filename(country, province=None):
     return 'data/' + (province + ', ' if province else '') + country + '.csv'
 
-def fetch_kcdc():
+def fetch_kcdc_provinces():
+    res = requests.get(kcdc_provinces_url).content.decode()
+    m = re.search(kcdc_provinces_re, res, re.DOTALL)
+    if not m:
+        return
+
+    year = int(m[1])
+    month = int(m[2])
+    date = int(m[3])
+    hour = int(m[4])
+    last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
+    for m in re.findall(kcdc_provinces_subre, m[5]):
+        province = en[m[0]]
+        confirmed = int(m[1].replace(',', ''))
+        recovered = int(m[2].replace(',', ''))
+        deaths = int(m[3].replace(',', ''))
+
+        file = get_data_filename('South Korea', province)
+        if os.path.exists(file):
+            with open(file) as f:
+                reader = csv.reader(f)
+                reader.__next__()
+                row = reader.__next__()
+                time = datetime.datetime.fromisoformat(row[0]).astimezone(
+                        datetime.timezone.utc)
+                if time >= datetime.datetime.fromisoformat(last_updated_iso).\
+                        astimezone(datetime.timezone.utc):
+                    continue
+
+        with open(file, 'w') as f:
+            f.write('time,confirmed,recovered,deaths\n')
+            f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
+
+def fetch_kcdc_country():
     res = requests.get(kcdc_url).content.decode()
     m = re.search(kcdc_re, res, re.DOTALL)
     if not m:
@@ -141,7 +177,8 @@ def fetch_dxy():
                 f.write('time,confirmed,recovered,deaths\n')
             f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
-fetch_kcdc()
+fetch_kcdc_country()
+fetch_kcdc_provinces()
 fetch_dxy()
 
 # download features from the REST server
