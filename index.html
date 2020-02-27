@@ -286,7 +286,7 @@ Local times except for plots in UTC.
 <div id="stats-by-province"></div>
 </div>
 <script>
-var dataUrl = 'geodata.json'
+var dataUrl = 'test-geodata.json'
 var dataSources = '<a href="https://arcg.is/0fHmTX">CSSE</a><sup><a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series">1</a>' +
 	',<a href="https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">2</a></sup>' +
 	', <a href="https://ncov.dxy.cn/ncovh5/view/pneumonia">DXY</a>' +
@@ -326,10 +326,15 @@ var calculateConfirmedRadius = function(confirmed){
 }
 var createStyle = function(feature, resolution){
 	var radiusFactor = Math.log10(maxResolution / resolution) * 0.5 + 1;
+	var country = feature.get('country');
+	var province = feature.get('province');
 	var confirmed = feature.get('confirmed');
 	var recovered = feature.get('recovered');
 	var deaths = feature.get('deaths');
 	var lastIndex = confirmed.length - 1;
+	if(country == 'South Korea' && !province)
+		return null;
+
 	confirmed = confirmed[lastIndex].count;
 	recovered = recovered[lastIndex].count;
 	deaths = deaths[lastIndex].count;
@@ -632,6 +637,32 @@ xhr.onload = function(){
 			var recovered = feature.properties.recovered;
 			var deaths = feature.properties.deaths;
 			var updated = Date.parse(confirmed[confirmed.length-1].time);
+			if(country != 'South Korea' || province){
+				var name = province ? province + ', ' + country : country;
+				var lastIndex = confirmed.length - 1;
+				var lastConfirmed = confirmed[lastIndex].count;
+				var lastRecovered = recovered[lastIndex].count;
+				var lastDeaths = deaths[lastIndex].count;
+
+				if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
+				if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
+				if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
+
+				statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
+					(isMobile ? '' :
+					 '<div>' + (province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
+					 '<div><a href="?' + country.replace(/ /g, '%20') + '"><span class="iconify" data-icon="fa:flag"></span></a></div></div>') +
+					'<div onclick="showStatsById(' + id + ')">' +
+					'<div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
+				if(lastRecovered)
+					statsByProvince += '<div class="recovered">' + lastRecovered + ' recovered</div>';
+				if(lastDeaths)
+					statsByProvince += '<div class="deaths">' + lastDeaths + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
+				statsByProvince += '</div></div>';
+
+				if(country == 'South Korea')
+					continue;
+			}
 			if(updated > lastUpdated)
 				lastUpdated = updated;
 			for(var j = 0; j < confirmed.length; j++){
@@ -655,27 +686,6 @@ xhr.onload = function(){
 					deathsCounts[k] += d;
 				}
 			}
-			var name = province ? province + ', ' + country : country;
-			var lastIndex = confirmed.length - 1;
-			var lastConfirmed = confirmed[lastIndex].count;
-			var lastRecovered = recovered[lastIndex].count;
-			var lastDeaths = deaths[lastIndex].count;
-
-			if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
-			if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
-			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
-
-			statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
-				(isMobile ? '' :
-				 '<div>' + (province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
-				 '<div><a href="?' + country.replace(/ /g, '%20') + '"><span class="iconify" data-icon="fa:flag"></span></a></div></div>') +
-				'<div onclick="showStatsById(' + id + ')">' +
-				'<div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
-			if(lastRecovered)
-				statsByProvince += '<div class="recovered">' + lastRecovered + ' recovered</div>';
-			if(lastDeaths)
-				statsByProvince += '<div class="deaths">' + lastDeaths + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
-			statsByProvince += '</div></div>';
 
 			if(lastConfirmed > maxConfirmed){
 				maxConfirmed = lastConfirmed;
@@ -791,11 +801,12 @@ xhr.onload = function(){
 				var latitude = feature.geometry.coordinates[1];
 				var longitude = feature.geometry.coordinates[0];
 				var coor = ol.proj.fromLonLat([longitude, latitude]);
-				if(id == query - 1 ||
-				   id == features.length + Number(query) ||
-				   province + ', ' + country == query ||
-				   province.indexOf(query) >= 0 ||
-				   country.indexOf(query) >= 0){
+				if((country != 'South Korea' || province) &&
+				   (id == query - 1 ||
+				    id == features.length + Number(query) ||
+				    province + ', ' + country == query ||
+				    province.indexOf(query) >= 0 ||
+				    country.indexOf(query) >= 0)){
 					var s = calculateStats(feature, true);
 					featureIds.push(id);
 					if(stats.time.length == 0){

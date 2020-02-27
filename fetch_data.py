@@ -6,6 +6,7 @@ import json
 import datetime
 import re
 import os
+import glob
 from en import en
 import config
 
@@ -124,6 +125,7 @@ def fetch_kcdc_provinces():
         confirmed = int(m[1].replace(',', ''))
         recovered = int(m[2].replace(',', ''))
         deaths = int(m[3].replace(',', ''))
+        confirmed += recovered + deaths
 
         file = get_data_filename('South Korea', province)
         add_header = True
@@ -400,6 +402,44 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             'time': last_updated_str,
             'count': int(attr['Deaths'])
         }]
+        data.append({
+            'country': country,
+            'province': province,
+            'latitude': latitude,
+            'longitude': longitude,
+            'confirmed': confirmed,
+            'recovered': recovered,
+            'deaths': deaths
+        })
+
+country = 'South Korea'
+for file in glob.glob('data/*, ' + country + '.csv'):
+    m = re.search('^data/(.+),.+$', file)
+    province = m[1]
+    with open(file) as f:
+        reader = csv.reader(f)
+        reader.__next__()
+        confirmed = []
+        recovered = []
+        deaths = []
+        for row in reader:
+            time = datetime.datetime.fromisoformat(row[0]).astimezone(
+                    datetime.timezone.utc)
+            time_str = f'{time.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+            confirmed.append({
+                'time': time_str,
+                'count': int(row[1])
+            }),
+            recovered.append({
+                'time': time_str,
+                'count': int(row[2])
+            }),
+            deaths.append({
+                'time': time_str,
+                'count': int(row[3])
+            })
+
+        latitude, longitude = geocode(country, province)
         data.append({
             'country': country,
             'province': province,
