@@ -88,7 +88,9 @@ def fetch_kcdc_provinces():
         deaths = int(m[3].replace(',', ''))
 
         file = get_data_filename('South Korea', province)
+        add_header = True
         if os.path.exists(file):
+            add_header = False
             with open(file) as f:
                 reader = csv.reader(f)
                 for row in reader:
@@ -100,7 +102,8 @@ def fetch_kcdc_provinces():
                     continue
 
         with open(file, 'w') as f:
-            f.write('time,confirmed,recovered,deaths\n')
+            if add_header:
+                f.write('time,confirmed,recovered,deaths\n')
             f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
 def fetch_kcdc_country():
