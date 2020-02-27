@@ -70,6 +70,44 @@ def geocode(country, province, latitude=None, longitude=None):
 def get_data_filename(country, province=None):
     return 'data/' + (province + ', ' if province else '') + country + '.csv'
 
+def fetch_kcdc():
+    fetch_kcdc_country()
+    fetch_kcdc_provinces()
+
+def fetch_kcdc_country():
+    res = requests.get(kcdc_country_url).content.decode()
+    m = re.search(kcdc_country_re, res, re.DOTALL)
+    if not m:
+        return
+
+    year = 2020
+    month = int(m[1])
+    date = int(m[2])
+    hour = int(m[3])
+    confirmed = int(m[4].replace(',', ''))
+    recovered = int(m[5].replace(',', ''))
+    deaths = int(m[6].replace(',', ''))
+    last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
+
+    file = get_data_filename('South Korea')
+    add_header = True
+    if os.path.exists(file):
+        add_header = False
+        with open(file) as f:
+            reader = csv.reader(f)
+            for row in reader:
+                pass
+            time = datetime.datetime.fromisoformat(row[0]).astimezone(
+                    datetime.timezone.utc)
+            if time >= datetime.datetime.fromisoformat(last_updated_iso).\
+                    astimezone(datetime.timezone.utc):
+                return
+
+    with open(file, 'a') as f:
+        if add_header:
+            f.write('time,confirmed,recovered,deaths\n')
+        f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
+
 def fetch_kcdc_provinces():
     res = requests.get(kcdc_provinces_url).content.decode()
     m = re.search(kcdc_provinces_re, res, re.DOTALL)
@@ -105,40 +143,6 @@ def fetch_kcdc_provinces():
             if add_header:
                 f.write('time,confirmed,recovered,deaths\n')
             f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
-
-def fetch_kcdc_country():
-    res = requests.get(kcdc_country_url).content.decode()
-    m = re.search(kcdc_country_re, res, re.DOTALL)
-    if not m:
-        return
-
-    year = 2020
-    month = int(m[1])
-    date = int(m[2])
-    hour = int(m[3])
-    confirmed = int(m[4].replace(',', ''))
-    recovered = int(m[5].replace(',', ''))
-    deaths = int(m[6].replace(',', ''))
-    last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
-
-    file = get_data_filename('South Korea')
-    add_header = True
-    if os.path.exists(file):
-        add_header = False
-        with open(file) as f:
-            reader = csv.reader(f)
-            for row in reader:
-                pass
-            time = datetime.datetime.fromisoformat(row[0]).astimezone(
-                    datetime.timezone.utc)
-            if time >= datetime.datetime.fromisoformat(last_updated_iso).\
-                    astimezone(datetime.timezone.utc):
-                return
-
-    with open(file, 'a') as f:
-        if add_header:
-            f.write('time,confirmed,recovered,deaths\n')
-        f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
 def fetch_dxy():
     res = requests.get(dxy_url).content.decode()
@@ -180,8 +184,7 @@ def fetch_dxy():
                 f.write('time,confirmed,recovered,deaths\n')
             f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
-fetch_kcdc_country()
-fetch_kcdc_provinces()
+fetch_kcdc()
 fetch_dxy()
 
 # download features from the REST server
