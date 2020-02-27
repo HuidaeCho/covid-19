@@ -91,8 +91,8 @@ def fetch_kcdc_provinces():
         if os.path.exists(file):
             with open(file) as f:
                 reader = csv.reader(f)
-                reader.__next__()
-                row = reader.__next__()
+                for row in reader:
+                    pass
                 time = datetime.datetime.fromisoformat(row[0]).astimezone(
                         datetime.timezone.utc)
                 if time >= datetime.datetime.fromisoformat(last_updated_iso).\
