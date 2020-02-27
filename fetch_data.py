@@ -83,19 +83,22 @@ def fetch_kcdc():
     last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
 
     file = get_data_filename('South Korea')
+    add_header = True
     if os.path.exists(file):
+        add_header = False
         with open(file) as f:
             reader = csv.reader(f)
-            reader.__next__()
-            row = reader.__next__()
+            for row in reader:
+                pass
             time = datetime.datetime.fromisoformat(row[0]).astimezone(
                     datetime.timezone.utc)
             if time >= datetime.datetime.fromisoformat(last_updated_iso).\
                     astimezone(datetime.timezone.utc):
                 return
 
-    with open(file, 'w') as f:
-        f.write('time,confirmed,recovered,deaths\n')
+    with open(file, 'a') as f:
+        if add_header:
+            f.write('time,confirmed,recovered,deaths\n')
         f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
 def fetch_dxy():
@@ -120,18 +123,22 @@ def fetch_dxy():
             country = province
 
         file = get_data_filename(country, province)
+        add_header = True
         if os.path.exists(file):
+            add_header = False
             with open(file) as f:
                 reader = csv.reader(f)
-                reader.__next__()
-                row = reader.__next__()
+                reader = csv.reader(f)
+                for row in reader:
+                    pass
                 time = datetime.datetime.fromisoformat(row[0]).astimezone(
                         datetime.timezone.utc)
                 if time >= last_updated:
                     continue
 
         with open(file, 'w') as f:
-            f.write('time,confirmed,recovered,deaths\n')
+            if add_header:
+                f.write('time,confirmed,recovered,deaths\n')
             f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
 fetch_kcdc()
