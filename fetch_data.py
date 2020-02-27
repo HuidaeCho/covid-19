@@ -70,7 +70,6 @@ def get_data_filename(country, province=None):
 def fetch_kcdc():
     res = requests.get(kcdc_url).content.decode()
     m = re.search(kcdc_re, res, re.DOTALL)
-    print(m)
     if not m:
         return
 
