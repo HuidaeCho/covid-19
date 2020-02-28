@@ -309,8 +309,8 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         if os.path.exists(file):
             with open(file) as f:
                 reader = csv.reader(f)
-                reader.__next__()
-                row = reader.__next__()
+                for row in reader:
+                    pass
                 last_updated = datetime.datetime.fromisoformat(row[0]).\
                         astimezone(datetime.timezone.utc)
                 if last_updated > time:
