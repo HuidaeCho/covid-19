@@ -121,7 +121,6 @@ def fetch_kcdc_provinces():
     hour = int(m[4])
     last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
     for m in re.findall(kcdc_provinces_subre, m[5]):
-        print(m[0])
         province = en[m[0]]
         confirmed = int(m[1].replace(',', ''))
         recovered = int(m[2].replace(',', ''))
