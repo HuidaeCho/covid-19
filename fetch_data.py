@@ -16,7 +16,7 @@ confirmed_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/maste
 recovered_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv'
 deaths_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
 kcdc_country_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do'
-kcdc_country_re = '현황\(([0-9]+)\.([0-9]+)일.*?([0-9]+)시 기준\).*\(확진환자\) ([0-9,]+)명.*\(확진환자 격리해제\) ([0-9,]+)명.*\(사망자\) ([0-9,]+)명'
+kcdc_country_re = '현황\(([0-9]+)\.([0-9]+)일.*?([0-9]+)시 기준\).*?>확진환자<.*?([0-9,]+)[^0-9]*명.*?>확진환자 격리해제<.*?([0-9,]+)[^0-9]*명.*?>사망자<([0-9,]+)[^0-9]*명'
 kcdc_provinces_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do?brdGubun=13'
 kcdc_provinces_re = '([0-9]{4})년 ([0-9]+)월 ([0-9]+)일.*?([0-9]+)시.*기준.*?<tr class="sumline">.*?</tr>.*?(<tr>.+?)</tbody>'
 kcdc_provinces_subre = '>([^>]+)<[^>]+><[^>]+?s_type1[^>]+> *([0-9,]+) *<.+?s_type2[^>]+> *([0-9,]+) *<.+?s_type3[^>]+> *([0-9,]+) *<'
@@ -78,6 +78,7 @@ def fetch_kcdc():
 def fetch_kcdc_country():
     res = requests.get(kcdc_country_url).content.decode()
     m = re.search(kcdc_country_re, res, re.DOTALL)
+    print(m)
     if not m:
         return
 
