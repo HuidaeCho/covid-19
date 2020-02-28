@@ -356,6 +356,8 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             'recovered': recovered,
             'deaths': deaths
         })
+        if country == 'South Korea':
+            data_south_korea = data[len(data) - 1]
 
     # try to find newly confirmed provinces from the REST server
     for feature in features:
@@ -411,6 +413,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             'deaths': deaths
         })
 
+c = r = d = 0
 country = 'South Korea'
 for file in glob.glob('data/*, ' + country + '.csv'):
     m = re.search('^data/(.+),.+$', file)
@@ -437,9 +440,42 @@ for file in glob.glob('data/*, ' + country + '.csv'):
                 'time': time_str,
                 'count': int(row[3])
             })
+        index = len(confirmed) - 1
+        c += confirmed[index]['count']
+        r += recovered[index]['count']
+        d += deaths[index]['count']
 
         latitude, longitude = geocode(country, province)
         data.append({
+            'country': country,
+            'province': province,
+            'latitude': latitude,
+            'longitude': longitude,
+            'confirmed': confirmed,
+            'recovered': recovered,
+            'deaths': deaths
+        })
+
+index = len(data_south_korea['confirmed']) - 1
+if c != data_south_korea['confirmed'][index]['count'] or \
+   r != data_south_korea['recovered'][index]['count'] or \
+   d != data_south_korea['deaths'][index]['count']:
+       province = 'Others'
+       latitude = data_south_korea['latitude']
+       longitude = data_south_korea['longitude']
+       confirmed = [{
+           'time': data_south_korea['confirmed'][index]['time'],
+           'count': data_south_korea['confirmed'][index]['count'] - c
+       }]
+       recovered = [{
+           'time': data_south_korea['recovered'][index]['time'],
+           'count': data_south_korea['recovered'][index]['count'] - r
+       }]
+       deaths = [{
+           'time': data_south_korea['deaths'][index]['time'],
+           'count': data_south_korea['deaths'][index]['count'] - d
+       }]
+       data.append({
             'country': country,
             'province': province,
             'latitude': latitude,
