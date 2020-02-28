@@ -19,7 +19,7 @@ kcdc_country_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do'
 kcdc_country_re = '현황\(([0-9]+)\.([0-9]+)일.*?([0-9]+)시.*?기준\).*?>확진환자<.*?([0-9,]+)[^0-9]*명.*?>확진환자 격리해제<.*?([0-9,]+)[^0-9]*명.*?>사망자<.*?([0-9,]+)[^0-9]*명'
 kcdc_provinces_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do?brdGubun=13'
 kcdc_provinces_re = '([0-9]{4})년 ([0-9]+)월 ([0-9]+)일.*?([0-9]+)시.*기준.*?<tr class="sumline">.*?</tr>.*?(<tr>.+?)</tbody>'
-kcdc_provinces_subre = '>([^>]+)<[^>]+><[^>]+?s_type1[^>]+> *([0-9,]+) *<.+?s_type2[^>]+> *([0-9,]+) *<.+?s_type3[^>]+> *([0-9,]+) *<'
+kcdc_provinces_subre = '>([^>]+)</th><[^>]+>[^<>]*<[^>]+><[^>]+?s_type1[^>]+> *([0-9,]+) *<.+?s_type2[^>]+> *([0-9,]+) *<.+?s_type3[^>]+> *([0-9,]+) *<'
 
 dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
 dxy_re = '"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
@@ -121,6 +121,7 @@ def fetch_kcdc_provinces():
     hour = int(m[4])
     last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
     for m in re.findall(kcdc_provinces_subre, m[5]):
+        print(m[0])
         province = en[m[0]]
         confirmed = int(m[1].replace(',', ''))
         recovered = int(m[2].replace(',', ''))
