@@ -294,17 +294,29 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             if time > last_updated:
                 last_updated = time
             last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+
+            c = int(attr['Confirmed'])
+            r = int(attr['Recovered'])
+            d = int(attr['Deaths'])
+
+            index = len(confirmed) - 1
+            if c != confirmed[index]['count']:
+                print(f'REST confirmed: {province}, {country}, {confirmed[index]["count"]} => {c}')
+            if r != recovered[index]['count']:
+                print(f'REST recovered: {province}, {country}, {recovered[index]["count"]} => {r}')
+            if d != deaths[index]['count']:
+                print(f'REST deaths   : {province}, {country}, {deaths[index]["count"]} => {d}')
             confirmed.append({
                 'time': last_updated_str,
-                'count': int(attr['Confirmed'])
+                'count': c
             }),
             recovered.append({
                 'time': last_updated_str,
-                'count': int(attr['Recovered'])
+                'count': r
             }),
             deaths.append({
                 'time': last_updated_str,
-                'count': int(attr['Deaths'])
+                'count': d
             })
 
         file = get_data_filename(country, province)
@@ -371,10 +383,6 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         total_recovered += recovered[index]['count']
         total_deaths += deaths[index]['count']
 
-    print(f'Total confirmed (time series, data): {total_confirmed}')
-    print(f'Total recovered (time series, data): {total_recovered}')
-    print(f'Total deaths    (time series, data): {total_deaths}')
-
 # try to find newly confirmed provinces from the REST server
 for feature in features:
     attr = feature['attributes']
@@ -407,17 +415,22 @@ for feature in features:
     last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000,
             tz=datetime.timezone.utc)
     last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+
+    c = int(attr['Confirmed'])
+    r = int(attr['Recovered'])
+    d = int(attr['Deaths'])
+
     confirmed = [{
         'time': last_updated_str,
-        'count': int(attr['Confirmed'])
+        'count': c
     }]
     recovered = [{
         'time': last_updated_str,
-        'count': int(attr['Recovered'])
+        'count': r
     }]
     deaths = [{
         'time': last_updated_str,
-        'count': int(attr['Deaths'])
+        'count': d
     }]
     data.append({
         'country': country,
@@ -429,14 +442,17 @@ for feature in features:
         'deaths': deaths
     })
 
-    index = len(confirmed) - 1
-    total_confirmed += confirmed[index]['count']
-    total_recovered += recovered[index]['count']
-    total_deaths += deaths[index]['count']
+    print(f'REST confirmed: {province}, {country}, {c}')
+    print(f'REST recovered: {province}, {country}, {r}')
+    print(f'REST deaths   : {province}, {country}, {d}')
 
-print(f'Total confirmed (time series, data, REST): {total_confirmed}')
-print(f'Total recovered (time series, data, REST): {total_recovered}')
-print(f'Total deaths    (time series, data, REST): {total_deaths}')
+    total_confirmed += c
+    total_recovered += r
+    total_deaths += d
+
+print(f'Total confirmed: {total_confirmed}')
+print(f'Total recovered: {total_recovered}')
+print(f'Total deaths   : {total_deaths}')
 
 c = r = d = 0
 country = 'South Korea'
