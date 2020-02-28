@@ -270,11 +270,10 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         # try to find most up-to-date info from the REST server
         for feature in features:
             attr = feature['attributes']
-            if country == 'Israel' or \
-               ((attr['Province_State'] and
-                 'Diamond Princess' in attr['Province_State']) and
-                (province + ' (From Diamond Princess)' == attr['Province_State'] or
-                 (country == 'Others' and country == attr['Country_Region']))):
+            if (attr['Province_State'] and \
+                'Diamond Princess' in attr['Province_State']) and \
+               (province + ' (From Diamond Princess)' == attr['Province_State'] or \
+                (country == 'Others' and country == attr['Country_Region'])):
                 province = attr['Province_State']
             # need an exact match
             if country != attr['Country_Region'] or \
