@@ -19,7 +19,7 @@ kcdc_country_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do'
 kcdc_country_re = '현황\(([0-9]+)\.([0-9]+)일.*?([0-9]+)시.*?기준\).*?>확진환자<.*?([0-9,]+)[^0-9]*명.*?>확진환자 격리해제<.*?([0-9,]+)[^0-9]*명.*?>사망자<.*?([0-9,]+)[^0-9]*명'
 kcdc_provinces_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do?brdGubun=13'
 kcdc_provinces_re = '([0-9]{4})년 ([0-9]+)월 ([0-9]+)일.*?([0-9]+)시.*기준.*?<tr class="sumline">.*?</tr>.*?(<tr>.+?)</tbody>'
-kcdc_provinces_subre = '>([^>]+)</th><[^>]+>[^<>]*<[^>]+><[^>]+?s_type1[^>]+> *([0-9,]+) *<.+?s_type2[^>]+> *([0-9,]+) *<.+?s_type3[^>]+> *([0-9,]+) *<'
+kcdc_provinces_subre = '>([^>]+)</th>.*?<[^>]+?s_type1[^>]+> *([0-9,]+) *<.+?s_type3[^>]+> *([0-9,]+) *<.+?s_type4[^>]+> *([0-9,]+) *<'
 
 dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
 dxy_re = '"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
@@ -125,7 +125,6 @@ def fetch_kcdc_provinces():
         confirmed = int(m[1].replace(',', ''))
         recovered = int(m[2].replace(',', ''))
         deaths = int(m[3].replace(',', ''))
-        confirmed += recovered + deaths
 
         file = get_data_filename('South Korea', province)
         add_header = True
@@ -204,6 +203,10 @@ else:
 
 # create a new list for the output JSON object
 data = []
+
+total_confirmed = 0
+total_recovered = 0
+total_deaths = 0
 
 # download CSV files
 confirmed_res = requests.get(confirmed_url)
@@ -319,16 +322,19 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                 r = int(row[2])
                 d = int(row[3])
                 if c > confirmed[index]['count']:
+                    print(f'data confirmed: {province}, {country}, {confirmed[index]["count"]} => {c}')
                     confirmed[index] = {
                         'time': last_updated_str,
                         'count': c
                     }
                 if r > recovered[index]['count']:
+                    print(f'data recovered: {province}, {country}, {recovered[index]["count"]} => {r}')
                     recovered[index] = {
                         'time': last_updated_str,
                         'count': r
                     }
                 if d > deaths[index]['count']:
+                    print(f'data deaths   : {province}, {country}, {deaths[index]["count"]} => {d}')
                     deaths[index] = {
                         'time': last_updated_str,
                         'count': d
@@ -356,62 +362,81 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             'recovered': recovered,
             'deaths': deaths
         })
+
         if country == 'South Korea':
             data_south_korea = data[len(data) - 1]
 
-    # try to find newly confirmed provinces from the REST server
-    for feature in features:
-        attr = feature['attributes']
-        country = attr['Country_Region']
-        province = attr['Province_State'] if attr['Province_State'] else ''
-        latitude = feature['geometry']['y']
-        longitude = feature['geometry']['x']
-        # Diamond Princess is a country in the REST API, but it's a
-        # province in Others in the CSV files; Others in the REST API is
-        # empty!
-        if country == 'Others':
-            continue
-        # need to skip existing provinces
-        found = False
-        for rec in data:
-            if country == rec['country']:
-                if province == rec['province'] or \
-                   (not province and rec['province']) or \
-                   (abs(latitude - rec['latitude']) < 0.00001 and
-                    abs(longitude - rec['longitude']) < 0.00001):
-                    if province and not rec['province']:
-                        rec['province'] = province
-                    found = True
-                    break
-        if found:
-            continue
+        index = len(confirmed) - 1
+        total_confirmed += confirmed[index]['count']
+        total_recovered += recovered[index]['count']
+        total_deaths += deaths[index]['count']
 
-        # just found a new province that is not in the spreadsheet, but is in
-        # the REST server; add this record
-        last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000,
-                tz=datetime.timezone.utc)
-        last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-        confirmed = [{
-            'time': last_updated_str,
-            'count': int(attr['Confirmed'])
-        }]
-        recovered = [{
-            'time': last_updated_str,
-            'count': int(attr['Recovered'])
-        }]
-        deaths = [{
-            'time': last_updated_str,
-            'count': int(attr['Deaths'])
-        }]
-        data.append({
-            'country': country,
-            'province': province,
-            'latitude': latitude,
-            'longitude': longitude,
-            'confirmed': confirmed,
-            'recovered': recovered,
-            'deaths': deaths
-        })
+    print(f'Total confirmed (time series, data): {total_confirmed}')
+    print(f'Total recovered (time series, data): {total_recovered}')
+    print(f'Total deaths    (time series, data): {total_deaths}')
+
+# try to find newly confirmed provinces from the REST server
+for feature in features:
+    attr = feature['attributes']
+    country = attr['Country_Region']
+    province = attr['Province_State'] if attr['Province_State'] else ''
+    latitude = feature['geometry']['y']
+    longitude = feature['geometry']['x']
+    # Diamond Princess is a country in the REST API, but it's a
+    # province in Others in the CSV files; Others in the REST API is
+    # empty!
+    if country == 'Others':
+        continue
+    # need to skip existing provinces
+    found = False
+    for rec in data:
+        if country == rec['country']:
+            if province == rec['province'] or \
+               (not province and rec['province']) or \
+               (abs(latitude - rec['latitude']) < 0.00001 and
+                abs(longitude - rec['longitude']) < 0.00001):
+                if province and not rec['province']:
+                    rec['province'] = province
+                found = True
+                break
+    if found:
+        continue
+
+    # just found a new province that is not in the spreadsheet, but is in
+    # the REST server; add this record
+    last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000,
+            tz=datetime.timezone.utc)
+    last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+    confirmed = [{
+        'time': last_updated_str,
+        'count': int(attr['Confirmed'])
+    }]
+    recovered = [{
+        'time': last_updated_str,
+        'count': int(attr['Recovered'])
+    }]
+    deaths = [{
+        'time': last_updated_str,
+        'count': int(attr['Deaths'])
+    }]
+    data.append({
+        'country': country,
+        'province': province,
+        'latitude': latitude,
+        'longitude': longitude,
+        'confirmed': confirmed,
+        'recovered': recovered,
+        'deaths': deaths
+    })
+
+    index = len(confirmed) - 1
+    total_confirmed += confirmed[index]['count']
+    total_recovered += recovered[index]['count']
+    total_deaths += deaths[index]['count']
+
+print(f'Total confirmed (time series, data, REST): {total_confirmed}')
+print(f'Total recovered (time series, data, REST): {total_recovered}')
+print(f'Total deaths    (time series, data, REST): {total_deaths}')
 
 c = r = d = 0
 country = 'South Korea'
