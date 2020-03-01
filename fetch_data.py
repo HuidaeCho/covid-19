@@ -448,10 +448,6 @@ for feature in features:
     total_recovered += r
     total_deaths += d
 
-print(f'Total confirmed: {total_confirmed}')
-print(f'Total recovered: {total_recovered}')
-print(f'Total deaths   : {total_deaths}')
-
 c = r = d = 0
 country = 'South Korea'
 last_updated = None
@@ -526,14 +522,22 @@ if c < data[south_korea_index]['confirmed'][index]['count'] or \
             'confirmed': confirmed,
             'recovered': recovered,
             'deaths': deaths
-        })
+       })
 else:
+    total_confirmed += c - data[south_korea_index]['confirmed'][index]['count']
+    total_recovered += r - data[south_korea_index]['recovered'][index]['count']
+    total_deaths += d - data[south_korea_index]['deaths'][index]['count']
+
     data[south_korea_index]['confirmed'][index]['time'] = last_updated_str
     data[south_korea_index]['confirmed'][index]['count'] = c
     data[south_korea_index]['recovered'][index]['time'] = last_updated_str
     data[south_korea_index]['recovered'][index]['count'] = r
     data[south_korea_index]['deaths'][index]['time'] = last_updated_str
     data[south_korea_index]['deaths'][index]['count'] = d
+
+print(f'Total confirmed: {total_confirmed}')
+print(f'Total recovered: {total_recovered}')
+print(f'Total deaths   : {total_deaths}')
 
 # sort records by confirmed, country, and province
 data = sorted(data, key=lambda x: (
