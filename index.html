@@ -818,10 +818,10 @@ xhr.onload = function(){
 					}else{
 						if(s.lastUpdated > stats.lastUpdated)
 							stats.lastUpdated = s.lastUpdated;
-						for(var i = 0; i < s.time.length; i++){
-							stats.confirmed[i] += s.confirmed[i];
-							stats.recovered[i] += s.recovered[i];
-							stats.deaths[i] += s.deaths[i];
+						for(var i = stats.time.length - 1, j = s.time.length - 1; i >= 0 && j >= 0; i--, j--){
+							stats.confirmed[i] += s.confirmed[j];
+							stats.recovered[i] += s.recovered[j];
+							stats.deaths[i] += s.deaths[j];
 						}
 					}
 					ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
