@@ -204,9 +204,7 @@ else:
 # create a new list for the output JSON object
 data = []
 
-total_confirmed = 0
-total_recovered = 0
-total_deaths = 0
+total_confirmed = total_recovered = total_deaths = 0
 
 # download CSV files
 confirmed_res = requests.get(confirmed_url)
@@ -376,7 +374,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         })
 
         if country == 'South Korea':
-            data_south_korea = data[len(data) - 1]
+            south_korea_index = len(data) - 1
 
         index = len(confirmed) - 1
         total_confirmed += confirmed[index]['count']
@@ -456,6 +454,7 @@ print(f'Total deaths   : {total_deaths}')
 
 c = r = d = 0
 country = 'South Korea'
+last_updated = None
 for file in glob.glob('data/*, ' + country + '.csv'):
     m = re.search('^data/(.+),.+$', file)
     province = m[1]
@@ -468,6 +467,8 @@ for file in glob.glob('data/*, ' + country + '.csv'):
         for row in reader:
             time = datetime.datetime.fromisoformat(row[0]).astimezone(
                     datetime.timezone.utc)
+            if last_updated is None or time > last_updated:
+                last_updated = time
             time_str = f'{time.strftime("%Y/%m/%d %H:%M:%S UTC")}'
             confirmed.append({
                 'time': time_str,
@@ -497,24 +498,25 @@ for file in glob.glob('data/*, ' + country + '.csv'):
             'deaths': deaths
         })
 
-index = len(data_south_korea['confirmed']) - 1
-if c != data_south_korea['confirmed'][index]['count'] or \
-   r != data_south_korea['recovered'][index]['count'] or \
-   d != data_south_korea['deaths'][index]['count']:
+last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+index = len(data[south_korea_index]['confirmed']) - 1
+if c < data[south_korea_index]['confirmed'][index]['count'] or \
+   r < data[south_korea_index]['recovered'][index]['count'] or \
+   d < data[south_korea_index]['deaths'][index]['count']:
        province = 'Others'
-       latitude = data_south_korea['latitude']
-       longitude = data_south_korea['longitude']
+       latitude = data[south_korea_index]['latitude']
+       longitude = data[south_korea_index]['longitude']
        confirmed = [{
-           'time': data_south_korea['confirmed'][index]['time'],
-           'count': data_south_korea['confirmed'][index]['count'] - c
+           'time': last_updated_str,
+           'count': data[south_korea_index]['confirmed'][index]['count'] - c
        }]
        recovered = [{
-           'time': data_south_korea['recovered'][index]['time'],
-           'count': data_south_korea['recovered'][index]['count'] - r
+           'time': last_updated_str,
+           'count': data[south_korea_index]['recovered'][index]['count'] - r
        }]
        deaths = [{
-           'time': data_south_korea['deaths'][index]['time'],
-           'count': data_south_korea['deaths'][index]['count'] - d
+           'time': last_updated_str,
+           'count': data[south_korea_index]['deaths'][index]['count'] - d
        }]
        data.append({
             'country': country,
@@ -525,6 +527,13 @@ if c != data_south_korea['confirmed'][index]['count'] or \
             'recovered': recovered,
             'deaths': deaths
         })
+else:
+    data[south_korea_index]['confirmed'][index]['time'] = last_updated_str
+    data[south_korea_index]['confirmed'][index]['count'] = c
+    data[south_korea_index]['recovered'][index]['time'] = last_updated_str
+    data[south_korea_index]['recovered'][index]['count'] = r
+    data[south_korea_index]['deaths'][index]['time'] = last_updated_str
+    data[south_korea_index]['deaths'][index]['count'] = d
 
 # sort records by confirmed, country, and province
 data = sorted(data, key=lambda x: (
