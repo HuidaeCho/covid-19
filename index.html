@@ -34,11 +34,13 @@ a:hover {
 	text-decoration: underline;
 }
 h1 {
+	color: red;
+    text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
 	display: inline-block;
 	vertical-align: top;
 	width: 70%;
 	margin: 0;
-	font-size: 1.3em;
+	font-size: 2em;
 	line-height: 1;
 }
 h2 {
@@ -80,6 +82,7 @@ h3 {
 	display: none;
 }
 #map {
+	box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 	display: inline-block;
 }
 #info {
@@ -265,12 +268,13 @@ Local times except for plots in UTC.
 <a href="/covid-19.html">Suggestions?</a>
 </div>
 <div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Confirmed: logarithmic radius, Others: area proportional to confirmed</div>
-<div><span class="iconify" data-icon="fa:link"></span> <a href="?Mainland%20China">Mainland China</a>, <a href="?US">US</a>, <a href="?South%20Korea">South Korea</a></div>
+<div><span class="iconify" data-icon="fa:link"></span> <a href="?Mainland%20China">Mainland China</a>, <a href="?US">US</a>, <a href="?South%20Korea">South Korea</a>, <a href="?Italy">Italy</a>, <a href="?Iran">Iran</a>, <a href="?Others">Others</a>, <a href="?Japan">Japan</a>, <a href="?France">France</a>, <a href="?Germany">Germany</a>, <a href="?Singapore">Singapore</a>, <a href="?Hong%20Kong">Hong Kong</a>, <a href="?Spain">Spain</a>, <a href="?Bahrain">Bahrain</a>, <a href="?Kuwait">Kuwait</a>, <a href="?Thailand">Thailand</a>, <a href="?Taiwan">Taiwan</a>, <a href="?UK">UK</a></div>
 </div>
 <div id="map"></div>
 <div id="info">
 <div id="summary">
 <h2>Global Total</h2>
+<h3>Last Updated: </h3>
 <div id="last-updated"></div>
 <table id="global-stats">
 <tr class="confirmed"><td>Confirmed:</td><td id="total-confirmed" class="right"></td></tr>
