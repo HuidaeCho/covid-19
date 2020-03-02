@@ -801,7 +801,16 @@ xhr.onload = function(){
 				var latitude = feature.geometry.coordinates[1];
 				var longitude = feature.geometry.coordinates[0];
 				var coor = ol.proj.fromLonLat([longitude, latitude]);
-				if((country != 'South Korea' || province) &&
+				if(query == 'South Korea'){
+					if(query == country && !province){
+						var s = calculateStats(feature);
+						stats.lastUpdated = s.lastUpdated;
+						stats.time = s.time;
+						stats.confirmed = s.confirmed;
+						stats.recovered = s.recovered;
+						stats.deaths = s.deaths;
+					}
+				}else if((country != 'South Korea' || province) &&
 				   (id == query - 1 ||
 				    id == features.length + Number(query) ||
 				    province + ', ' + country == query ||
@@ -827,7 +836,7 @@ xhr.onload = function(){
 					ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
 				}
 			});
-			if(featureIds.length){
+			if(featureIds.length || stats.time.length){
 				window.location.hash = 'feature-' + featureIds[0];
 				highlightProvinceStats(featureIds);
 				var options = {duration: 1000};
