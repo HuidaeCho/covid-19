@@ -471,7 +471,7 @@ map.on('singleclick', function(evt){
 	});
 	if(feature){
 		window.location.hash = 'feature-' + feature.getId();
-		showStats(feature, evt.coordinate);
+		showFeatureStats(feature, evt.coordinate);
 	}else{
 		highlightProvinceStats([]);
 		popup.hide();
@@ -524,7 +524,7 @@ var highlightProvinceStats = function(featureIds){
 	});
 };
 
-var showStats = function(feature, coor){
+var showFeatureStats = function(feature, coor){
 	highlightProvinceStats([feature.getId()]);
 	var stats = calculateStats(feature);
 	showPopup(stats, coor);
@@ -603,13 +603,268 @@ var showPopup = function(stats, coor){
 
 var layerSource = map.getLayers().item(1).getSource();
 
-var showStatsById = function(id){
+var showFeatureStatsById = function(id){
 	var feature = layerSource.getFeatureById(id);
 	var coor = feature.getGeometry().getCoordinates();
 	view.animate({center: coor});
-	showStats(feature, coor);
+	showFeatureStats(feature, coor);
 };
 
+var showStats = function(features, query){
+	var time = [];
+	var confirmedCounts = [];
+	var recoveredCounts = [];
+	var deathsCounts = [];
+	var lastUpdated = 0;
+	var statsByProvince = '';
+	var maxConfirmed = 0;
+	var maxCoor;
+	for(var i = 0; i < features.length; i++){
+		var feature = features[i];
+		var id = feature.id;
+		var country = feature.properties.country;
+		var province = feature.properties.province;
+		var latitude = feature.geometry.coordinates[1];
+		var longitude = feature.geometry.coordinates[0];
+		var confirmed = feature.properties.confirmed;
+		var recovered = feature.properties.recovered;
+		var deaths = feature.properties.deaths;
+		var updated = Date.parse(confirmed[confirmed.length-1].time);
+		if(country != 'South Korea' || province){
+			var name = province ? province + ', ' + country : country;
+			var lastIndex = confirmed.length - 1;
+			var lastConfirmed = confirmed[lastIndex].count;
+			var lastRecovered = recovered[lastIndex].count;
+			var lastDeaths = deaths[lastIndex].count;
+
+			if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
+			if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
+			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
+
+			statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
+				(isMobile ? '' :
+				 '<div>' + (province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
+				 '<div><a href="?' + country.replace(/ /g, '%20') + '"><span class="iconify" data-icon="fa:flag"></span></a></div></div>') +
+				'<div onclick="showFeatureStatsById(' + id + ')">' +
+				'<div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
+			if(lastRecovered)
+				statsByProvince += '<div class="recovered">' + lastRecovered + ' recovered</div>';
+			if(lastDeaths)
+				statsByProvince += '<div class="deaths">' + lastDeaths + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
+			statsByProvince += '</div></div>';
+
+			if(country == 'South Korea')
+				continue;
+		}
+		if(updated > lastUpdated)
+			lastUpdated = updated;
+		for(var j = 0; j < confirmed.length; j++){
+			var c = confirmed[j].count;
+			var r = recovered[j].count;
+			var d = deaths[j].count;
+			if(j + 1 > time.length){
+				time.push(confirmed[j].time.replace(/\//g, '-').replace(/ .*/, ''));
+				confirmedCounts.push(c);
+				recoveredCounts.push(r);
+				deathsCounts.push(d);
+			}else{
+				confirmedCounts[j] += c;
+				recoveredCounts[j] += r;
+				deathsCounts[j] += d;
+			}
+			if(j == confirmed.length - 1 && confirmedCounts.length > confirmed.length){
+				var k = confirmedCounts.length - 1;
+				confirmedCounts[k] += c;
+				recoveredCounts[k] += r;
+				deathsCounts[k] += d;
+			}
+		}
+
+		if(lastConfirmed > maxConfirmed){
+			maxConfirmed = lastConfirmed;
+			maxCoor = [longitude, latitude];
+		}
+	}
+	statsByProvinceEl.innerHTML = statsByProvince;
+	view.animate({center: ol.proj.fromLonLat(maxCoor)});
+
+	var averageDaysFromConfirmedToDeath = 14; // median days from first symptom to death
+	var cfrs1 = [];
+	var cfrs2 = [];
+	for(var i = 0; i < time.length; i++){
+		if(i < averageDaysFromConfirmedToDeath)
+			cfrs1.push(null);
+		else
+			cfrs1.push(Math.round(deathsCounts[i] / confirmedCounts[i - averageDaysFromConfirmedToDeath] * 1000) / 10);
+	}
+	for(var i = 0; i < time.length; i++)
+		cfrs2.push(Math.round(deathsCounts[i] / (recoveredCounts[i] + deathsCounts[i]) * 1000) / 10);
+	var lastIndex = time.length - 1;
+	lastUpdatedEl.innerHTML = new Date(lastUpdated).toLocaleString();
+	totalConfirmedEl.innerHTML = confirmedCounts[lastIndex].toLocaleString();
+	totalRecoveredEl.innerHTML = recoveredCounts[lastIndex].toLocaleString();
+	totalDeathsEl.innerHTML = deathsCounts[lastIndex].toLocaleString();
+	cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrs1[cfrs1.length - 1] + '%' + (isMobile ? '' : ', ') + '<sup>d/(d+r)</sup>' + cfrs2[cfrs2.length - 1] + '%';
+	var trends = [];
+	trends.push({
+		name: 'Confirmed',
+		x: time,
+		y: confirmedCounts,
+		marker: {
+			color: getColor('confirmed')
+		}
+	});
+	trends.push({
+		name: 'Recovered',
+		x: time,
+		y: recoveredCounts,
+		marker: {
+			color: getColor('recovered')
+		}
+	});
+	trends.push({
+		name: 'Deaths',
+		x: time,
+		y: deathsCounts,
+		marker: {
+			color: getColor('deaths')
+		}
+	});
+	var fontSize = isMobile ? 6 : 12;
+	var layout = {
+		height: isMobile ? 50 : 150,
+		margin: {
+			l: isMobile ? 15 : 25,
+			r: isMobile ? 6 : 10,
+			b: isMobile ? 20 : 30,
+			t: isMobile ? 3 : 10
+		},
+		font: {
+			size: fontSize
+		},
+		showlegend: false
+	};
+	Plotly.newPlot('count-plot', trends, layout, {displayModeBar: false});
+
+	trends = [];
+	trends.push({
+		name: 'T=' + averageDaysFromConfirmedToDeath,
+		x: time,
+		y: cfrs1
+	});
+	trends.push({
+		name: 'd/(d+r)',
+		x: time,
+		y: cfrs2
+	});
+	layout = {
+		height: isMobile ? 50 : 100,
+		margin: {
+			l: isMobile ? 17 : 35,
+			r: isMobile ? 6 : 10,
+			b: isMobile ? 20 : 30,
+			t: isMobile ? 0 : 10
+		},
+		yaxis: {
+			title: 'CFR'
+		},
+		font: {
+			size: fontSize
+		},
+		showlegend: false
+	};
+	Plotly.newPlot('cfr-plot', trends, layout, {displayModeBar: false});
+	statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
+
+	if(query){
+		var extent = new ol.extent.createEmpty();
+		var featureIds = [];
+		var stats = {
+			time: [],
+			confirmed: [],
+			recovered: [],
+			deaths: []
+		};
+		features.forEach(function(feature){
+			var id = feature.id;
+			var country = feature.properties.country;
+			var province = feature.properties.province;
+			var latitude = feature.geometry.coordinates[1];
+			var longitude = feature.geometry.coordinates[0];
+			var coor = ol.proj.fromLonLat([longitude, latitude]);
+			if(query == 'South Korea'){
+				if(query == country){
+					if(!province){
+						var s = calculateStats(feature);
+						stats.lastUpdated = s.lastUpdated;
+						stats.time = s.time;
+						stats.confirmed = s.confirmed;
+						stats.recovered = s.recovered;
+						stats.deaths = s.deaths;
+					}else
+						featureIds.push(id);
+				}
+			}else if(id == query - 1 ||
+			    id == features.length + Number(query) ||
+			    province + ', ' + country == query ||
+			    province.indexOf(query) >= 0 ||
+			    country.indexOf(query) >= 0){
+				var s = calculateStats(feature, true);
+				featureIds.push(id);
+				if(stats.time.length == 0){
+					stats.lastUpdated = s.lastUpdated;
+					stats.time = s.time;
+					stats.confirmed = s.confirmed;
+					stats.recovered = s.recovered;
+					stats.deaths = s.deaths;
+				}else{
+					if(s.lastUpdated > stats.lastUpdated)
+						stats.lastUpdated = s.lastUpdated;
+					for(var i = stats.time.length - 1, j = s.time.length - 1; i >= 0 && j >= 0; i--, j--){
+						stats.confirmed[i] += s.confirmed[j];
+						stats.recovered[i] += s.recovered[j];
+						stats.deaths[i] += s.deaths[j];
+					}
+				}
+				ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
+			}
+		});
+		if(featureIds.length){
+			window.location.hash = 'feature-' + featureIds[0];
+			highlightProvinceStats(featureIds);
+			var options = {duration: 1000};
+			if(featureIds.length == 1){
+				options.maxZoom = 6;
+				view.fit(extent, options);
+				setTimeout(function(){
+					showFeatureStatsById(featureIds[0]);
+				}, 1000);
+			}else{
+				var geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + (query == 'Mainland China' ? 'China' : query) + '&key=' + bingMapsKey;
+				var geocodeXhr = new XMLHttpRequest();
+				geocodeXhr.open('GET', geocodeUrl, true);
+				geocodeXhr.responseType = 'json';
+				geocodeXhr.onload = function(){
+					var status = geocodeXhr.status;
+					if(status == 200){
+						var resource = geocodeXhr.response.resourceSets[0].resources[0];
+						var coor = ol.proj.fromLonLat(resource.geocodePoints[0].coordinates.reverse());
+						var c1 = ol.proj.fromLonLat([resource.bbox[1], resource.bbox[0]]);
+						var c2 = ol.proj.fromLonLat([resource.bbox[3], resource.bbox[2]]);
+						extent = [c1[0], c1[1], c2[0], c2[1]];
+						stats.country = query;
+						showPopup(stats, coor);
+					}else
+						console.log(status);
+					view.fit(extent);
+				};
+				geocodeXhr.send();
+			}
+		}
+	}
+}
+
+var features;
 var xhr = new XMLHttpRequest();
 xhr.open('GET', dataUrl, true);
 xhr.responseType = 'json';
@@ -617,260 +872,11 @@ xhr.onload = function(){
 	var status = xhr.status;
 	if(status == 200){
 		var data = xhr.response;
-		var features = data.features;
-		var time = [];
-		var confirmedCounts = [];
-		var recoveredCounts = [];
-		var deathsCounts = [];
-		var lastUpdated = 0;
-		var statsByProvince = '';
-		var maxConfirmed = 0;
-		var maxCoor;
-		for(var i = 0; i < features.length; i++){
-			var feature = features[i];
-			var id = feature.id;
-			var country = feature.properties.country;
-			var province = feature.properties.province;
-			var latitude = feature.geometry.coordinates[1];
-			var longitude = feature.geometry.coordinates[0];
-			var confirmed = feature.properties.confirmed;
-			var recovered = feature.properties.recovered;
-			var deaths = feature.properties.deaths;
-			var updated = Date.parse(confirmed[confirmed.length-1].time);
-			if(country != 'South Korea' || province){
-				var name = province ? province + ', ' + country : country;
-				var lastIndex = confirmed.length - 1;
-				var lastConfirmed = confirmed[lastIndex].count;
-				var lastRecovered = recovered[lastIndex].count;
-				var lastDeaths = deaths[lastIndex].count;
-
-				if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
-				if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
-				if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
-
-				statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
-					(isMobile ? '' :
-					 '<div>' + (province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
-					 '<div><a href="?' + country.replace(/ /g, '%20') + '"><span class="iconify" data-icon="fa:flag"></span></a></div></div>') +
-					'<div onclick="showStatsById(' + id + ')">' +
-					'<div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
-				if(lastRecovered)
-					statsByProvince += '<div class="recovered">' + lastRecovered + ' recovered</div>';
-				if(lastDeaths)
-					statsByProvince += '<div class="deaths">' + lastDeaths + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
-				statsByProvince += '</div></div>';
-
-				if(country == 'South Korea')
-					continue;
-			}
-			if(updated > lastUpdated)
-				lastUpdated = updated;
-			for(var j = 0; j < confirmed.length; j++){
-				var c = confirmed[j].count;
-				var r = recovered[j].count;
-				var d = deaths[j].count;
-				if(j + 1 > time.length){
-					time.push(confirmed[j].time.replace(/\//g, '-').replace(/ .*/, ''));
-					confirmedCounts.push(c);
-					recoveredCounts.push(r);
-					deathsCounts.push(d);
-				}else{
-					confirmedCounts[j] += c;
-					recoveredCounts[j] += r;
-					deathsCounts[j] += d;
-				}
-				if(j == confirmed.length - 1 && confirmedCounts.length > confirmed.length){
-					var k = confirmedCounts.length - 1;
-					confirmedCounts[k] += c;
-					recoveredCounts[k] += r;
-					deathsCounts[k] += d;
-				}
-			}
-
-			if(lastConfirmed > maxConfirmed){
-				maxConfirmed = lastConfirmed;
-				maxCoor = [longitude, latitude];
-			}
-		}
-		statsByProvinceEl.innerHTML = statsByProvince;
-		view.animate({center: ol.proj.fromLonLat(maxCoor)});
-
-		var averageDaysFromConfirmedToDeath = 14; // median days from first symptom to death
-		var cfrs1 = [];
-		var cfrs2 = [];
-		for(var i = 0; i < time.length; i++){
-			if(i < averageDaysFromConfirmedToDeath)
-				cfrs1.push(null);
-			else
-				cfrs1.push(Math.round(deathsCounts[i] / confirmedCounts[i - averageDaysFromConfirmedToDeath] * 1000) / 10);
-		}
-		for(var i = 0; i < time.length; i++)
-			cfrs2.push(Math.round(deathsCounts[i] / (recoveredCounts[i] + deathsCounts[i]) * 1000) / 10);
-		var lastIndex = time.length - 1;
-		lastUpdatedEl.innerHTML = new Date(lastUpdated).toLocaleString();
-		totalConfirmedEl.innerHTML = confirmedCounts[lastIndex].toLocaleString();
-		totalRecoveredEl.innerHTML = recoveredCounts[lastIndex].toLocaleString();
-		totalDeathsEl.innerHTML = deathsCounts[lastIndex].toLocaleString();
-		cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrs1[cfrs1.length - 1] + '%' + (isMobile ? '' : ', ') + '<sup>d/(d+r)</sup>' + cfrs2[cfrs2.length - 1] + '%';
-		var trends = [];
-		trends.push({
-			name: 'Confirmed',
-			x: time,
-			y: confirmedCounts,
-			marker: {
-				color: getColor('confirmed')
-			}
-		});
-		trends.push({
-			name: 'Recovered',
-			x: time,
-			y: recoveredCounts,
-			marker: {
-				color: getColor('recovered')
-			}
-		});
-		trends.push({
-			name: 'Deaths',
-			x: time,
-			y: deathsCounts,
-			marker: {
-				color: getColor('deaths')
-			}
-		});
-		var fontSize = isMobile ? 6 : 12;
-		var layout = {
-			height: isMobile ? 50 : 150,
-			margin: {
-				l: isMobile ? 15 : 25,
-				r: isMobile ? 6 : 10,
-				b: isMobile ? 20 : 30,
-				t: isMobile ? 3 : 10
-			},
-			font: {
-				size: fontSize
-			},
-			showlegend: false
-		};
-		Plotly.newPlot('count-plot', trends, layout, {displayModeBar: false});
-
-		trends = [];
-		trends.push({
-			name: 'T=' + averageDaysFromConfirmedToDeath,
-			x: time,
-			y: cfrs1
-		});
-		trends.push({
-			name: 'd/(d+r)',
-			x: time,
-			y: cfrs2
-		});
-		layout = {
-			height: isMobile ? 50 : 100,
-			margin: {
-				l: isMobile ? 17 : 35,
-				r: isMobile ? 6 : 10,
-				b: isMobile ? 20 : 30,
-				t: isMobile ? 0 : 10
-			},
-			yaxis: {
-				title: 'CFR'
-			},
-			font: {
-				size: fontSize
-			},
-			showlegend: false
-		};
-		Plotly.newPlot('cfr-plot', trends, layout, {displayModeBar: false});
-		statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
-
+		features = data.features;
 		var query = window.location.search.match(/^\?(.+)$/);
-		if(query){
+		if(query)
 			query = query[1].replace(/\+|%20/g, ' ').replace(/%22/g, '"');
-			var extent = new ol.extent.createEmpty();
-			var featureIds = [];
-			var stats = {
-				time: [],
-				confirmed: [],
-				recovered: [],
-				deaths: []
-			};
-			features.forEach(function(feature){
-				var id = feature.id;
-				var country = feature.properties.country;
-				var province = feature.properties.province;
-				var latitude = feature.geometry.coordinates[1];
-				var longitude = feature.geometry.coordinates[0];
-				var coor = ol.proj.fromLonLat([longitude, latitude]);
-				if(query == 'South Korea'){
-					if(query == country){
-						if(!province){
-							var s = calculateStats(feature);
-							stats.lastUpdated = s.lastUpdated;
-							stats.time = s.time;
-							stats.confirmed = s.confirmed;
-							stats.recovered = s.recovered;
-							stats.deaths = s.deaths;
-						}else
-							featureIds.push(id);
-					}
-				}else if(id == query - 1 ||
-				    id == features.length + Number(query) ||
-				    province + ', ' + country == query ||
-				    province.indexOf(query) >= 0 ||
-				    country.indexOf(query) >= 0){
-					var s = calculateStats(feature, true);
-					featureIds.push(id);
-					if(stats.time.length == 0){
-						stats.lastUpdated = s.lastUpdated;
-						stats.time = s.time;
-						stats.confirmed = s.confirmed;
-						stats.recovered = s.recovered;
-						stats.deaths = s.deaths;
-					}else{
-						if(s.lastUpdated > stats.lastUpdated)
-							stats.lastUpdated = s.lastUpdated;
-						for(var i = stats.time.length - 1, j = s.time.length - 1; i >= 0 && j >= 0; i--, j--){
-							stats.confirmed[i] += s.confirmed[j];
-							stats.recovered[i] += s.recovered[j];
-							stats.deaths[i] += s.deaths[j];
-						}
-					}
-					ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
-				}
-			});
-			if(featureIds.length){
-				window.location.hash = 'feature-' + featureIds[0];
-				highlightProvinceStats(featureIds);
-				var options = {duration: 1000};
-				if(featureIds.length == 1){
-					options.maxZoom = 6;
-					view.fit(extent, options);
-					setTimeout(function(){
-						showStatsById(featureIds[0]);
-					}, 1000);
-				}else{
-					var geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + (query == 'Mainland China' ? 'China' : query) + '&key=' + bingMapsKey;
-					var geocodeXhr = new XMLHttpRequest();
-					geocodeXhr.open('GET', geocodeUrl, true);
-					geocodeXhr.responseType = 'json';
-					geocodeXhr.onload = function(){
-						var status = geocodeXhr.status;
-						if(status == 200){
-							var resource = geocodeXhr.response.resourceSets[0].resources[0];
-							var coor = ol.proj.fromLonLat(resource.geocodePoints[0].coordinates.reverse());
-							var c1 = ol.proj.fromLonLat([resource.bbox[1], resource.bbox[0]]);
-							var c2 = ol.proj.fromLonLat([resource.bbox[3], resource.bbox[2]]);
-							extent = [c1[0], c1[1], c2[0], c2[1]];
-							stats.country = query;
-							showPopup(stats, coor);
-						}else
-							console.log(status);
-						view.fit(extent);
-					};
-					geocodeXhr.send();
-				}
-			}
-		}
+		showStats(features, query);
 	}else
 		console.log(status);
 };
