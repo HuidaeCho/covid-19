@@ -802,20 +802,22 @@ xhr.onload = function(){
 				var longitude = feature.geometry.coordinates[0];
 				var coor = ol.proj.fromLonLat([longitude, latitude]);
 				if(query == 'South Korea'){
-					if(query == country && !province){
-						var s = calculateStats(feature);
-						stats.lastUpdated = s.lastUpdated;
-						stats.time = s.time;
-						stats.confirmed = s.confirmed;
-						stats.recovered = s.recovered;
-						stats.deaths = s.deaths;
+					if(query == country){
+						if(!province){
+							var s = calculateStats(feature);
+							stats.lastUpdated = s.lastUpdated;
+							stats.time = s.time;
+							stats.confirmed = s.confirmed;
+							stats.recovered = s.recovered;
+							stats.deaths = s.deaths;
+						}else
+							featureIds.push(id);
 					}
-				}else if((country != 'South Korea' || province) &&
-				   (id == query - 1 ||
+				}else if(id == query - 1 ||
 				    id == features.length + Number(query) ||
 				    province + ', ' + country == query ||
 				    province.indexOf(query) >= 0 ||
-				    country.indexOf(query) >= 0)){
+				    country.indexOf(query) >= 0){
 					var s = calculateStats(feature, true);
 					featureIds.push(id);
 					if(stats.time.length == 0){
@@ -836,7 +838,7 @@ xhr.onload = function(){
 					ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
 				}
 			});
-			if(featureIds.length || stats.time.length){
+			if(featureIds.length){
 				window.location.hash = 'feature-' + featureIds[0];
 				highlightProvinceStats(featureIds);
 				var options = {duration: 1000};
