@@ -107,6 +107,15 @@ h3 {
 #summary {
 	font-size: 0.8em;
 }
+#last-updated-label {
+	display: none;
+	width: 0%;
+}
+#last-updated {
+	display: inline-block;
+	width: 100%;
+	text-align: right;
+}
 #global-stats {
 	width: 100%;
 	font-weight: bold;
@@ -115,9 +124,6 @@ h3 {
 }
 .cfr {
 	font-weight: bold;
-}
-#last-updated {
-	text-align: right;
 }
 .right {
 	text-align: right;
@@ -207,6 +213,13 @@ h3 {
 	#summary {
 		font-size: 1em;
 	}
+	#last-updated-label {
+		display: inline-block;
+		width: 40%;
+	}
+	#last-updated {
+		width: 60%;
+	}
 	.cfr {
 		font-size: 1.2em;
 	}
@@ -271,7 +284,7 @@ Local times except for plots in UTC.
 <div id="info">
 <div id="summary">
 <h2>Global Total</h2>
-<div id="last-updated"></div>
+<div id="last-updated-label">Last Updated:</div><div id="last-updated"></div>
 <table id="global-stats">
 <tr class="confirmed"><td>Confirmed:</td><td id="total-confirmed" class="right"></td></tr>
 <tr class="recovered"><td>Recovered:</td><td id="total-recovered" class="right"></td></tr>
