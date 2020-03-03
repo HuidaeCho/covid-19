@@ -79,6 +79,9 @@ h3 {
 .desktop-block, .desktop-inline {
 	display: none;
 }
+#country-links-wrap {
+	font-size: 0.8em;
+}
 #map {
 	display: inline-block;
 }
@@ -278,7 +281,7 @@ Local times except for plots in UTC.
 <a href="/covid-19.html">Suggestions?</a>
 </div>
 <div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Confirmed: logarithmic radius, Others: area proportional to confirmed</div>
-<div><span class="iconify" data-icon="fa:link"></span> <a href="?Mainland%20China">Mainland China</a>, <a href="?US">US</a>, <a href="?South%20Korea">South Korea</a></div>
+<div id="country-links-wrap"><span class="iconify" data-icon="fa:flag"></span>&nbsp;<span id="country-links"></a></div>
 </div>
 <div id="map"></div>
 <div id="info">
@@ -311,6 +314,7 @@ var isMobile = window.getComputedStyle(document.getElementsByClassName('mobile-b
 var bodyEl = document.body;
 var headerEl = document.getElementById('header');
 var dataSourcesEl = document.getElementById('data-sources');
+var countryLinksEl = document.getElementById('country-links');
 var mapEl = document.getElementById('map');
 var infoEl = document.getElementById('info');
 var lastUpdatedEl = document.getElementById('last-updated');
@@ -528,11 +532,11 @@ var calculateStats = function(feature, all=false){
 
 var highlightedFeatureIds = [];
 var highlightProvinceStats = function(featureIds){
-	highlightedFeatureIds.forEach(function(featureId){
+	highlightedFeatureIds.forEach(featureId => {
 		document.getElementById('feature-' + featureId).classList.remove('highlighted');
 	});
 	highlightedFeatureIds = featureIds;
-	highlightedFeatureIds.forEach(function(featureId){
+	highlightedFeatureIds.forEach(featureId => {
 		document.getElementById('feature-' + featureId).classList.add('highlighted');
 	});
 };
@@ -632,8 +636,8 @@ var showStats = function(features, query){
 	var statsByProvince = '';
 	var maxConfirmed = 0;
 	var maxCoor;
-	for(var i = 0; i < features.length; i++){
-		var feature = features[i];
+	var confirmedByCountry = {};
+	features.forEach(feature => {
 		var id = feature.id;
 		var country = feature.properties.country;
 		var province = feature.properties.province;
@@ -662,26 +666,28 @@ var showStats = function(features, query){
 				statsByProvince += '<div class="deaths">' + lastDeaths.toLocaleString() + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
 			statsByProvince += '</div></div>';
 
+			confirmedByCountry[country] = confirmedByCountry[country] || 0 + lastConfirmed;
+
 			if(country == 'South Korea')
-				continue;
+				return;
 		}
 		if(updated > lastUpdated)
 			lastUpdated = updated;
-		for(var j = 0; j < confirmed.length; j++){
-			var c = confirmed[j].count;
-			var r = recovered[j].count;
-			var d = deaths[j].count;
-			if(j + 1 > time.length){
-				time.push(confirmed[j].time.replace(/\//g, '-').replace(/ .*/, ''));
+		for(var i = 0; i < confirmed.length; i++){
+			var c = confirmed[i].count;
+			var r = recovered[i].count;
+			var d = deaths[i].count;
+			if(i + 1 > time.length){
+				time.push(confirmed[i].time.replace(/\//g, '-').replace(/ .*/, ''));
 				confirmedCounts.push(c);
 				recoveredCounts.push(r);
 				deathsCounts.push(d);
 			}else{
-				confirmedCounts[j] += c;
-				recoveredCounts[j] += r;
-				deathsCounts[j] += d;
+				confirmedCounts[i] += c;
+				recoveredCounts[i] += r;
+				deathsCounts[i] += d;
 			}
-			if(j == confirmed.length - 1 && confirmedCounts.length > confirmed.length){
+			if(i == confirmed.length - 1 && confirmedCounts.length > confirmed.length){
 				var k = confirmedCounts.length - 1;
 				confirmedCounts[k] += c;
 				recoveredCounts[k] += r;
@@ -693,7 +699,25 @@ var showStats = function(features, query){
 			maxConfirmed = lastConfirmed;
 			maxCoor = [longitude, latitude];
 		}
+	});
+	var sortedByCountry = [];
+	Object.entries(confirmedByCountry).forEach(([country, confirmed]) => {
+		sortedByCountry.push({country: country, confirmed: confirmed});
+	});
+	sortedByCountry.sort(function(a, b){
+		return b.confirmed - a.confirmed;
+	});
+	var singleLineHeight = countryLinksEl.offsetHeight;
+	for(var i = 0; i < sortedByCountry.length; i++){
+		var country = sortedByCountry[i].country;
+		var backup = countryLinksEl.innerHTML;
+		countryLinksEl.innerHTML += (countryLinksEl.innerHTML ? ', ' : '') + '<a href="?' + country.replace(/ /g, '%20') + '">' + country + '</a>';
+		if(countryLinksEl.offsetHeight > singleLineHeight){
+			countryLinksEl.innerHTML = backup;
+			break;
+		}
 	}
+
 	statsByProvinceEl.innerHTML = statsByProvince;
 	view.animate({center: ol.proj.fromLonLat(maxCoor)});
 
@@ -794,7 +818,7 @@ var showStats = function(features, query){
 			recovered: [],
 			deaths: []
 		};
-		features.forEach(function(feature){
+		features.forEach(feature => {
 			var id = feature.id;
 			var country = feature.properties.country;
 			var province = feature.properties.province;
