@@ -637,20 +637,16 @@ var showStats = function(features, query){
 			var lastRecovered = recovered[lastIndex].count;
 			var lastDeaths = deaths[lastIndex].count;
 
-			if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
-			if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
-			if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
-
 			statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
 				(isMobile ? '' :
 				 '<div>' + (province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
 				 '<div><a href="?' + country.replace(/ /g, '%20') + '"><span class="iconify" data-icon="fa:flag"></span></a></div></div>') +
 				'<div onclick="showFeatureStatsById(' + id + ')">' +
-				'<div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed + ' confirmed</div>';
+				'<div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed.toLocaleString() + ' confirmed</div>';
 			if(lastRecovered)
-				statsByProvince += '<div class="recovered">' + lastRecovered + ' recovered</div>';
+				statsByProvince += '<div class="recovered">' + lastRecovered.toLocaleString() + ' recovered</div>';
 			if(lastDeaths)
-				statsByProvince += '<div class="deaths">' + lastDeaths + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
+				statsByProvince += '<div class="deaths">' + lastDeaths.toLocaleString() + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
 			statsByProvince += '</div></div>';
 
 			if(country == 'South Korea')
