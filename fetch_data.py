@@ -204,6 +204,9 @@ else:
 # create a new list for the output JSON object
 data = []
 
+# some provinces repeat in the CSSE data
+done = []
+
 total_confirmed = total_recovered = total_deaths = 0
 
 # download CSV files
@@ -362,6 +365,11 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                         deaths[i]['count'] = max(deaths[i]['count'],
                                 props['deaths'][i]['count'])
                 break
+
+        location = country if province == '' else f'{province}, {country}'
+        if location in done:
+            continue
+        done.append(location)
 
         data.append({
             'country': country,
