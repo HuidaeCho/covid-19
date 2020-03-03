@@ -840,7 +840,7 @@ var showStats = function(features, query){
 			}else if(id == query - 1 ||
 			    id == features.length + Number(query) ||
 			    province + ', ' + country == query ||
-			    province.indexOf(query) >= 0 ||
+			    (query != 'Others' && province.indexOf(query) >= 0) ||
 			    country.indexOf(query) >= 0){
 				var s = calculateStats(feature, true);
 				featureIds.push(id);
