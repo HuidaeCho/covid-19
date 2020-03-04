@@ -666,7 +666,7 @@ var showStats = function(features, query){
 				statsByProvince += '<div class="deaths">' + lastDeaths.toLocaleString() + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
 			statsByProvince += '</div></div>';
 
-			confirmedByCountry[country] = confirmedByCountry[country] || 0 + lastConfirmed;
+			confirmedByCountry[country] = (confirmedByCountry[country] || 0) + lastConfirmed;
 
 			if(country == 'South Korea')
 				return;
