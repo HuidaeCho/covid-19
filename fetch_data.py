@@ -19,6 +19,7 @@ kcdc_country_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do'
 kcdc_country_re = '현황\(([0-9]+)\.([0-9]+)일.*?([0-9]+)시.*?기준\).*?>확진환자<.*?([0-9,]+)[^0-9]*명.*?>확진환자 격리해제<.*?([0-9,]+)[^0-9]*명.*?>사망자<.*?([0-9,]+)[^0-9]*명'
 kcdc_provinces_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do?brdGubun=13'
 kcdc_provinces_re = '([0-9]{4})년 ([0-9]+)월 ([0-9]+)일.*?([0-9]+)시.*기준.*?<tr class="sumline">.*?</tr>.*?(<tr>.+?)</tbody>'
+kcdc_provinces_re = None
 kcdc_provinces_subre = '>([^>]+)</th>.*?<[^>]+?s_type1[^>]+>\s*([0-9,]+)\s*<.+?s_type3[^>]+>\s*([0-9,]+)\s*<.+?s_type4[^>]+>\s*([0-9,]+)\s*<'
 
 dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
@@ -110,6 +111,9 @@ def fetch_kcdc_country():
         f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
 def fetch_kcdc_provinces():
+    if not kcdc_provinces_re:
+        return
+
     res = requests.get(kcdc_provinces_url).content.decode()
     m = re.search(kcdc_provinces_re, res, re.DOTALL)
     if not m:
@@ -456,92 +460,93 @@ for feature in features:
     total_recovered += r
     total_deaths += d
 
-c = r = d = 0
-country = 'South Korea'
-last_updated = None
-for file in glob.glob('data/*, ' + country + '.csv'):
-    m = re.search('^data/(.+),.+$', file)
-    province = m[1]
-    with open(file) as f:
-        reader = csv.reader(f)
-        reader.__next__()
-        confirmed = []
-        recovered = []
-        deaths = []
-        for row in reader:
-            time = datetime.datetime.fromisoformat(row[0]).astimezone(
-                    datetime.timezone.utc)
-            if last_updated is None or time > last_updated:
-                last_updated = time
-            time_str = f'{time.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-            confirmed.append({
-                'time': time_str,
-                'count': int(row[1])
-            }),
-            recovered.append({
-                'time': time_str,
-                'count': int(row[2])
-            }),
-            deaths.append({
-                'time': time_str,
-                'count': int(row[3])
+if kcdc_provinces_re:
+    c = r = d = 0
+    country = 'South Korea'
+    last_updated = None
+    for file in glob.glob('data/*, ' + country + '.csv'):
+        m = re.search('^data/(.+),.+$', file)
+        province = m[1]
+        with open(file) as f:
+            reader = csv.reader(f)
+            reader.__next__()
+            confirmed = []
+            recovered = []
+            deaths = []
+            for row in reader:
+                time = datetime.datetime.fromisoformat(row[0]).astimezone(
+                        datetime.timezone.utc)
+                if last_updated is None or time > last_updated:
+                    last_updated = time
+                time_str = f'{time.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+                confirmed.append({
+                    'time': time_str,
+                    'count': int(row[1])
+                }),
+                recovered.append({
+                    'time': time_str,
+                    'count': int(row[2])
+                }),
+                deaths.append({
+                    'time': time_str,
+                    'count': int(row[3])
+                })
+            index = len(confirmed) - 1
+            c += confirmed[index]['count']
+            r += recovered[index]['count']
+            d += deaths[index]['count']
+
+            latitude, longitude = geocode(country, province)
+            data.append({
+                'country': country,
+                'province': province,
+                'latitude': latitude,
+                'longitude': longitude,
+                'confirmed': confirmed,
+                'recovered': recovered,
+                'deaths': deaths
             })
-        index = len(confirmed) - 1
-        c += confirmed[index]['count']
-        r += recovered[index]['count']
-        d += deaths[index]['count']
 
-        latitude, longitude = geocode(country, province)
-        data.append({
-            'country': country,
-            'province': province,
-            'latitude': latitude,
-            'longitude': longitude,
-            'confirmed': confirmed,
-            'recovered': recovered,
-            'deaths': deaths
-        })
+    last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+    index = len(data[south_korea_index]['confirmed']) - 1
+    if c < data[south_korea_index]['confirmed'][index]['count'] or \
+       r < data[south_korea_index]['recovered'][index]['count'] or \
+       d < data[south_korea_index]['deaths'][index]['count']:
+           province = 'Others'
+           latitude = data[south_korea_index]['latitude']
+           longitude = data[south_korea_index]['longitude']
+           confirmed = [{
+               'time': last_updated_str,
+               'count': data[south_korea_index]['confirmed'][index]['count'] - c
+           }]
+           recovered = [{
+               'time': last_updated_str,
+               'count': data[south_korea_index]['recovered'][index]['count'] - r
+           }]
+           deaths = [{
+               'time': last_updated_str,
+               'count': data[south_korea_index]['deaths'][index]['count'] - d
+           }]
+           data.append({
+                'country': country,
+                'province': province,
+                'latitude': latitude,
+                'longitude': longitude,
+                'confirmed': confirmed,
+                'recovered': recovered,
+                'deaths': deaths
+           })
+    else:
+        total_confirmed += c - data[south_korea_index]['confirmed'][index]['count']
+        total_recovered += r - data[south_korea_index]['recovered'][index]['count']
+        total_deaths += d - data[south_korea_index]['deaths'][index]['count']
 
-last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-index = len(data[south_korea_index]['confirmed']) - 1
-if c < data[south_korea_index]['confirmed'][index]['count'] or \
-   r < data[south_korea_index]['recovered'][index]['count'] or \
-   d < data[south_korea_index]['deaths'][index]['count']:
-       province = 'Others'
-       latitude = data[south_korea_index]['latitude']
-       longitude = data[south_korea_index]['longitude']
-       confirmed = [{
-           'time': last_updated_str,
-           'count': data[south_korea_index]['confirmed'][index]['count'] - c
-       }]
-       recovered = [{
-           'time': last_updated_str,
-           'count': data[south_korea_index]['recovered'][index]['count'] - r
-       }]
-       deaths = [{
-           'time': last_updated_str,
-           'count': data[south_korea_index]['deaths'][index]['count'] - d
-       }]
-       data.append({
-            'country': country,
-            'province': province,
-            'latitude': latitude,
-            'longitude': longitude,
-            'confirmed': confirmed,
-            'recovered': recovered,
-            'deaths': deaths
-       })
-else:
-    total_confirmed += c - data[south_korea_index]['confirmed'][index]['count']
-    total_recovered += r - data[south_korea_index]['recovered'][index]['count']
-    total_deaths += d - data[south_korea_index]['deaths'][index]['count']
-
-    data[south_korea_index]['confirmed'][index]['time'] = last_updated_str
-    data[south_korea_index]['confirmed'][index]['count'] = c
-    data[south_korea_index]['recovered'][index]['time'] = last_updated_str
-    data[south_korea_index]['recovered'][index]['count'] = r
-    data[south_korea_index]['deaths'][index]['time'] = last_updated_str
-    data[south_korea_index]['deaths'][index]['count'] = d
+        data[south_korea_index]['confirmed'][index]['time'] = last_updated_str
+        data[south_korea_index]['confirmed'][index]['count'] = c
+        data[south_korea_index]['recovered'][index]['time'] = last_updated_str
+        data[south_korea_index]['recovered'][index]['count'] = r
+        data[south_korea_index]['deaths'][index]['time'] = last_updated_str
+        data[south_korea_index]['deaths'][index]['count'] = d
 
 print(f'Total confirmed: {total_confirmed}')
 print(f'Total recovered: {total_recovered}')
