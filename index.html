@@ -848,6 +848,8 @@ var showStats = function(features, query){
 			    (query != 'Others' && province.indexOf(query) >= 0) ||
 			    country.indexOf(query) >= 0){
 				var s = calculateStats(feature, true);
+				if(!s.confirmed[s.confirmed.length - 1])
+					return;
 				featureIds.push(id);
 				if(stats.time.length == 0){
 					stats.lastUpdated = s.lastUpdated;
