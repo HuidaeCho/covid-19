@@ -841,6 +841,7 @@ var showStats = function(features, query){
 			}else if(id == query - 1 ||
 			    id == features.length + Number(query) ||
 			    province + ', ' + country == query ||
+			    (province + ', ' + country).indexOf(query) >= 0 ||
 			    (query != 'Others' && province.indexOf(query) >= 0) ||
 			    country.indexOf(query) >= 0){
 				var s = calculateStats(feature, true);
@@ -874,13 +875,18 @@ var showStats = function(features, query){
 					showFeatureStatsById(featureIds[0]);
 				}, 1000);
 			}else{
-				var geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + (query == 'Mainland China' ? 'China' : query) + '&key=' + bingMapsKey;
+				var geocodeUrl;
+				if(query.indexOf(', ') >= 0){
+					var q = query.split(', ');
+					geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + (q[1] == 'Mainland China' ? 'China' : q[1]) + '&adminDistrict=' + q[0] + '&key=' + bingMapsKey;
+				}else
+					geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + (query == 'Mainland China' ? 'China' : query) + '&key=' + bingMapsKey;
 				var geocodeXhr = new XMLHttpRequest();
 				geocodeXhr.open('GET', geocodeUrl, true);
 				geocodeXhr.responseType = 'json';
 				geocodeXhr.onload = function(){
 					var status = geocodeXhr.status;
-					if(status == 200){
+					if(status == 200 && geocodeXhr.response.resourceSets[0].estimatedTotal){
 						var resource = geocodeXhr.response.resourceSets[0].resources[0];
 						var coor = ol.proj.fromLonLat(resource.geocodePoints[0].coordinates.reverse());
 						var c1 = ol.proj.fromLonLat([resource.bbox[1], resource.bbox[0]]);
