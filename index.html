@@ -512,7 +512,7 @@ var calculateStats = function(feature, all=false){
 		var c = confirmed[i].count;
 		var r = recovered[i].count;
 		var d = deaths[i].count;
-		if(all || c || r || d){
+		if(all || time.length || c || r || d){
 			time.push(confirmed[i].time.replace(/\//g, '-').replace(/ .*/, ''));
 			confirmedCounts.push(c);
 			recoveredCounts.push(r);
@@ -654,6 +654,9 @@ var showStats = function(features, query){
 			var lastConfirmed = confirmed[lastIndex].count;
 			var lastRecovered = recovered[lastIndex].count;
 			var lastDeaths = deaths[lastIndex].count;
+
+			if(!lastConfirmed)
+				return;
 
 			statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
 				(isMobile ? '' :
