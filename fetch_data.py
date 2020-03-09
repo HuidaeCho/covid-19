@@ -245,7 +245,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             continue
 
         # skip duplicate countries
-        if country in ('Republic of Ireland'):
+        if any(country == c for c in ('Republic of Ireland')):
             continue
 
         # retrieve coordinates from the geocoding server if desired;
