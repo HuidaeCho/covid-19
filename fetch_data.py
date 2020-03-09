@@ -244,6 +244,10 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         if len(confirmed_row) <= col:
             continue
 
+        # skip duplicate countries
+        if country in ('Republic of Ireland'):
+            continue
+
         # retrieve coordinates from the geocoding server if desired;
         # otherwise, just use coordinates from the spreadsheet
         latitude = float(confirmed_row[col]); col += 1
