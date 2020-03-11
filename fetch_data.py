@@ -7,7 +7,7 @@ import datetime
 import re
 import os
 import glob
-from en import en
+import dic
 import config
 
 features_url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json'
@@ -91,7 +91,7 @@ def fetch_kcdc_country():
     deaths = int(m[6].replace(',', ''))
     last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
 
-    file = get_data_filename('South Korea')
+    file = get_data_filename('Republic of Korea')
     add_header = True
     if os.path.exists(file):
         add_header = False
@@ -125,12 +125,12 @@ def fetch_kcdc_provinces():
     hour = int(m[4])
     last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
     for m in re.findall(kcdc_provinces_subre, m[5]):
-        province = en[m[0]]
+        province = dic.en[m[0]]
         confirmed = int(m[1].replace(',', ''))
         recovered = int(m[2].replace(',', ''))
         deaths = int(m[3].replace(',', ''))
 
-        file = get_data_filename('South Korea', province)
+        file = get_data_filename('Republic of Korea', province)
         add_header = True
         if os.path.exists(file):
             add_header = False
@@ -159,9 +159,9 @@ def fetch_dxy():
     last_updated_iso = f'{last_updated.strftime("%Y-%m-%d %H:%M:%S+00:00")}'
     for rec in json.loads(m[2]):
         province = rec['provinceShortName']
-        if not province in en:
+        if not province in dic.en:
             return
-        province = en[province]
+        province = dic.en[province]
         confirmed = rec['confirmedCount']
         recovered = rec['curedCount']
         deaths = rec['deadCount']
@@ -237,7 +237,14 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         province = confirmed_row[col]; col += 1
         province = '' if province == 'None' else province
         country = confirmed_row[col]; col += 1
+
         if len(confirmed_row) <= col:
+            continue
+
+        # TODO: for now, use state-level data only, but I want to keep
+        # historical county-level data; I'll see how CSSE updates county-level
+        # data
+        if country == 'US' and not province in dic.us_states.values():
             continue
 
         if country == 'Mainland China' or province == 'Taiwan' or ' SAR' in country:
@@ -388,7 +395,7 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
             'deaths': deaths
         })
 
-        if country == 'South Korea':
+        if country == 'Republic of Korea':
             south_korea_index = len(data) - 1
 
 # try to find newly confirmed provinces from the REST server
@@ -398,6 +405,7 @@ for feature in features:
     province = attr['Province_State'] if attr['Province_State'] else ''
     latitude = round(feature['geometry']['y'], 4)
     longitude = round(feature['geometry']['x'], 4)
+
     # Diamond Princess is a country in the REST API, but it's a
     # province in Others in the CSV files; Others in the REST API is
     # empty!
@@ -456,7 +464,7 @@ for feature in features:
 
 if kcdc_provinces_re:
     c = r = d = 0
-    country = 'South Korea'
+    country = 'Republic of Korea'
     last_updated = None
     for file in glob.glob('data/*, ' + country + '.csv'):
         m = re.search('^data/(.+),.+$', file)
