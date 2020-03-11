@@ -138,6 +138,7 @@ us_states = {
     'WV': 'West Virginia',
     'WI': 'Wisconsin',
     'WY': 'Wyoming',
+
     'AS': 'American Samoa',
     'DC': 'District of Columbia',
     'FM': 'Federated States of Micronesia',
