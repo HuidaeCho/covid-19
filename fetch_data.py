@@ -76,10 +76,15 @@ def fetch_kcdc():
     fetch_kcdc_provinces()
 
 def fetch_kcdc_country():
+    print('Fetching KCDC country...')
+
     res = requests.get(kcdc_country_url).content.decode()
     m = re.search(kcdc_country_re, res, re.DOTALL)
     if not m:
+        print('Fetching KCDC country failed')
         return
+
+    print('Fetching KCDC country matched')
 
     year = 2020
     month = int(m[1])
@@ -109,21 +114,35 @@ def fetch_kcdc_country():
             f.write('time,confirmed,recovered,deaths\n')
         f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
+    print('Fetching KCDC country completed')
+
 def fetch_kcdc_provinces():
+    print('Fetching KCDC provinces...')
+
     if not kcdc_provinces_re:
+        print('Fetching KCDC provinces skipped')
         return
+
+    print('Fetching KCDC provinces 1/2 matched')
 
     res = requests.get(kcdc_provinces_url).content.decode()
     m = re.search(kcdc_provinces_re, res, re.DOTALL)
     if not m:
+        print('Fetching KCDC provinces 1/2 failed')
         return
+
+    print('Fetching KCDC provinces 2/2 matched')
 
     year = 2020
     month = int(m[1])
     date = int(m[2])
     hour = int(m[3])
     last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
-    for m in re.findall(kcdc_provinces_subre, m[4]):
+    matches = re.findall(kcdc_provinces_subre, m[4])
+    if not matches:
+        print('Fetching KCDC provinces 2/2 failed')
+
+    for m in matches:
         province = dic.en[m[0]]
         confirmed = int(m[1].replace(',', ''))
         recovered = int(m[2].replace(',', ''))
@@ -148,11 +167,19 @@ def fetch_kcdc_provinces():
                 f.write('time,confirmed,recovered,deaths\n')
             f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
+    print('Fetching KCDC provinces completed')
+
 def fetch_dxy():
+    print('Fetching DXY...')
+
     res = requests.get(dxy_url).content.decode()
     m = re.search(dxy_re, res, re.DOTALL)
     if not m:
+        print('Fetching DXY failed')
         return
+
+    print('Fetching DXY matched')
+
     last_updated = datetime.datetime.fromtimestamp(int(m[1])/1000,
             tz=datetime.timezone.utc)
     last_updated_iso = f'{last_updated.strftime("%Y-%m-%d %H:%M:%S+00:00")}'
@@ -185,6 +212,8 @@ def fetch_dxy():
             if add_header:
                 f.write('time,confirmed,recovered,deaths\n')
             f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
+
+    print('Fetching DXY completed')
 
 fetch_kcdc()
 fetch_dxy()
