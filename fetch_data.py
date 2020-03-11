@@ -18,9 +18,8 @@ deaths_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/c
 kcdc_country_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do'
 kcdc_country_re = '발생현황\s*\(([0-9]+)\.([0-9]+).*?([0-9]+)시.*?기준\).*?>누적 확진자 현황<.*?tbody>\s*<tr>\s*<td>([0-9,]+)</td>\s*<td>([0-9,]+)</td>\s*<td>[0-9,]+</td>\s*<td>([0-9,]+)</td>'
 kcdc_provinces_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do?brdGubun=13'
-kcdc_provinces_re = '([0-9]{4})년 ([0-9]+)월 ([0-9]+)일.*?([0-9]+)시.*기준.*?<tr class="sumline">.*?</tr>.*?(<tr>.+?)</tbody>'
-kcdc_provinces_re = None
-kcdc_provinces_subre = '>([^>]+)</th>.*?<[^>]+?s_type1[^>]+>\s*([0-9,]+)\s*<.+?s_type3[^>]+>\s*([0-9,]+)\s*<.+?s_type4[^>]+>\s*([0-9,]+)\s*<'
+kcdc_provinces_re = '([0-9]+)\.([0-9]+)\..*?([0-9]+)시.*기준.*?<tr class="sumline">.*?</tr>.*?(<tr>.+?)</tbody>'
+kcdc_provinces_subre = '>([^>]+)</th>.*?<[^>]+?s_type1[^>]+>\s*([0-9,]+)\s*<.+?s_type4[^>]+>\s*([0-9,]+)\s*<.+?s_type2[^>]+>\s*([0-9,]+)\s*<'
 
 dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
 dxy_re = '"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
@@ -79,7 +78,6 @@ def fetch_kcdc():
 def fetch_kcdc_country():
     res = requests.get(kcdc_country_url).content.decode()
     m = re.search(kcdc_country_re, res, re.DOTALL)
-    print(m)
     if not m:
         return
 
@@ -120,12 +118,12 @@ def fetch_kcdc_provinces():
     if not m:
         return
 
-    year = int(m[1])
-    month = int(m[2])
-    date = int(m[3])
-    hour = int(m[4])
+    year = 2020
+    month = int(m[1])
+    date = int(m[2])
+    hour = int(m[3])
     last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
-    for m in re.findall(kcdc_provinces_subre, m[5]):
+    for m in re.findall(kcdc_provinces_subre, m[4]):
         province = dic.en[m[0]]
         confirmed = int(m[1].replace(',', ''))
         recovered = int(m[2].replace(',', ''))
@@ -500,6 +498,8 @@ if kcdc_provinces_re:
             d += deaths[index]['count']
 
             latitude, longitude = geocode(country, province)
+            latitude = round(latitude, 4)
+            longitude = round(longitude, 4)
             data.append({
                 'country': country,
                 'province': province,
@@ -540,12 +540,15 @@ if kcdc_provinces_re:
                 'deaths': deaths
            })
     else:
+        # TODO: keep or not?
         data[south_korea_index]['confirmed'][index]['time'] = last_updated_str
         data[south_korea_index]['confirmed'][index]['count'] = c
         data[south_korea_index]['recovered'][index]['time'] = last_updated_str
         data[south_korea_index]['recovered'][index]['count'] = r
         data[south_korea_index]['deaths'][index]['time'] = last_updated_str
         data[south_korea_index]['deaths'][index]['count'] = d
+
+    del data[south_korea_index]
 
 total_confirmed = total_recovered = total_deaths = 0
 for rec in data:
