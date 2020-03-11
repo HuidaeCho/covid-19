@@ -166,9 +166,7 @@ def fetch_dxy():
         recovered = rec['curedCount']
         deaths = rec['deadCount']
 
-        country = 'Mainland China'
-        if province in ('Hong Kong', 'Macau', 'Taiwan'):
-            country = province
+        country = 'China'
 
         file = get_data_filename(country, province)
         add_header = True
@@ -211,8 +209,6 @@ data = []
 # some provinces repeat in the CSSE data
 done = []
 
-total_confirmed = total_recovered = total_deaths = 0
-
 # download CSV files
 confirmed_res = requests.get(confirmed_url)
 recovered_res = requests.get(recovered_url)
@@ -244,9 +240,10 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         if len(confirmed_row) <= col:
             continue
 
-        # skip duplicate countries
-        if country == 'Republic of Ireland':
-            continue
+        if country == 'Mainland China' or province == 'Taiwan' or ' SAR' in country:
+            if country != 'Mainland China':
+                province = country
+            country = 'China'
 
         # retrieve coordinates from the geocoding server if desired;
         # otherwise, just use coordinates from the spreadsheet
@@ -255,6 +252,8 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         if config.geocode:
             latitude, longitude = geocode(country, province,
                     latitude, longitude)
+        latitude = round(latitude, 4)
+        longitude = round(longitude, 4)
 
         # create and populate three lists with time series data
         confirmed = []
@@ -293,8 +292,8 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
                 continue
 
             # grab new coordinates from the REST server
-            latitude = feature['geometry']['y']
-            longitude = feature['geometry']['x']
+            latitude = round(feature['geometry']['y'], 4)
+            longitude = round(feature['geometry']['x'], 4)
 
             last_updated = datetime.datetime.fromtimestamp(
                     attr['Last_Update']/1000, tz=datetime.timezone.utc)
@@ -392,18 +391,13 @@ with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
         if country == 'South Korea':
             south_korea_index = len(data) - 1
 
-        index = len(confirmed) - 1
-        total_confirmed += confirmed[index]['count']
-        total_recovered += recovered[index]['count']
-        total_deaths += deaths[index]['count']
-
 # try to find newly confirmed provinces from the REST server
 for feature in features:
     attr = feature['attributes']
     country = attr['Country_Region']
     province = attr['Province_State'] if attr['Province_State'] else ''
-    latitude = feature['geometry']['y']
-    longitude = feature['geometry']['x']
+    latitude = round(feature['geometry']['y'], 4)
+    longitude = round(feature['geometry']['x'], 4)
     # Diamond Princess is a country in the REST API, but it's a
     # province in Others in the CSV files; Others in the REST API is
     # empty!
@@ -415,8 +409,8 @@ for feature in features:
         if country == rec['country']:
             if province == rec['province'] or \
                (not province and rec['province']) or \
-               (abs(latitude - rec['latitude']) < 0.00001 and
-                abs(longitude - rec['longitude']) < 0.00001):
+               (abs(latitude - rec['latitude']) <= 0.0001 and
+                abs(longitude - rec['longitude']) <= 0.0001):
                 if province and not rec['province']:
                     rec['province'] = province
                 found = True
@@ -459,10 +453,6 @@ for feature in features:
     print(f'REST confirmed: {province}, {country}, {c}')
     print(f'REST recovered: {province}, {country}, {r}')
     print(f'REST deaths   : {province}, {country}, {d}')
-
-    total_confirmed += c
-    total_recovered += r
-    total_deaths += d
 
 if kcdc_provinces_re:
     c = r = d = 0
@@ -541,16 +531,23 @@ if kcdc_provinces_re:
                 'deaths': deaths
            })
     else:
-        total_confirmed += c - data[south_korea_index]['confirmed'][index]['count']
-        total_recovered += r - data[south_korea_index]['recovered'][index]['count']
-        total_deaths += d - data[south_korea_index]['deaths'][index]['count']
-
         data[south_korea_index]['confirmed'][index]['time'] = last_updated_str
         data[south_korea_index]['confirmed'][index]['count'] = c
         data[south_korea_index]['recovered'][index]['time'] = last_updated_str
         data[south_korea_index]['recovered'][index]['count'] = r
         data[south_korea_index]['deaths'][index]['time'] = last_updated_str
         data[south_korea_index]['deaths'][index]['count'] = d
+
+total_confirmed = total_recovered = total_deaths = 0
+for rec in data:
+    index = len(rec['confirmed']) - 1
+    c = rec['confirmed'][index]['count']
+    r = rec['recovered'][index]['count']
+    d = rec['deaths'][index]['count']
+    print(f'final: {rec["province"]}; {rec["country"]}; {rec["latitude"]}; {rec["longitude"]}; {c}; {r}; {d}')
+    total_confirmed += c
+    total_recovered += r
+    total_deaths += d
 
 print(f'Total confirmed: {total_confirmed}')
 print(f'Total recovered: {total_recovered}')

@@ -33,7 +33,7 @@ en = {
         '山西': 'Shanxi',
         '松江': 'Songjiang',
         '绥远': 'Suiyuan',
-        '台湾': 'Taiwan',
+        '台湾': 'Taipei and environs',
         '西康': 'Xikang',
         '兴安': "Xing'an",
         '新疆': 'Xinjiang',
@@ -64,8 +64,8 @@ en = {
         '武汉': 'Wuhan',
         '西安': "Xi'an",
 
-        '香港': 'Hong Kong',
-        '澳门': 'Macau',
+        '香港': 'Hong Kong SAR',
+        '澳门': 'Macao SAR',
 
         '서울': 'Seoul',
         '부산': 'Busan',
