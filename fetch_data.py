@@ -540,7 +540,6 @@ if kcdc_provinces_re:
                 'deaths': deaths
            })
     else:
-        # TODO: keep or not?
         data[south_korea_index]['confirmed'][index]['time'] = last_updated_str
         data[south_korea_index]['confirmed'][index]['count'] = c
         data[south_korea_index]['recovered'][index]['time'] = last_updated_str
@@ -548,10 +547,11 @@ if kcdc_provinces_re:
         data[south_korea_index]['deaths'][index]['time'] = last_updated_str
         data[south_korea_index]['deaths'][index]['count'] = d
 
-    del data[south_korea_index]
-
 total_confirmed = total_recovered = total_deaths = 0
-for rec in data:
+for i in range(0, len(data)):
+    if i == south_korea_index:
+        continue
+    rec = data[i]
     index = len(rec['confirmed']) - 1
     c = rec['confirmed'][index]['count']
     r = rec['recovered'][index]['count']
