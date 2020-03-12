@@ -34,7 +34,8 @@ coors_json = 'coors.json'
 
 data = []
 key2data = {}
-south_korea_provinces_data = False
+has_south_korea_provinces = False
+use_us_county_level = False
 
 def geocode(country, province, latitude=None, longitude=None):
     # read existing data
@@ -331,7 +332,7 @@ def fetch_kcdc_country():
     print('Fetching KCDC country completed')
 
 def fetch_kcdc_provinces():
-    global south_korea_provinces_data
+    global has_south_korea_provinces
 
     print('Fetching KCDC provinces...')
 
@@ -491,7 +492,7 @@ def fetch_kcdc_provinces():
     if south_korea_deaths != total_deaths:
         print(f'data deaths   : {country}, {south_korea_deaths} => {total_deaths}')
 
-    south_korea_provinces_data = True
+    has_south_korea_provinces = True
 
     print('Fetching KCDC provinces completed')
 
@@ -591,12 +592,15 @@ def merge_data():
                 }
 
 def clean_us_data():
+    if not use_us_county_level:
+        return
+
+    # TODO: South Korea-like data handling
     for rec in data:
         country = rec['country']
         province = rec['province']
         if country != 'US' or province not in dic.us_states.values():
             continue
-
 
 def sort_data():
     global data
@@ -618,14 +622,12 @@ def report_data():
         c = rec['confirmed'][index]['count']
         r = rec['recovered'][index]['count']
         d = rec['deaths'][index]['count']
-        if c == 0 or (south_korea_provinces_data and country == 'South Korea' and not province):
+        if c == 0 or (has_south_korea_provinces and country == 'South Korea' and not province):
             continue
-#        if country == 'US' and province[-2:] in dic.us_states:
-#            print(country, province, c)
-#            continue
-        if country == 'US' and province in dic.us_states.values():
-            print(country, province, c)
-            continue
+        if country == 'US':
+            if (use_us_county_level and province in dic.us_states.values()) or \
+               (not use_us_county_level and province[-2:] in dic.us_states):
+                    continue
         print(f'final: {province}; {country}; {latitude}; {longitude}; {c}; {r}; {d}')
         total_confirmed += c
         total_recovered += r
@@ -673,6 +675,7 @@ def write_geojson():
 if __name__ == '__main__':
     fetch_csse_csv()
     fetch_csse_rest()
+    clean_us_data()
 
     #fetch_dxy()
     #fetch_kcdc_country()
