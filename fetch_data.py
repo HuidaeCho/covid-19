@@ -590,6 +590,14 @@ def merge_data():
                     'count': d
                 }
 
+def clean_us_data():
+    for rec in data:
+        country = rec['country']
+        province = rec['province']
+        if country != 'US' or province not in dic.us_states.values():
+            continue
+
+
 def sort_data():
     global data
 
@@ -601,8 +609,7 @@ def sort_data():
 
 def report_data():
     total_confirmed = total_recovered = total_deaths = 0
-    for i in range(0, len(data)):
-        rec = data[i]
+    for rec in data:
         country = rec['country']
         province = rec['province']
         latitude = rec['latitude']
@@ -612,6 +619,12 @@ def report_data():
         r = rec['recovered'][index]['count']
         d = rec['deaths'][index]['count']
         if c == 0 or (south_korea_provinces_data and country == 'South Korea' and not province):
+            continue
+#        if country == 'US' and province[-2:] in dic.us_states:
+#            print(country, province, c)
+#            continue
+        if country == 'US' and province in dic.us_states.values():
+            print(country, province, c)
             continue
         print(f'final: {province}; {country}; {latitude}; {longitude}; {c}; {r}; {d}')
         total_confirmed += c
@@ -628,6 +641,8 @@ def write_geojson():
     # create a feature collection
     for i in range(0, len(data)):
         rec = data[i]
+        country = rec['country']
+        province = rec['province']
         if rec['confirmed'][len(rec['confirmed']) - 1]['count'] == 0:
             continue
         features.append({
@@ -659,11 +674,11 @@ if __name__ == '__main__':
     fetch_csse_csv()
     fetch_csse_rest()
 
-    fetch_dxy()
-    fetch_kcdc_country()
-    merge_data()
+    #fetch_dxy()
+    #fetch_kcdc_country()
+    #merge_data()
 
-    fetch_kcdc_provinces()
+    #fetch_kcdc_provinces()
 
     sort_data()
     report_data()
