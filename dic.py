@@ -150,6 +150,11 @@ us_states = {
     'VI': 'Virgin Islands',
 }
 
+ll_csv2csv = {
+    # Gansu, Mainland China
+    '37.8099,101.0583': '36.0611,103.8343',
+}
+
 ll_rest2csv = {
     # United Arab Emirates
     '23.4241,53.8478': '24.0,54.0',
@@ -177,4 +182,6 @@ ll_rest2csv = {
     '46.0,25.0': '45.9432,24.9668',
     # British Columbia, Canada
     '53.7267,-127.6476': '49.2827,-123.1207',
+    # Gansu, Mainland China
+    '37.8099,101.0583': '36.0611,103.8343',
 }

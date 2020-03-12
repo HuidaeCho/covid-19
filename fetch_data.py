@@ -124,6 +124,8 @@ def fetch_csse_csv():
                 key = f'{province},{country}'
             else:
                 key = f'{latitude},{longitude}'
+            if key in dic.ll_csv2csv:
+                key = dic.ll_csv2csv[key]
             if key not in key2data:
                 key2data[key] = len(data)
                 if key == '36.0,128.0':
