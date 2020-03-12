@@ -112,8 +112,8 @@ def fetch_csse_csv():
 
             col = 0
             province = confirmed_row[col]; col += 1
-            province = '' if province == 'None' else province
-            country = confirmed_row[col]; col += 1
+            province = '' if province == 'None' else province.strip()
+            country = confirmed_row[col].strip(); col += 1
             if country in dic.co_names:
                 country = dic.co_names[country]
 
@@ -210,8 +210,8 @@ def fetch_csse_rest():
         if c == 0:
             continue
 
-        country = attr['Country_Region']
-        province = attr['Province_State'] if attr['Province_State'] else ''
+        country = attr['Country_Region'].strip()
+        province = attr['Province_State'].strip() if attr['Province_State'] else ''
         latitude = round(feature['geometry']['y'], 4)
         longitude = round(feature['geometry']['x'], 4)
         last_updated = datetime.datetime.fromtimestamp(
