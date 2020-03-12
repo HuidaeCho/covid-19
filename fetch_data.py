@@ -647,6 +647,10 @@ def write_geojson():
         province = rec['province']
         if rec['confirmed'][len(rec['confirmed']) - 1]['count'] == 0:
             continue
+        if country == 'US':
+            if (use_us_county_level and province in dic.us_states.values()) or \
+               (not use_us_county_level and province[-2:] in dic.us_states):
+                    continue
         features.append({
             'id': i,
             'type': 'Feature',
