@@ -353,7 +353,7 @@ def fetch_kcdc_provinces():
     if not matches:
         print('Fetching KCDC provinces 2/2 failed')
 
-    c = r = d = 0
+    total_confirmed = total_recovered = total_deaths = 0
     last_updated = None
     for m in matches:
         province = dic.en[m[0]]
@@ -407,9 +407,17 @@ def fetch_kcdc_provinces():
                     'count': int(row[3])
                 })
             index = len(confirmed) - 1
-            c += confirmed[index]['count']
-            r += recovered[index]['count']
-            d += deaths[index]['count']
+            c = confirmed[index]['count']
+            r = recovered[index]['count']
+            d = deaths[index]['count']
+
+            print(f'data confirmed: {province}, {country}, {c}')
+            print(f'data recovered: {province}, {country}, {r}')
+            print(f'data deaths   : {province}, {country}, {d}')
+
+            total_confirmed += c
+            total_recovered += r
+            total_deaths += d
 
             latitude, longitude = geocode(country, province)
             latitude = round(latitude, 4)
@@ -425,36 +433,56 @@ def fetch_kcdc_provinces():
             })
 
     last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+
     index = len(data[south_korea_index]['confirmed']) - 1
-    if c < data[south_korea_index]['confirmed'][index]['count'] or \
-       r < data[south_korea_index]['recovered'][index]['count'] or \
-       d < data[south_korea_index]['deaths'][index]['count']:
-           province = 'Others'
-           latitude = data[south_korea_index]['latitude']
-           longitude = data[south_korea_index]['longitude']
-           confirmed = [{
-               'time': last_updated_str,
-               'count': data[south_korea_index]['confirmed'][index]['count'] - c
-           }]
-           recovered = [{
-               'time': last_updated_str,
-               'count': data[south_korea_index]['recovered'][index]['count'] - r
-           }]
-           deaths = [{
-               'time': last_updated_str,
-               'count': data[south_korea_index]['deaths'][index]['count'] - d
-           }]
-           data.append({
-                'country': country,
-                'province': province,
-                'latitude': latitude,
-                'longitude': longitude,
-                'confirmed': confirmed,
-                'recovered': recovered,
-                'deaths': deaths
-           })
-    else:
-        del data[south_korea_index]
+    south_korea_confirmed = data[south_korea_index]['confirmed'][index]['count']
+    south_korea_recovered = data[south_korea_index]['recovered'][index]['count']
+    south_korea_deaths = data[south_korea_index]['deaths'][index]['count']
+
+    if total_confirmed < south_korea_confirmed or \
+       total_recovered < south_korea_recovered or \
+       total_deaths < south_korea_deaths:
+        province = 'Others'
+        latitude = data[south_korea_index]['latitude']
+        longitude = data[south_korea_index]['longitude']
+        c = south_korea_confirmed - total_confirmed
+        r = south_korea_recovered - total_recovered
+        d = south_korea_deaths - total_deaths
+
+        print(f'data confirmed: {province}, {country}, {c}')
+        print(f'data recovered: {province}, {country}, {r}')
+        print(f'data deaths   : {province}, {country}, {d}')
+
+        confirmed = [{
+            'time': last_updated_str,
+            'count': c
+        }]
+        recovered = [{
+            'time': last_updated_str,
+            'count': r
+        }]
+        deaths = [{
+            'time': last_updated_str,
+            'count': d
+        }]
+        data.append({
+            'country': country,
+            'province': province,
+            'latitude': latitude,
+            'longitude': longitude,
+            'confirmed': confirmed,
+            'recovered': recovered,
+            'deaths': deaths
+        })
+
+    del data[south_korea_index]
+    print(f'data {country} deleted')
+    if south_korea_confirmed != total_confirmed:
+        print(f'data confirmed: {country}, {south_korea_confirmed} => {total_confirmed}')
+    if south_korea_recovered != total_recovered:
+        print(f'data recovered: {country}, {south_korea_recovered} => {total_recovered}')
+    if south_korea_deaths != total_deaths:
+        print(f'data deaths   : {country}, {south_korea_deaths} => {total_deaths}')
 
     print('Fetching KCDC provinces completed')
 
