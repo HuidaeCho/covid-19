@@ -76,6 +76,14 @@ def fetch_csse_csv():
     confirmed_res = requests.get(confirmed_url)
     recovered_res = requests.get(recovered_url)
     deaths_res = requests.get(deaths_url)
+
+    with open('data/csse_confirmed.csv', 'w') as f:
+        f.write(confirmed_res.content.decode())
+    with open('data/csse_recovered.csv', 'w') as f:
+        f.write(recovered_res.content.decode())
+    with open('data/csse_deaths.csv', 'w') as f:
+        f.write(deaths_res.content.decode())
+
     with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
          io.StringIO(recovered_res.content.decode()) as recovered_f,\
          io.StringIO(deaths_res.content.decode()) as deaths_f:
@@ -176,6 +184,10 @@ def fetch_csse_rest():
     print('Fetching CSSE REST...')
 
     res = requests.get(features_url)
+
+    with open('data/csse_rest.csv', 'w') as f:
+        f.write(res.content.decode())
+
     features = json.loads(res.content)['features']
 
     # try to find most up-to-date info from the REST server
@@ -409,6 +421,52 @@ def fetch_dxy():
 
     print('Fetching DXY completed')
 
+def merge_non_csse_data():
+    for rec in data:
+        country = rec['country']
+        province = rec['province']
+
+        file = get_data_filename(country, province)
+        if not os.path.exists(file):
+            continue
+
+        confirmed = rec['confirmed']
+        recovered = rec['recovered']
+        deaths = rec['deaths']
+        index = len(confirmed) - 1
+        time_str = confirmed[index]['time']
+
+        with open(file) as f:
+            reader = csv.reader(f)
+            for row in reader:
+                pass
+            last_updated = datetime.datetime.fromisoformat(row[0]).\
+                    astimezone(datetime.timezone.utc)
+            last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+            if time_str > last_updated_str:
+                last_updated_str = time_str
+            c = int(row[1])
+            r = int(row[2])
+            d = int(row[3])
+            if c > confirmed[index]['count']:
+                print(f'data confirmed: {province}, {country}, {confirmed[index]["count"]} => {c}')
+                confirmed[index] = {
+                    'time': last_updated_str,
+                    'count': c
+                }
+            if r > recovered[index]['count']:
+                print(f'data recovered: {province}, {country}, {recovered[index]["count"]} => {r}')
+                recovered[index] = {
+                    'time': last_updated_str,
+                    'count': r
+                }
+            if d > deaths[index]['count']:
+                print(f'data deaths   : {province}, {country}, {deaths[index]["count"]} => {d}')
+                deaths[index] = {
+                    'time': last_updated_str,
+                    'count': d
+                }
+
 # create a new list for the output JSON object
 data = []
 # lat/long to data index
@@ -416,55 +474,12 @@ key2data = {}
 
 fetch_csse_csv()
 fetch_csse_rest()
+
 fetch_kcdc()
 fetch_dxy()
 
-#
-#        file = get_data_filename(country, province)
-#        if os.path.exists(file):
-#            with open(file) as f:
-#                reader = csv.reader(f)
-#                for row in reader:
-#                    pass
-#                last_updated = datetime.datetime.fromisoformat(row[0]).\
-#                        astimezone(datetime.timezone.utc)
-#                if last_updated > time:
-#                    last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-#                index = len(confirmed) - 1
-#                c = int(row[1])
-#                r = int(row[2])
-#                d = int(row[3])
-#                if c > confirmed[index]['count']:
-#                    print(f'data confirmed: {province}, {country}, {confirmed[index]["count"]} => {c}')
-#                    confirmed[index] = {
-#                        'time': last_updated_str,
-#                        'count': c
-#                    }
-#                if r > recovered[index]['count']:
-#                    print(f'data recovered: {province}, {country}, {recovered[index]["count"]} => {r}')
-#                    recovered[index] = {
-#                        'time': last_updated_str,
-#                        'count': r
-#                    }
-#                if d > deaths[index]['count']:
-#                    print(f'data deaths   : {province}, {country}, {deaths[index]["count"]} => {d}')
-#                    deaths[index] = {
-#                        'time': last_updated_str,
-#                        'count': d
-#                    }
-#
-#        for feature in geodata['features']:
-#            props = feature['properties']
-#            if props['country'] == country and props['province'] == province:
-#                for i in range(0, min(len(confirmed), len(props['confirmed']))):
-#                    if confirmed[i]['time'] == props['confirmed'][i]['time']:
-#                        confirmed[i]['count'] = max(confirmed[i]['count'],
-#                                props['confirmed'][i]['count'])
-#                        recovered[i]['count'] = max(recovered[i]['count'],
-#                                props['recovered'][i]['count'])
-#                        deaths[i]['count'] = max(deaths[i]['count'],
-#                                props['deaths'][i]['count'])
-#                break
+merge_non_csse_data()
+
 
 
 #if kcdc_provinces_re:
