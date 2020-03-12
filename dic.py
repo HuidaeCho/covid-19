@@ -153,6 +153,8 @@ us_states = {
 ll_csv2csv = {
     # Gansu, Mainland China
     '37.8099,101.0583': '36.0611,103.8343',
+    # Hebei, Mainland China
+    '39.549,116.1306': '38.0428,114.5149',
 }
 
 ll_rest2csv = {
@@ -184,4 +186,14 @@ ll_rest2csv = {
     '53.7267,-127.6476': '49.2827,-123.1207',
     # Gansu, Mainland China
     '37.8099,101.0583': '36.0611,103.8343',
+    # Hebei, Mainland China
+    '39.549,116.1306': '38.0428,114.5149',
+}
+
+co_names = {
+    'Republic of Korea': 'South Korea',
+    'Korea, South': 'South Korea',
+    'Iran (Islamic Republic of)': 'Iran',
+    'Republic of Moldova': 'Moldova',
+    'Taiwan*': 'Taiwan',
 }

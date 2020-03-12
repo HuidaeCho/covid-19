@@ -32,6 +32,9 @@ geodata_json = 'geodata.json'
 # use this dictionary to avoid geocoding the same province multiple times
 coors_json = 'coors.json'
 
+data = []
+key2data = {}
+
 def geocode(country, province, latitude=None, longitude=None):
     # read existing data
     if os.path.exists(coors_json):
@@ -109,6 +112,8 @@ def fetch_csse_csv():
             province = confirmed_row[col]; col += 1
             province = '' if province == 'None' else province
             country = confirmed_row[col]; col += 1
+            if country in dic.co_names:
+                country = dic.co_names[country]
 
             # retrieve coordinates from the geocoding server if desired;
             # otherwise, just use coordinates from the spreadsheet
@@ -146,9 +151,10 @@ def fetch_csse_csv():
                 append = True
             else:
                 # retrieve existing lists
-                confirmed = data[key2data[key]]['confirmed']
-                recovered = data[key2data[key]]['recovered']
-                deaths = data[key2data[key]]['deaths']
+                rec = data[key2data[key]]
+                confirmed = rec['confirmed']
+                recovered = rec['recovered']
+                deaths = rec['deaths']
                 append = False
 
             for j in range(col, len(confirmed_row)):
@@ -195,6 +201,13 @@ def fetch_csse_rest():
     # try to find most up-to-date info from the REST server
     for feature in features:
         attr = feature['attributes']
+        c = int(attr['Confirmed'])
+        r = int(attr['Recovered'])
+        d = int(attr['Deaths'])
+
+        if c == 0:
+            continue
+
         country = attr['Country_Region']
         province = attr['Province_State'] if attr['Province_State'] else ''
         latitude = round(feature['geometry']['y'], 4)
@@ -228,19 +241,18 @@ def fetch_csse_rest():
             existing = False
         else:
             # retrieve existing lists
-            confirmed = data[key2data[key]]['confirmed']
-            recovered = data[key2data[key]]['recovered']
-            deaths = data[key2data[key]]['deaths']
+            rec = data[key2data[key]]
+            country = rec['country']
+            province = rec['province']
+            confirmed = rec['confirmed']
+            recovered = rec['recovered']
+            deaths = rec['deaths']
             time_str = confirmed[len(confirmed) - 1]['time']
             # I found this case where a time from the spreadsheet is more
             # recent than the last updated time from the REST server
             if time_str > last_updated_str:
                 last_updated_str = time_str
             existing = True
-
-        c = int(attr['Confirmed'])
-        r = int(attr['Recovered'])
-        d = int(attr['Deaths'])
 
         if existing:
             index = len(confirmed) - 1
@@ -272,10 +284,6 @@ def fetch_csse_rest():
 
 def get_data_filename(country, province=None):
     return 'data/' + (province + ', ' if province else '') + country + '.csv'
-
-def fetch_kcdc():
-    fetch_kcdc_country()
-    fetch_kcdc_provinces()
 
 def fetch_kcdc_country():
     print('Fetching KCDC country...')
@@ -335,6 +343,7 @@ def fetch_kcdc_provinces():
 
     print('Fetching KCDC provinces 2/2 matched')
 
+    country = 'South Korea'
     year = 2020
     month = int(m[1])
     date = int(m[2])
@@ -344,14 +353,17 @@ def fetch_kcdc_provinces():
     if not matches:
         print('Fetching KCDC provinces 2/2 failed')
 
+    c = r = d = 0
+    last_updated = None
     for m in matches:
         province = dic.en[m[0]]
         confirmed = int(m[1].replace(',', ''))
         recovered = int(m[2].replace(',', ''))
         deaths = int(m[3].replace(',', ''))
 
-        file = get_data_filename('South Korea', province)
+        file = get_data_filename(country, province)
         add_header = True
+        append = True
         if os.path.exists(file):
             add_header = False
             with open(file) as f:
@@ -362,12 +374,87 @@ def fetch_kcdc_provinces():
                         datetime.timezone.utc)
                 if time >= datetime.datetime.fromisoformat(last_updated_iso).\
                         astimezone(datetime.timezone.utc):
-                    continue
+                    append = False
 
-        with open(file, 'a') as f:
-            if add_header:
-                f.write('time,confirmed,recovered,deaths\n')
-            f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
+        if append:
+            with open(file, 'a') as f:
+                if add_header:
+                    f.write('time,confirmed,recovered,deaths\n')
+                f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
+
+        with open(file) as f:
+            reader = csv.reader(f)
+            reader.__next__()
+            confirmed = []
+            recovered = []
+            deaths = []
+            for row in reader:
+                time = datetime.datetime.fromisoformat(row[0]).astimezone(
+                        datetime.timezone.utc)
+                if not last_updated or time > last_updated:
+                    last_updated = time
+                time_str = f'{time.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+                confirmed.append({
+                    'time': time_str,
+                    'count': int(row[1])
+                }),
+                recovered.append({
+                    'time': time_str,
+                    'count': int(row[2])
+                }),
+                deaths.append({
+                    'time': time_str,
+                    'count': int(row[3])
+                })
+            index = len(confirmed) - 1
+            c += confirmed[index]['count']
+            r += recovered[index]['count']
+            d += deaths[index]['count']
+
+            latitude, longitude = geocode(country, province)
+            latitude = round(latitude, 4)
+            longitude = round(longitude, 4)
+            data.append({
+                'country': country,
+                'province': province,
+                'latitude': latitude,
+                'longitude': longitude,
+                'confirmed': confirmed,
+                'recovered': recovered,
+                'deaths': deaths
+            })
+
+    last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+    index = len(data[south_korea_index]['confirmed']) - 1
+    if c < data[south_korea_index]['confirmed'][index]['count'] or \
+       r < data[south_korea_index]['recovered'][index]['count'] or \
+       d < data[south_korea_index]['deaths'][index]['count']:
+           province = 'Others'
+           latitude = data[south_korea_index]['latitude']
+           longitude = data[south_korea_index]['longitude']
+           confirmed = [{
+               'time': last_updated_str,
+               'count': data[south_korea_index]['confirmed'][index]['count'] - c
+           }]
+           recovered = [{
+               'time': last_updated_str,
+               'count': data[south_korea_index]['recovered'][index]['count'] - r
+           }]
+           deaths = [{
+               'time': last_updated_str,
+               'count': data[south_korea_index]['deaths'][index]['count'] - d
+           }]
+           data.append({
+                'country': country,
+                'province': province,
+                'latitude': latitude,
+                'longitude': longitude,
+                'confirmed': confirmed,
+                'recovered': recovered,
+                'deaths': deaths
+           })
+    else:
+        del data[south_korea_index]
 
     print('Fetching KCDC provinces completed')
 
@@ -394,13 +481,10 @@ def fetch_dxy():
         recovered = rec['curedCount']
         deaths = rec['deadCount']
 
-        country = 'Mainland China'
-        if province == 'Hong Kong':
-            country = f'{province} SAR'
-        elif province == 'Macau':
-            country = 'Macao SAR'
-        elif province == 'Taiwan':
-            country = 'Taipei and environs'
+        country = 'China'
+        if province == 'Taiwan':
+            country = 'Taiwan'
+            province = ''
 
         file = get_data_filename(country, province)
         add_header = True
@@ -423,7 +507,7 @@ def fetch_dxy():
 
     print('Fetching DXY completed')
 
-def merge_non_csse_data():
+def merge_data():
     for rec in data:
         country = rec['country']
         province = rec['province']
@@ -469,161 +553,80 @@ def merge_non_csse_data():
                     'count': d
                 }
 
-# create a new list for the output JSON object
-data = []
-# lat/long to data index
-key2data = {}
+def sort_data():
+    global data
 
-fetch_csse_csv()
-fetch_csse_rest()
+    # sort records by confirmed, country, and province
+    data = sorted(data, key=lambda x: (
+        -x['confirmed'][len(x['confirmed'])-1]['count'],
+        x['country'],
+        x['province']))
 
-fetch_kcdc()
-fetch_dxy()
+def report_data():
+    total_confirmed = total_recovered = total_deaths = 0
+    for i in range(0, len(data)):
+    #    if i == south_korea_index:
+    #        continue
+        rec = data[i]
+        index = len(rec['confirmed']) - 1
+        c = rec['confirmed'][index]['count']
+        r = rec['recovered'][index]['count']
+        d = rec['deaths'][index]['count']
+        if c == 0:
+            continue
+        print(f'final: {rec["province"]}; {rec["country"]}; {rec["latitude"]}; {rec["longitude"]}; {c}; {r}; {d}')
+        total_confirmed += c
+        total_recovered += r
+        total_deaths += d
 
-merge_non_csse_data()
+    print(f'Total confirmed: {total_confirmed}')
+    print(f'Total recovered: {total_recovered}')
+    print(f'Total deaths   : {total_deaths}')
 
+def write_geojson():
+    # create a new list to store all the features
+    features = []
+    # create a feature collection
+    for i in range(0, len(data)):
+        rec = data[i]
+        if rec['confirmed'][len(rec['confirmed']) - 1]['count'] == 0:
+            continue
+        features.append({
+            'id': i,
+            'type': 'Feature',
+            'geometry': {
+                'type': 'Point',
+                'coordinates': [rec['longitude'], rec['latitude']]
+            },
+            'properties': {
+                'country': rec['country'],
+                'province': rec['province'],
+                'confirmed': rec['confirmed'],
+                'recovered': rec['recovered'],
+                'deaths': rec['deaths']
+            }
+        })
 
+    # finally, build the output GeoJSON object and save it
+    geodata = {
+        'type': 'FeatureCollection',
+        'features': features
+    }
 
-#if kcdc_provinces_re:
-#    c = r = d = 0
-#    country = 'South Korea'
-#    last_updated = None
-#    for file in glob.glob('data/*, ' + country + '.csv'):
-#        m = re.search('^data/(.+),.+$', file)
-#        province = m[1]
-#        with open(file) as f:
-#            reader = csv.reader(f)
-#            reader.__next__()
-#            confirmed = []
-#            recovered = []
-#            deaths = []
-#            for row in reader:
-#                time = datetime.datetime.fromisoformat(row[0]).astimezone(
-#                        datetime.timezone.utc)
-#                if last_updated is None or time > last_updated:
-#                    last_updated = time
-#                time_str = f'{time.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-#                confirmed.append({
-#                    'time': time_str,
-#                    'count': int(row[1])
-#                }),
-#                recovered.append({
-#                    'time': time_str,
-#                    'count': int(row[2])
-#                }),
-#                deaths.append({
-#                    'time': time_str,
-#                    'count': int(row[3])
-#                })
-#            index = len(confirmed) - 1
-#            c += confirmed[index]['count']
-#            r += recovered[index]['count']
-#            d += deaths[index]['count']
-#
-#            latitude, longitude = geocode(country, province)
-#            latitude = round(latitude, 4)
-#            longitude = round(longitude, 4)
-#            data.append({
-#                'country': country,
-#                'province': province,
-#                'latitude': latitude,
-#                'longitude': longitude,
-#                'confirmed': confirmed,
-#                'recovered': recovered,
-#                'deaths': deaths
-#            })
-#
-#    last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-#    index = len(data[south_korea_index]['confirmed']) - 1
-#    if c < data[south_korea_index]['confirmed'][index]['count'] or \
-#       r < data[south_korea_index]['recovered'][index]['count'] or \
-#       d < data[south_korea_index]['deaths'][index]['count']:
-#           province = 'Others'
-#           latitude = data[south_korea_index]['latitude']
-#           longitude = data[south_korea_index]['longitude']
-#           confirmed = [{
-#               'time': last_updated_str,
-#               'count': data[south_korea_index]['confirmed'][index]['count'] - c
-#           }]
-#           recovered = [{
-#               'time': last_updated_str,
-#               'count': data[south_korea_index]['recovered'][index]['count'] - r
-#           }]
-#           deaths = [{
-#               'time': last_updated_str,
-#               'count': data[south_korea_index]['deaths'][index]['count'] - d
-#           }]
-#           data.append({
-#                'country': country,
-#                'province': province,
-#                'latitude': latitude,
-#                'longitude': longitude,
-#                'confirmed': confirmed,
-#                'recovered': recovered,
-#                'deaths': deaths
-#           })
-#    else:
-#        data[south_korea_index]['confirmed'][index]['time'] = last_updated_str
-#        data[south_korea_index]['confirmed'][index]['count'] = c
-#        data[south_korea_index]['recovered'][index]['time'] = last_updated_str
-#        data[south_korea_index]['recovered'][index]['count'] = r
-#        data[south_korea_index]['deaths'][index]['time'] = last_updated_str
-#        data[south_korea_index]['deaths'][index]['count'] = d
+    with open(geodata_json, 'w') as f:
+        f.write(json.dumps(geodata))
 
-# sort records by confirmed, country, and province
-data = sorted(data, key=lambda x: (
-    -x['confirmed'][len(x['confirmed'])-1]['count'],
-    x['country'],
-    x['province']))
+if __name__ == '__main__':
+    fetch_csse_csv()
+    fetch_csse_rest()
 
-total_confirmed = total_recovered = total_deaths = 0
-for i in range(0, len(data)):
-#    if i == south_korea_index:
-#        continue
-    rec = data[i]
-    index = len(rec['confirmed']) - 1
-    c = rec['confirmed'][index]['count']
-    r = rec['recovered'][index]['count']
-    d = rec['deaths'][index]['count']
-    if c == 0:
-        continue
-    print(f'final: {rec["province"]}; {rec["country"]}; {rec["latitude"]}; {rec["longitude"]}; {c}; {r}; {d}')
-    total_confirmed += c
-    total_recovered += r
-    total_deaths += d
+    fetch_dxy()
+    fetch_kcdc_country()
+    merge_data()
 
-print(f'Total confirmed: {total_confirmed}')
-print(f'Total recovered: {total_recovered}')
-print(f'Total deaths   : {total_deaths}')
+    fetch_kcdc_provinces()
 
-# create a new list to store all the features
-features = []
-# create a feature collection
-for i in range(0, len(data)):
-    rec = data[i]
-    if rec['confirmed'][len(rec['confirmed']) - 1]['count'] == 0:
-        continue
-    features.append({
-        'id': i,
-        'type': 'Feature',
-        'geometry': {
-            'type': 'Point',
-            'coordinates': [rec['longitude'], rec['latitude']]
-        },
-        'properties': {
-            'country': rec['country'],
-            'province': rec['province'],
-            'confirmed': rec['confirmed'],
-            'recovered': rec['recovered'],
-            'deaths': rec['deaths']
-        }
-    })
+    sort_data()
+    report_data()
 
-# finally, build the output GeoJSON object and save it
-geodata = {
-    'type': 'FeatureCollection',
-    'features': features
-}
-
-with open(geodata_json, 'w') as f:
-    f.write(json.dumps(geodata))
+    write_geojson()
