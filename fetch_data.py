@@ -264,9 +264,12 @@ def fetch_csse_rest():
             if d != deaths[index]['count']:
                 print(f'REST deaths   : {province}, {country}, {deaths[index]["count"]} => {d}')
         else:
-            print(f'REST confirmed: {province}, {country}, {c}')
-            print(f'REST recovered: {province}, {country}, {r}')
-            print(f'REST deaths   : {province}, {country}, {d}')
+            if c:
+                print(f'REST confirmed: {province}, {country}, 0 => {c}')
+            if r:
+                print(f'REST recovered: {province}, {country}, 0 => {r}')
+            if d:
+                print(f'REST deaths   : {province}, {country}, 0 => {d}')
 
         confirmed.append({
             'time': last_updated_str,
