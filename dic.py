@@ -151,10 +151,12 @@ us_states = {
 }
 
 ll_csv2csv = {
-    # Gansu, Mainland China
+    # Gansu, China
     '37.8099,101.0583': '36.0611,103.8343',
-    # Hebei, Mainland China
+    # Hebei, China
     '39.549,116.1306': '38.0428,114.5149',
+    # District of Columbia
+    '38.8974,-77.0268': '38.9072,-77.0369',
 }
 
 ll_rest2csv = {
@@ -184,10 +186,12 @@ ll_rest2csv = {
     '46.0,25.0': '45.9432,24.9668',
     # British Columbia, Canada
     '53.7267,-127.6476': '49.2827,-123.1207',
-    # Gansu, Mainland China
+    # Gansu, China
     '37.8099,101.0583': '36.0611,103.8343',
-    # Hebei, Mainland China
+    # Hebei, China
     '39.549,116.1306': '38.0428,114.5149',
+    # District of Columbia
+    '38.8974,-77.0268': '38.9072,-77.0369',
 }
 
 co_names = {
