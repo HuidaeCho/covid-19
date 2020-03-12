@@ -1,6 +1,6 @@
 # Coronavirus Disease 2019 (COVID-19 or 2019-nCoV) Cases Tracker
 
-[This web map](https://app.isnew.info/covid-19) is an open source version of [the COVID-19 global cases website](https://arcg.is/0fHmTX) by [Johns Hopkins CSSE](https://systems.jhu.edu). It uses their [time series data](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series), [REST API](https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json), [DXY](https://ncov.dxy.cn/ncovh5/view/pneumonia), [KCDC](http://ncov.mohw.go.kr/bdBoardList_Real.do), and [OpenLayers](https://openlayers.org).
+[This web map](https://app.isnew.info/covid-19) is an open source version of [the COVID-19 global cases website](https://arcg.is/0fHmTX) by [Johns Hopkins CSSE](https://systems.jhu.edu). It uses their [time series data](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series) (I found this data source unreliable because they keep changing country names and adding duplicate entries with incomplete records), [REST API](https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json), [DXY](https://ncov.dxy.cn/ncovh5/view/pneumonia), [KCDC](http://ncov.mohw.go.kr/bdBoardList_Real.do), and [OpenLayers](https://openlayers.org).
 
 Why reinvent the wheel? Why not!
 
