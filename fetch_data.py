@@ -185,7 +185,7 @@ def fetch_csse_rest():
 
     res = requests.get(features_url)
 
-    with open('data/csse_rest.csv', 'w') as f:
+    with open('data/csse_rest.json', 'w') as f:
         f.write(res.content.decode())
 
     features = json.loads(res.content)['features']
