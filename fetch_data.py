@@ -34,6 +34,7 @@ coors_json = 'coors.json'
 
 data = []
 key2data = {}
+south_korea_provinces_data = False
 
 def geocode(country, province, latitude=None, longitude=None):
     # read existing data
@@ -327,6 +328,8 @@ def fetch_kcdc_country():
     print('Fetching KCDC country completed')
 
 def fetch_kcdc_provinces():
+    global south_korea_provinces_data
+
     print('Fetching KCDC provinces...')
 
     if not kcdc_provinces_re:
@@ -475,14 +478,17 @@ def fetch_kcdc_provinces():
             'deaths': deaths
         })
 
-    del data[south_korea_index]
-    print(f'data {country} deleted')
+    # keep South Korea country data for historical plots
+#    del data[south_korea_index]
+#    print(f'data {country} deleted')
     if south_korea_confirmed != total_confirmed:
         print(f'data confirmed: {country}, {south_korea_confirmed} => {total_confirmed}')
     if south_korea_recovered != total_recovered:
         print(f'data recovered: {country}, {south_korea_recovered} => {total_recovered}')
     if south_korea_deaths != total_deaths:
         print(f'data deaths   : {country}, {south_korea_deaths} => {total_deaths}')
+
+    south_korea_provinces_data = True
 
     print('Fetching KCDC provinces completed')
 
@@ -593,16 +599,18 @@ def sort_data():
 def report_data():
     total_confirmed = total_recovered = total_deaths = 0
     for i in range(0, len(data)):
-    #    if i == south_korea_index:
-    #        continue
         rec = data[i]
+        country = rec['country']
+        province = rec['province']
+        latitude = rec['latitude']
+        longitude = rec['longitude']
         index = len(rec['confirmed']) - 1
         c = rec['confirmed'][index]['count']
         r = rec['recovered'][index]['count']
         d = rec['deaths'][index]['count']
-        if c == 0:
+        if c == 0 or (south_korea_provinces_data and country == 'South Korea' and not province):
             continue
-        print(f'final: {rec["province"]}; {rec["country"]}; {rec["latitude"]}; {rec["longitude"]}; {c}; {r}; {d}')
+        print(f'final: {province}; {country}; {latitude}; {longitude}; {c}; {r}; {d}')
         total_confirmed += c
         total_recovered += r
         total_deaths += d
