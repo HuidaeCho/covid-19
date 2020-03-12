@@ -69,6 +69,8 @@ def geocode(country, province, latitude=None, longitude=None):
     return latitude, longitude
 
 def fetch_csse_csv():
+    global south_korea_index
+
     print('Fetching CSSE CSV...')
 
     confirmed_res = requests.get(confirmed_url)
@@ -116,6 +118,8 @@ def fetch_csse_csv():
                 key = f'{latitude},{longitude}'
             if key not in key2data:
                 key2data[key] = len(data)
+                if key == '36.0,128.0':
+                    south_korea_index = key2data[key]
                 # create and populate three lists with time series data
                 confirmed = []
                 recovered = []
@@ -232,6 +236,10 @@ def fetch_csse_rest():
                 print(f'REST recovered: {province}, {country}, {recovered[index]["count"]} => {r}')
             if d != deaths[index]['count']:
                 print(f'REST deaths   : {province}, {country}, {deaths[index]["count"]} => {d}')
+        else:
+            print(f'REST confirmed: {province}, {country}, {c}')
+            print(f'REST recovered: {province}, {country}, {r}')
+            print(f'REST deaths   : {province}, {country}, {d}')
 
         confirmed.append({
             'time': last_updated_str,
@@ -275,7 +283,7 @@ def fetch_kcdc_country():
     deaths = int(m[6].replace(',', ''))
     last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
 
-    file = get_data_filename('Republic of Korea')
+    file = get_data_filename('South Korea')
     add_header = True
     if os.path.exists(file):
         add_header = False
@@ -328,7 +336,7 @@ def fetch_kcdc_provinces():
         recovered = int(m[2].replace(',', ''))
         deaths = int(m[3].replace(',', ''))
 
-        file = get_data_filename('Republic of Korea', province)
+        file = get_data_filename('South Korea', province)
         add_header = True
         if os.path.exists(file):
             add_header = False
@@ -372,7 +380,13 @@ def fetch_dxy():
         recovered = rec['curedCount']
         deaths = rec['deadCount']
 
-        country = 'China'
+        country = 'Mainland China'
+        if province == 'Hong Kong':
+            country = f'{province} SAR'
+        elif province == 'Macau':
+            country = 'Macao SAR'
+        elif province == 'Taiwan':
+            country = 'Taipei and environs'
 
         file = get_data_filename(country, province)
         add_header = True
@@ -402,8 +416,8 @@ key2data = {}
 
 fetch_csse_csv()
 fetch_csse_rest()
-#fetch_kcdc()
-#fetch_dxy()
+fetch_kcdc()
+fetch_dxy()
 
 #
 #        file = get_data_filename(country, province)
@@ -452,73 +466,10 @@ fetch_csse_rest()
 #                                props['deaths'][i]['count'])
 #                break
 
-# try to find newly confirmed provinces from the REST server
-#for feature in features:
-#    attr = feature['attributes']
-#    country = attr['Country_Region']
-#    province = attr['Province_State'] if attr['Province_State'] else ''
-#    latitude = round(feature['geometry']['y'], 4)
-#    longitude = round(feature['geometry']['x'], 4)
-#
-#    # Diamond Princess is a country in the REST API, but it's a
-#    # province in Others in the CSV files; Others in the REST API is
-#    # empty!
-#    if country == 'Others':
-#        continue
-#    # need to skip existing provinces
-#    found = False
-#    for rec in data:
-#        if country == rec['country']:
-#            if province == rec['province'] or \
-#               (not province and rec['province']) or \
-#               (abs(latitude - rec['latitude']) <= 0.0001 and
-#                abs(longitude - rec['longitude']) <= 0.0001):
-#                if province and not rec['province']:
-#                    rec['province'] = province
-#                found = True
-#                break
-#    if found:
-#        continue
-#
-#    # just found a new province that is not in the spreadsheet, but is in
-#    # the REST server; add this record
-#    last_updated = datetime.datetime.fromtimestamp(attr['Last_Update']/1000,
-#            tz=datetime.timezone.utc)
-#    last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-#
-#    c = int(attr['Confirmed'])
-#    r = int(attr['Recovered'])
-#    d = int(attr['Deaths'])
-#
-#    confirmed = [{
-#        'time': last_updated_str,
-#        'count': c
-#    }]
-#    recovered = [{
-#        'time': last_updated_str,
-#        'count': r
-#    }]
-#    deaths = [{
-#        'time': last_updated_str,
-#        'count': d
-#    }]
-#    data.append({
-#        'country': country,
-#        'province': province,
-#        'latitude': latitude,
-#        'longitude': longitude,
-#        'confirmed': confirmed,
-#        'recovered': recovered,
-#        'deaths': deaths
-#    })
-#
-#    print(f'REST confirmed: {province}, {country}, {c}')
-#    print(f'REST recovered: {province}, {country}, {r}')
-#    print(f'REST deaths   : {province}, {country}, {d}')
 
 #if kcdc_provinces_re:
 #    c = r = d = 0
-#    country = 'Republic of Korea'
+#    country = 'South Korea'
 #    last_updated = None
 #    for file in glob.glob('data/*, ' + country + '.csv'):
 #        m = re.search('^data/(.+),.+$', file)
