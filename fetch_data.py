@@ -648,10 +648,10 @@ def report_data():
         d = rec['deaths'][index]['count']
         if c == 0 or (has_south_korea_provinces and country == 'South Korea' and not province):
             continue
-        if country == 'US':
-            if (use_us_county_level and province in dic.us_states.values()) or \
-               (not use_us_county_level and province[-2:] in dic.us_states):
-                    continue
+        if country == 'US' and \
+           ((use_us_county_level and province in dic.us_states.values()) or
+            (not use_us_county_level and province[-2:] in dic.us_states)):
+            continue
         print(f'final: {province}; {country}; {latitude}; {longitude}; {c}; {r}; {d}')
         total_confirmed += c
         total_recovered += r
