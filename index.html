@@ -36,7 +36,7 @@ a:hover {
 h1 {
 	display: inline-block;
 	vertical-align: top;
-	width: 70%;
+	width: calc(100% - 106px);
 	margin: 0;
 	font-size: 1.3em;
 	line-height: 1;
@@ -53,7 +53,7 @@ h3 {
 .follow-me {
 	display: inline-block;
 	vertical-align: top;
-	width: calc(30% - 6px);
+	width: 100px;
 	text-align: right;
 }
 .follow-me .author {
@@ -88,7 +88,7 @@ h3 {
 #info {
 	display: inline-block;
 	vertical-align: top;
-	width: 30%;
+	width: 32%;
 	max-width: 300px;
 	font-size: 0.95em;
 }
@@ -183,7 +183,8 @@ h3 {
 		font-size: 1em;
 	}
 	h1 {
-		font-size: 2em;
+		width: calc(75% - 6px);
+		font-size: 1.7em;
 	}
 	h2 {
 		font-size: 1.5em;
@@ -191,6 +192,9 @@ h3 {
 	}
 	h3 {
 		margin: 0 0 5px 0;
+	}
+	.follow-me {
+		width: 25%;
 	}
 	.follow-me .author {
 		display: inline;
@@ -200,6 +204,9 @@ h3 {
 	}
 	#legend > .iconify {
 		margin-bottom: -3px;
+	}
+	#info {
+		width: 25%;
 	}
 	.desktop-block {
 		display: block;
