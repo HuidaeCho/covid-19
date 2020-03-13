@@ -7,6 +7,7 @@ import datetime
 import re
 import os
 import glob
+import copy
 import dic
 import config
 
@@ -231,9 +232,9 @@ def fetch_csse_rest():
             index = len(data)
             key2data[key] = index
             # create and populate three lists with REST data
-            confirmed = data[south_korea_index]['confirmed'].copy()
-            recovered = data[south_korea_index]['recovered'].copy()
-            deaths = data[south_korea_index]['deaths'].copy()
+            confirmed = copy.deepcopy(data[south_korea_index]['confirmed'])
+            recovered = copy.deepcopy(data[south_korea_index]['recovered'])
+            deaths = copy.deepcopy(data[south_korea_index]['deaths'])
             if len(confirmed) > total_days:
                 index = len(confirmed) - 1
                 del confirmed[index], recovered[index], deaths[index]
