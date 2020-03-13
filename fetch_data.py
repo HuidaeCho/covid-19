@@ -74,7 +74,7 @@ def geocode(country, province, latitude=None, longitude=None):
     return latitude, longitude
 
 def fetch_csse_csv():
-    global south_korea_index
+    global south_korea_index, total_days
 
     print('Fetching CSSE CSV...')
 
@@ -101,6 +101,7 @@ def fetch_csse_csv():
         recovered_header = recovered_reader.__next__()
         deaths_header = deaths_reader.__next__()
         num_cols = len(confirmed_header)
+        total_days = num_cols - 4
 
         # for each province
         for confirmed_row in confirmed_reader:
@@ -191,6 +192,8 @@ def fetch_csse_csv():
     print('Fetching CSSE CSV completed')
 
 def fetch_csse_rest():
+    global total_days
+
     print('Fetching CSSE REST...')
 
     res = requests.get(features_url)
@@ -228,9 +231,14 @@ def fetch_csse_rest():
             # new record not in data
             key2data[key] = len(data)
             # create and populate three lists with REST data
-            confirmed = []
-            recovered = []
-            deaths = []
+            confirmed = data[south_korea_index]['confirmed'].copy()
+            recovered = data[south_korea_index]['recovered'].copy()
+            deaths = data[south_korea_index]['deaths'].copy()
+            if len(confirmed) > total_days:
+                index = len(confirmed) - 1
+                del confirmed[index], recovered[index], deaths[index]
+            for i in range(0, total_days):
+                confirmed[i]['count'] = recovered[i]['count'] = deaths[i]['count'] = 0
             data.append({
                 'country': country,
                 'province': province,
@@ -284,6 +292,20 @@ def fetch_csse_rest():
             'time': last_updated_str,
             'count': d
         })
+
+    total_days += 1
+
+    # oops! some provinces are missing from the REST data?
+    for rec in data:
+        confirmed = rec['confirmed']
+        recovered = rec['recovered']
+        deaths = rec['deaths']
+        index = len(confirmed) - 1
+        if index == total_days - 1:
+            continue
+        confirmed.append(confirmed[index])
+        recovered.append(recovered[index])
+        deaths.append(deaths[index])
 
     print('Fetching CSSE REST completed')
 
