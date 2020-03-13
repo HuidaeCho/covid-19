@@ -311,6 +311,39 @@ def fetch_csse_rest():
 
     print('Fetching CSSE REST completed')
 
+def clean_us_data():
+    if use_us_county_level:
+        return
+
+    sts = list(dic.us_states.keys())
+    states = list(dic.us_states.values())
+    n = len(data)
+
+    for rec in data:
+        if rec['country'] != 'US':
+            continue
+
+        province = rec['province']
+        if province not in states:
+            continue
+
+        st = sts[states.index(province)]
+        confirmed = rec['confirmed']
+        recovered = rec['recovered']
+        deaths = rec['deaths']
+
+        st_indices = []
+        for i in range(0, n):
+            rec2 = data[i]
+            if rec2['country'] == 'US' and rec2['province'].endswith(f', {st}'):
+                st_indices.append(i)
+
+        for i in range(0, len(confirmed)):
+            if confirmed[i]['count'] > 0:
+                break
+            for j in st_indices:
+                confirmed[i]['count'] += data[j]['confirmed'][i]['count']
+
 def get_data_filename(country, province=None):
     return 'data/' + (province + ', ' if province else '') + country + '.csv'
 
@@ -614,17 +647,6 @@ def merge_data():
                     'time': last_updated_str,
                     'count': d
                 }
-
-def clean_us_data():
-    if not use_us_county_level:
-        return
-
-    # TODO: South Korea-like data handling
-    for rec in data:
-        country = rec['country']
-        province = rec['province']
-        if country != 'US' or province not in dic.us_states.values():
-            continue
 
 def sort_data():
     global data
