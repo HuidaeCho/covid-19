@@ -128,19 +128,14 @@ def fetch_csse_csv():
             latitude = round(latitude, 4)
             longitude = round(longitude, 4)
 
-            location = f'{province},{country}'
-            ll = f'{latitude},{longitude}'
-            if 'Diamond Princess' in province:
-                key = location
-            else:
-                key = ll
-            if key in dic.ll_csv2csv:
-                key = dic.ll_csv2csv[key]
-            if key not in key2data and location not in key2data:
+            key = f'{province}, {country}'
+            if key in dic.keymap:
+                key = dic.keymap[key]
+            if key not in key2data:
                 # new record not in data
                 index = len(data)
-                key2data[key] = key2data[location] = index
-                if key == '36.0,128.0':
+                key2data[key] = index
+                if country == 'South Korea':
                     south_korea_index = index
                 # create and populate three lists with time series data
                 confirmed = []
@@ -158,7 +153,7 @@ def fetch_csse_csv():
                 append = True
             else:
                 # retrieve existing lists
-                index = key2data[key] if key in key2data else key2data[location]
+                index = key2data[key]
                 rec = data[index]
                 confirmed = rec['confirmed']
                 recovered = rec['recovered']
@@ -219,6 +214,8 @@ def fetch_csse_rest():
             continue
 
         country = attr['Country_Region'].strip()
+        if country in dic.co_names:
+            country = dic.co_names[country]
         province = attr['Province_State'].strip() if attr['Province_State'] else ''
         latitude = round(feature['geometry']['y'], 4)
         longitude = round(feature['geometry']['x'], 4)
@@ -226,18 +223,13 @@ def fetch_csse_rest():
                 attr['Last_Update']/1000, tz=datetime.timezone.utc)
         last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
 
-        location = f'{province},{country}'
-        ll = f'{latitude},{longitude}'
-        if 'Diamond Princess' in province:
-            key = location
-        else:
-            key = ll
-        if key in dic.ll_csv2csv:
-            key = dic.ll_csv2csv[key]
-        if key not in key2data and location not in key2data:
+        key = f'{province}, {country}'
+        if key in dic.keymap:
+            key = dic.keymap[key]
+        if key not in key2data:
             # new record not in data
             index = len(data)
-            key2data[key] = key2data[location] = index
+            key2data[key] = index
             # create and populate three lists with REST data
             confirmed = data[south_korea_index]['confirmed'].copy()
             recovered = data[south_korea_index]['recovered'].copy()
@@ -259,7 +251,7 @@ def fetch_csse_rest():
             existing = False
         else:
             # retrieve existing lists
-            index = key2data[key] if key in key2data else key2data[location]
+            index = key2data[key]
             rec = data[index]
             country = rec['country']
             province = rec['province']
