@@ -635,7 +635,7 @@ var showStats = function(features, query){
 	var deathsCounts = [];
 	var lastUpdated = 0;
 	var statsByProvince = '';
-	var maxConfirmed = 0;
+	var maxActive = 0;
 	var maxCoor;
 	var confirmedByCountry = {};
 	features.forEach(feature => {
@@ -699,8 +699,8 @@ var showStats = function(features, query){
 			}
 		}
 
-		if(lastConfirmed > maxConfirmed){
-			maxConfirmed = lastConfirmed;
+		if(lastConfirmed - lastRecovered - lastDeaths > maxActive){
+			maxActive = lastConfirmed - lastRecovered - lastDeaths;
 			maxCoor = [longitude, latitude];
 		}
 	});
