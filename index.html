@@ -378,6 +378,9 @@ var createStyle = function(feature, resolution){
 					radius: confirmedRadius,
 					fill: new ol.style.Fill({
 						color: getColor('confirmed')
+					}),
+					stroke: new ol.style.Stroke({
+						color: '#555555'
 					})
 				})
 			}),
@@ -386,6 +389,9 @@ var createStyle = function(feature, resolution){
 					radius: recoveredRadius,
 					fill: new ol.style.Fill({
 						color: getColor('recovered')
+					}),
+					stroke: new ol.style.Stroke({
+						color: '#555555'
 					})
 				})
 			}),
@@ -394,6 +400,9 @@ var createStyle = function(feature, resolution){
 					radius: deathsRadius,
 					fill: new ol.style.Fill({
 						color: getColor('deaths')
+					}),
+					stroke: new ol.style.Stroke({
+						color: '#555555'
 					})
 				})
 			})
