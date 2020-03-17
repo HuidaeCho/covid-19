@@ -151,8 +151,13 @@ us_states = {
 }
 
 keymap = {
-    'District of Columbia, US': 'Washington, D.C., US',
-    'Reunion, France': 'Reunion',
+    'Washington, D.C., US': 'District of Columbia, US',
+    ', Puerto Rico': 'Puerto Rico, US',
+    ', Guam': 'Guam, US',
+    ', Reunion': 'Reunion, France',
+    ', Mayotte': 'Mayotte, France',
+    ', French Guiana': 'French Guiana, France',
+    ', Guadeloupe': 'Guadeloupe, France',
 }
 
 co_names = {

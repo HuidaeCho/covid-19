@@ -132,6 +132,7 @@ def fetch_csse_csv():
             key = f'{province}, {country}'
             if key in dic.keymap:
                 key = dic.keymap[key]
+                (province, country) = key.split(', ')
             if key not in key2data:
                 # new record not in data
                 index = len(data)
@@ -186,9 +187,9 @@ def fetch_csse_csv():
                         'count': d
                     })
                 else:
-                    confirmed[j - col]['count'] += c
-                    recovered[j - col]['count'] += r
-                    deaths[j - col]['count'] += d
+                    confirmed[j - col]['count'] = max(confirmed[j - col]['count'], c)
+                    recovered[j - col]['count'] = max(recovered[j - col]['count'], r)
+                    deaths[j - col]['count'] = max(deaths[j - col]['count'], d)
 
     print('Fetching CSSE CSV completed')
 
@@ -226,11 +227,9 @@ def fetch_csse_rest():
 
         key = f'{province}, {country}'
         if key in dic.keymap:
-            print(key)
             key = dic.keymap[key]
-            print(key)
+            (province, country) = key.split(', ')
         if key not in key2data:
-            print(key, 'HAHA')
             # new record not in data
             index = len(data)
             key2data[key] = index
@@ -254,7 +253,6 @@ def fetch_csse_rest():
             })
             existing = False
         else:
-            print(key, 'NANA')
             # retrieve existing lists
             index = key2data[key]
             rec = data[index]
@@ -272,6 +270,9 @@ def fetch_csse_rest():
 
         if existing:
             index = len(confirmed) - 1
+            c = max(confirmed[index]['count'], c)
+            r = max(recovered[index]['count'], r)
+            d = max(deaths[index]['count'], d)
             if c != confirmed[index]['count']:
                 print(f'REST confirmed: {province}, {country}, {confirmed[index]["count"]} => {c}')
             if r != recovered[index]['count']:
@@ -285,6 +286,9 @@ def fetch_csse_rest():
                 print(f'REST recovered: {province}, {country}, 0 => {r}')
             if d:
                 print(f'REST deaths   : {province}, {country}, 0 => {d}')
+
+        if len(confirmed) == total_days + 1:
+            continue
 
         confirmed.append({
             'time': last_updated_str,
