@@ -340,10 +340,10 @@ mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) +
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
 var SouthKorea = 'South Korea';
 
-var getColor = function(category, opaque=false){
+var getColor = function(category, opacity=null){
 	var color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
-	if(opaque)
-		color = color.replace(/,[^,]*\)/, ', 1)');
+	if(opacity != null)
+		color = color.replace(/,[^,]*\)/, ', ' + opacity + ')');
 	return color;
 }
 var calculateConfirmedRadius = function(confirmed){
@@ -372,15 +372,20 @@ var createStyle = function(feature, resolution){
 		confirmedRadius *= radiusFactor;
 		recoveredRadius *= radiusFactor;
 		deathsRadius *= radiusFactor;
+		var minOpacity = 0.1;
+		var maxOpacity = 0.4;
+		var opacity = minOpacity + (maxOpacity - minOpacity) * (confirmed - recovered - deaths) / confirmed;
+		var strokeColor = 'rgba(85, 85, 85, ' + 2 * opacity + ')';
+		console.log(strokeColor);
 		style = [
 			new ol.style.Style({
 				image: new ol.style.Circle({
 					radius: confirmedRadius,
 					fill: new ol.style.Fill({
-						color: getColor('confirmed')
+						color: getColor('confirmed', opacity)
 					}),
 					stroke: new ol.style.Stroke({
-						color: '#555555'
+						color: strokeColor
 					})
 				})
 			}),
@@ -388,10 +393,10 @@ var createStyle = function(feature, resolution){
 				image: new ol.style.Circle({
 					radius: recoveredRadius,
 					fill: new ol.style.Fill({
-						color: getColor('recovered')
+						color: getColor('recovered', opacity)
 					}),
 					stroke: new ol.style.Stroke({
-						color: '#555555'
+						color: strokeColor
 					})
 				})
 			}),
@@ -399,10 +404,10 @@ var createStyle = function(feature, resolution){
 				image: new ol.style.Circle({
 					radius: deathsRadius,
 					fill: new ol.style.Fill({
-						color: getColor('deaths')
+						color: getColor('deaths', 2 * opacity)
 					}),
 					stroke: new ol.style.Stroke({
-						color: '#555555'
+						color: strokeColor
 					})
 				})
 			})
