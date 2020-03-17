@@ -4,6 +4,8 @@
 
 I found [CSSE](https://systems.jhu.edu)'s data unreliable because they keep changing country names and adding duplicate entries with incomplete records. I am trying to clean up their data as much as possible to avoid double counting (e.g., as of March 17, Guam vs. Guam, US and French Guiana vs. French Guiana, France), so there can be some discrepancy between my cleaned up data and their original data.
 
+Also, remember that I am fetching data from [DXY](https://ncov.dxy.cn/ncovh5/view/pneumonia) and [KCDC](http://ncov.mohw.go.kr/bdBoardList_Real.do) every 30 minutes.
+
 ## Disclaimer
 
 Data that `fetch_data.py` collects from [CSSE's website](https://gisanddata.maps.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6) is copyrighted by [Johns Hopkins CSSE](https://systems.jhu.edu). Post-processing of the data by the script may introduce errors and the author is not responsible for any damages caused by using the processed data and the web map.
