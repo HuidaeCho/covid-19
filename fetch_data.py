@@ -514,38 +514,46 @@ def fetch_kcdc_provinces():
     if total_confirmed < south_korea_confirmed or \
        total_recovered < south_korea_recovered or \
        total_deaths < south_korea_deaths:
-        province = 'Others'
-        latitude = data[south_korea_index]['latitude']
-        longitude = data[south_korea_index]['longitude']
-        c = south_korea_confirmed - total_confirmed
-        r = south_korea_recovered - total_recovered
-        d = south_korea_deaths - total_deaths
+        if total_confirmed == south_korea_confirmed:
+            # trust KCDC more than CSSE in this case
+            data[south_korea_index]['confirmed'][index]['time'] = \
+            data[south_korea_index]['recovered'][index]['time'] = \
+            data[south_korea_index]['deaths'][index]['time'] = last_updated_str
+            data[south_korea_index]['recovered'][index]['count'] = total_recovered
+            data[south_korea_index]['deaths'][index]['count'] = total_deaths
+        else:
+            province = 'Others'
+            latitude = data[south_korea_index]['latitude']
+            longitude = data[south_korea_index]['longitude']
+            c = south_korea_confirmed - total_confirmed
+            r = south_korea_recovered - total_recovered
+            d = south_korea_deaths - total_deaths
 
-        print(f'data confirmed: {province}, {country}, {c}')
-        print(f'data recovered: {province}, {country}, {r}')
-        print(f'data deaths   : {province}, {country}, {d}')
+            print(f'data confirmed: {province}, {country}, {c}')
+            print(f'data recovered: {province}, {country}, {r}')
+            print(f'data deaths   : {province}, {country}, {d}')
 
-        confirmed = [{
-            'time': last_updated_str,
-            'count': c
-        }]
-        recovered = [{
-            'time': last_updated_str,
-            'count': r
-        }]
-        deaths = [{
-            'time': last_updated_str,
-            'count': d
-        }]
-        data.append({
-            'country': country,
-            'province': province,
-            'latitude': latitude,
-            'longitude': longitude,
-            'confirmed': confirmed,
-            'recovered': recovered,
-            'deaths': deaths
-        })
+            confirmed = [{
+                'time': last_updated_str,
+                'count': c
+            }]
+            recovered = [{
+                'time': last_updated_str,
+                'count': r
+            }]
+            deaths = [{
+                'time': last_updated_str,
+                'count': d
+            }]
+            data.append({
+                'country': country,
+                'province': province,
+                'latitude': latitude,
+                'longitude': longitude,
+                'confirmed': confirmed,
+                'recovered': recovered,
+                'deaths': deaths
+            })
 
     # keep South Korea country data for historical plots
 #    del data[south_korea_index]
