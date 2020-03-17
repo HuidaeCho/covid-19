@@ -346,7 +346,7 @@ var getColor = function(category, opacity=null){
 	return color;
 }
 var calculateConfirmedRadius = function(confirmed){
-	return Math.log10(confirmed + 1) * 10;
+	return Math.log10(confirmed + 1) * 10 * (isMobile ? 0.5 : 1);
 }
 var createStyle = function(feature, resolution){
 	var radiusFactor = Math.log10(maxResolution / resolution) * 0.5 + 1;
@@ -365,7 +365,7 @@ var createStyle = function(feature, resolution){
 
 	var style;
 	if(true){
-		var confirmedRadius = calculateConfirmedRadius(confirmed) * (isMobile ? 0.5 : 1);
+		var confirmedRadius = calculateConfirmedRadius(confirmed);
 		var recoveredRadius = Math.sqrt((recovered + deaths) / confirmed) * confirmedRadius;
 		var deathsRadius = Math.sqrt(deaths / confirmed) * confirmedRadius;
 		confirmedRadius *= radiusFactor;
