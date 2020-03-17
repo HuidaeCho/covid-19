@@ -152,6 +152,7 @@ us_states = {
 
 keymap = {
     'District of Columbia, US': 'Washington, D.C., US',
+    'Reunion, France': 'Reunion',
 }
 
 co_names = {

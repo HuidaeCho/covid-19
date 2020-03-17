@@ -226,8 +226,11 @@ def fetch_csse_rest():
 
         key = f'{province}, {country}'
         if key in dic.keymap:
+            print(key)
             key = dic.keymap[key]
+            print(key)
         if key not in key2data:
+            print(key, 'HAHA')
             # new record not in data
             index = len(data)
             key2data[key] = index
@@ -251,6 +254,7 @@ def fetch_csse_rest():
             })
             existing = False
         else:
+            print(key, 'NANA')
             # retrieve existing lists
             index = key2data[key]
             rec = data[index]
