@@ -365,7 +365,7 @@ var createStyle = function(feature, resolution){
 
 	var style;
 	if(true){
-		var confirmedRadius = calculateConfirmedRadius(confirmed);
+		var confirmedRadius = calculateConfirmedRadius(confirmed) * (isMobile ? 0.5 : 1);
 		var recoveredRadius = Math.sqrt((recovered + deaths) / confirmed) * confirmedRadius;
 		var deathsRadius = Math.sqrt(deaths / confirmed) * confirmedRadius;
 		confirmedRadius *= radiusFactor;
