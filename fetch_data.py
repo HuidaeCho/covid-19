@@ -24,6 +24,7 @@ kcdc_provinces_subre = '>([^>]+)</th>.*?<[^>]+?s_type1[^>]+>\s*([0-9,]+)\s*<.+?s
 
 dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
 dxy_re = '"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
+dxy_re = 'window\.getAreaStat = (.*?)\}catch\(e\).*timeStamp = ([0-9]+)'
 
 geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
@@ -580,10 +581,11 @@ def fetch_dxy():
 
     print('Fetching DXY matched')
 
-    last_updated = datetime.datetime.fromtimestamp(int(m[1])/1000,
+    last_updated = datetime.datetime.fromtimestamp(int(m[2])/1000,
             tz=datetime.timezone.utc)
     last_updated_iso = f'{last_updated.strftime("%Y-%m-%d %H:%M:%S+00:00")}'
-    for rec in json.loads(m[2]):
+    print('TIME', last_updated_iso)
+    for rec in json.loads(m[1]):
         province = rec['provinceShortName']
         if province not in dic.en:
             return
