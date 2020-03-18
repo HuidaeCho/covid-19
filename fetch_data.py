@@ -611,7 +611,7 @@ def fetch_dxy():
                 if time >= last_updated:
                     continue
 
-        with open(file, 'w') as f:
+        with open(file, 'a') as f:
             if add_header:
                 f.write('time,confirmed,recovered,deaths\n')
             f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
