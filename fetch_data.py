@@ -759,6 +759,8 @@ def write_csv():
             longitude = rec['longitude']
             for category in ('confirmed', 'recovered', 'deaths'):
                 f.write(f'{province},{country},{latitude},{longitude},{category}')
+                for i in range(len(rec[category]), total_days):
+                    f.write(',0')
                 for x in rec[category]:
                     f.write(f',{x["count"]}')
                 f.write('\n')
