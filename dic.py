@@ -154,6 +154,7 @@ keymap = {
     'Washington, D.C., US': 'District of Columbia, US',
     ', Puerto Rico': 'Puerto Rico, US',
     ', Guam': 'Guam, US',
+    'United States Virgin Islands, US': 'Virgin Islands, US',
     ', Reunion': 'Reunion, France',
     ', Mayotte': 'Mayotte, France',
     ', French Guiana': 'French Guiana, France',
