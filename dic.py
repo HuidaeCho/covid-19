@@ -161,8 +161,8 @@ keymap = {
     ', Guadeloupe': 'Guadeloupe, France',
     ', Aruba': 'Aruba, Netherlands',
     ', Greenland': 'Greenland, Denmark',
-    ', Bahamas, The': ', The Bahamas',
-    ', Gambia, The': ', The Gambia',
+    ', Bahamas, The': ', Bahamas',
+    ', Gambia, The': ', Gambia',
 }
 
 co_names = {
