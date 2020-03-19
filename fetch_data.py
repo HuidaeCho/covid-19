@@ -29,6 +29,7 @@ geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRe
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
 
 geodata_json = 'geodata.json'
+data_csv = 'data.csv'
 
 # use this dictionary to avoid geocoding the same province multiple times
 coors_json = 'coors.json'
@@ -738,6 +739,30 @@ def write_geojson():
     with open(geodata_json, 'w') as f:
         f.write(json.dumps(geodata))
 
+def write_csv():
+    with open(data_csv, 'w') as f:
+        f.write('province,country,latitude,longitude,category')
+        for x in data[0]['confirmed']:
+            date = x['time'].split(' ')[0].replace('/', '')
+            f.write(f',utc_{date}')
+        f.write('\n')
+        for rec in data:
+            if rec['confirmed'][len(rec['confirmed']) - 1]['count'] == 0:
+                continue
+            province = rec['province']
+            if ',' in province:
+                province = f'"{province}"'
+            country = rec['country']
+            if ',' in country:
+                country = f'"{country}"'
+            latitude = rec['latitude']
+            longitude = rec['longitude']
+            for category in ('confirmed', 'recovered', 'deaths'):
+                f.write(f'{province},{country},{latitude},{longitude},{category}')
+                for x in rec[category]:
+                    f.write(f',{x["count"]}')
+                f.write('\n')
+
 if __name__ == '__main__':
     fetch_csse_csv()
     fetch_csse_rest()
@@ -753,3 +778,4 @@ if __name__ == '__main__':
     report_data()
 
     write_geojson()
+    write_csv()
