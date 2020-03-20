@@ -656,7 +656,7 @@ var showStats = function(features, query){
 	var statsByProvince = '';
 	var maxActive = 0;
 	var maxCoor;
-	var confirmedByCountry = {};
+	var statsByCountry = {};
 	features.forEach(feature => {
 		var id = feature.id;
 		var country = feature.properties.country;
@@ -689,7 +689,11 @@ var showStats = function(features, query){
 				statsByProvince += '<div class="deaths">' + lastDeaths.toLocaleString() + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
 			statsByProvince += '</div></div>';
 
-			confirmedByCountry[country] = (confirmedByCountry[country] || 0) + lastConfirmed;
+			if(!statsByCountry[country])
+				statsByCountry[country] = {confirmed: 0, recovered: 0, deaths: 0};
+			statsByCountry[country].confirmed += lastConfirmed;
+			statsByCountry[country].recovered += lastRecovered;
+			statsByCountry[country].deaths += lastDeaths;
 
 			if(country == SouthKorea)
 				return;
@@ -724,17 +728,17 @@ var showStats = function(features, query){
 		}
 	});
 	var sortedByCountry = [];
-	Object.entries(confirmedByCountry).forEach(([country, confirmed]) => {
-		sortedByCountry.push({country: country, confirmed: confirmed});
+	Object.entries(statsByCountry).forEach(([country, stats]) => {
+		sortedByCountry.push({country: country, active: stats.confirmed - stats.recovered - stats.deaths, confirmed: stats.confirmed, recovered: stats.recovered, deaths: stats.deaths});
 	});
 	sortedByCountry.sort(function(a, b){
-		return b.confirmed - a.confirmed;
+		return b.active - a.active;
 	});
 	var singleLineHeight = countryLinksEl.offsetHeight;
 	for(var i = 0; i < sortedByCountry.length; i++){
 		var country = sortedByCountry[i].country;
 		var backup = countryLinksEl.innerHTML;
-		countryLinksEl.innerHTML += (countryLinksEl.innerHTML ? ', ' : '') + '<a href="?' + country.replace(/ /g, '%20') + '">' + country + '</a>';
+		countryLinksEl.innerHTML += (countryLinksEl.innerHTML ? ', ' : '') + '<a href="?' + country.replace(/ /g, '%20') + '" title="' + sortedByCountry[i].active.toLocaleString() + ' active, ' + sortedByCountry[i].confirmed.toLocaleString() + ' confirmed, ' + sortedByCountry[i].recovered.toLocaleString() + ' recovered, ' + sortedByCountry[i].deaths.toLocaleString() + ' deaths">' + country + '</a>';
 		if(countryLinksEl.offsetHeight > singleLineHeight){
 			countryLinksEl.innerHTML = backup;
 			break;
