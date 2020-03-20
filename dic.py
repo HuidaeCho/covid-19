@@ -161,10 +161,6 @@ keymap = {
     ', Guadeloupe': 'Guadeloupe, France',
     ', Aruba': 'Aruba, Netherlands',
     ', Greenland': 'Greenland, Denmark',
-    ', Bahamas, The': ', Bahamas',
-    ', The Bahamas': ', Bahamas',
-    ', Gambia, The': ', Gambia',
-    ', The Gambia': ', Gambia',
 }
 
 co_names = {
@@ -173,4 +169,8 @@ co_names = {
     'Iran (Islamic Republic of)': 'Iran',
     'Republic of Moldova': 'Moldova',
     'Taiwan*': 'Taiwan',
+    'Bahamas, The': 'Bahamas',
+    'The Bahamas': 'Bahamas',
+    'Gambia, The': 'Gambia',
+    'The Gambia': 'Gambia',
 }
