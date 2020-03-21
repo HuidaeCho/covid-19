@@ -166,14 +166,15 @@ co_names = {
 }
 
 keymap = {
-    'Washington, D.C., US': 'District of Columbia, US',
-    ', Puerto Rico': 'Puerto Rico, US',
-    ', Guam': 'Guam, US',
-    'United States Virgin Islands, US': 'Virgin Islands, US',
+    'Washington, D.C., United States': 'District of Columbia, United States',
+    ', Puerto Rico': 'Puerto Rico, United States',
+    ', Guam': 'Guam, United States',
+    'United States Virgin Islands, United States': 'Virgin Islands, United States',
     ', Reunion': 'Reunion, France',
     ', Mayotte': 'Mayotte, France',
     ', French Guiana': 'French Guiana, France',
     ', Guadeloupe': 'Guadeloupe, France',
+    'St Martin, France': 'Saint Martin, France',
     ', Aruba': 'Aruba, Netherlands',
     ', Greenland': 'Greenland, Denmark',
 }
