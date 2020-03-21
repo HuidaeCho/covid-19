@@ -171,6 +171,7 @@ keymap = {
     ', Puerto Rico': 'Puerto Rico, United States',
     ', Guam': 'Guam, United States',
     'United States Virgin Islands, United States': 'Virgin Islands, United States',
+    'US, United States': 'United States, United States',
     ', Reunion': 'Reunion, France',
     ', Mayotte': 'Mayotte, France',
     ', French Guiana': 'French Guiana, France',
