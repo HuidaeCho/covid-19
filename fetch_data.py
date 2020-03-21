@@ -365,7 +365,7 @@ def clean_us_data():
     n = len(data)
 
     for rec in data:
-        if rec['country'] != 'US':
+        if rec['country'] != 'United States':
             continue
 
         province = rec['province']
@@ -380,7 +380,7 @@ def clean_us_data():
         st_indices = []
         for i in range(0, n):
             rec2 = data[i]
-            if rec2['country'] == 'US' and rec2['province'].endswith(f', {st}'):
+            if rec2['country'] == 'United States' and rec2['province'].endswith(f', {st}'):
                 st_indices.append(i)
 
         for i in range(0, len(confirmed)):
@@ -723,7 +723,7 @@ def report_data():
         d = rec['deaths'][index]['count']
         if c == 0 or (has_south_korea_provinces and country == 'South Korea' and not province):
             continue
-        if country == 'US' and \
+        if country == 'United States' and \
            ((use_us_county_level and province in dic.us_states.values()) or
             (not use_us_county_level and province[-2:] in dic.us_states)):
             continue
@@ -746,10 +746,10 @@ def write_geojson():
         province = rec['province']
         if rec['confirmed'][len(rec['confirmed']) - 1]['count'] == 0:
             continue
-        if country == 'US':
+        if country == 'United States':
             if (use_us_county_level and province in dic.us_states.values()) or \
                (not use_us_county_level and province[-2:] in dic.us_states):
-                    continue
+                continue
         features.append({
             'id': i,
             'type': 'Feature',
@@ -783,12 +783,16 @@ def write_csv():
             f.write(f',utc_{date}')
         f.write('\n')
         for rec in data:
+            country = rec['country']
+            province = rec['province']
             if rec['confirmed'][len(rec['confirmed']) - 1]['count'] == 0:
                 continue
-            province = rec['province']
+            if country == 'United States':
+                if (use_us_county_level and province in dic.us_states.values()) or \
+                   (not use_us_county_level and province[-2:] in dic.us_states):
+                    continue
             if ',' in province:
                 province = f'"{province}"'
-            country = rec['country']
             if ',' in country:
                 country = f'"{country}"'
             latitude = rec['latitude']
