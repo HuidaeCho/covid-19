@@ -163,6 +163,7 @@ co_names = {
     'The Gambia': 'Gambia',
     'Congo (Brazzaville)': 'Congo Republic',
     'Congo (Kinshasa)': 'Congo Democratic Republic',
+    'Czechia': 'Czech Republic',
 }
 
 keymap = {
