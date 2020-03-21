@@ -150,6 +150,21 @@ us_states = {
     'VI': 'Virgin Islands',
 }
 
+co_names = {
+    'US': 'United States',
+    'Republic of Korea': 'South Korea',
+    'Korea, South': 'South Korea',
+    'Iran (Islamic Republic of)': 'Iran',
+    'Republic of Moldova': 'Moldova',
+    'Taiwan*': 'Taiwan',
+    'Bahamas, The': 'Bahamas',
+    'The Bahamas': 'Bahamas',
+    'Gambia, The': 'Gambia',
+    'The Gambia': 'Gambia',
+    'Congo (Brazzaville)': 'Congo Republic',
+    'Congo (Kinshasa)': 'Congo Democratic Republic',
+}
+
 keymap = {
     'Washington, D.C., US': 'District of Columbia, US',
     ', Puerto Rico': 'Puerto Rico, US',
@@ -163,15 +178,7 @@ keymap = {
     ', Greenland': 'Greenland, Denmark',
 }
 
-co_names = {
-    'US': 'United States',
-    'Republic of Korea': 'South Korea',
-    'Korea, South': 'South Korea',
-    'Iran (Islamic Republic of)': 'Iran',
-    'Republic of Moldova': 'Moldova',
-    'Taiwan*': 'Taiwan',
-    'Bahamas, The': 'Bahamas',
-    'The Bahamas': 'Bahamas',
-    'Gambia, The': 'Gambia',
-    'The Gambia': 'Gambia',
+latlong = {
+    ', Congo Republic': {'latitude': -0.2280, 'longitude': 15.8277},
+    ', Congo Democratic Republic': {'latitude': -4.0383, 'longitude': 21.7587},
 }

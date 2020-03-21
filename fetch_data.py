@@ -127,10 +127,15 @@ def fetch_csse_csv():
             if config.geocode:
                 latitude, longitude = geocode(country, province,
                         latitude, longitude)
+
+            key = f'{province}, {country}'
+            if key in dic.latlong:
+                latlong = dic.latlong[key]
+                latitude = latlong['latitude']
+                longitude = latlong['longitude']
             latitude = round(latitude, 4)
             longitude = round(longitude, 4)
 
-            key = f'{province}, {country}'
             if key in dic.keymap:
                 key = dic.keymap[key]
                 (province, country) = key.split(', ')
@@ -220,13 +225,20 @@ def fetch_csse_rest():
         if country in dic.co_names:
             country = dic.co_names[country]
         province = attr['Province_State'].strip() if attr['Province_State'] else ''
-        latitude = round(feature['geometry']['y'], 4)
-        longitude = round(feature['geometry']['x'], 4)
         last_updated = datetime.datetime.fromtimestamp(
                 attr['Last_Update']/1000, tz=datetime.timezone.utc)
         last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+        latitude = feature['geometry']['y']
+        longitude = feature['geometry']['x']
 
         key = f'{province}, {country}'
+        if key in dic.latlong:
+            latlong = dic.latlong[key]
+            latitude = latlong['latitude']
+            longitude = latlong['longitude']
+        latitude = round(latitude, 4)
+        longitude = round(longitude, 4)
+
         if key in dic.keymap:
             key = dic.keymap[key]
             (province, country) = key.split(', ')
