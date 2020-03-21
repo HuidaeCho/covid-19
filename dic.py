@@ -164,6 +164,7 @@ keymap = {
 }
 
 co_names = {
+    'US': 'United States',
     'Republic of Korea': 'South Korea',
     'Korea, South': 'South Korea',
     'Iran (Islamic Republic of)': 'Iran',
