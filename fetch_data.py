@@ -60,6 +60,7 @@ coors_json = 'coors.json'
 
 data = []
 key2data = {}
+has_countries_to_display = True if len(config.countries_to_display) else False
 has_south_korea_provinces = False
 use_us_county_level = False
 
@@ -750,6 +751,9 @@ def write_geojson():
             if (use_us_county_level and province in dic.us_states.values()) or \
                (not use_us_county_level and province[-2:] in dic.us_states):
                 continue
+        if has_countries_to_display and \
+           country not in config.countries_to_display:
+            continue
         features.append({
             'id': i,
             'type': 'Feature',
@@ -791,6 +795,9 @@ def write_csv():
                 if (use_us_county_level and province in dic.us_states.values()) or \
                    (not use_us_county_level and province[-2:] in dic.us_states):
                     continue
+            if has_countries_to_display and \
+               country not in config.countries_to_display:
+                continue
             if ',' in province:
                 province = f'"{province}"'
             if ',' in country:

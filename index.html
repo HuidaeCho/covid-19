@@ -360,7 +360,7 @@ var bodyHeight = Number(bodyStyle.height.replace('px', ''));
 dataSourcesEl.innerHTML = dataSources.replace(/(, )([^,]+)$/, '$1and $2');
 mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) + 'px';
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
-var SouthKorea = 'South Korea';
+var hasDuplicates = ['South Korea'];
 
 var getColor = function(category, opacity=null){
 	var color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
@@ -379,7 +379,7 @@ var createStyle = function(feature, resolution){
 	var recovered = feature.get('recovered');
 	var deaths = feature.get('deaths');
 	var lastIndex = confirmed.length - 1;
-	if(country == SouthKorea && !province)
+	if(hasDuplicates.indexOf(country) >= 0 && !province)
 		return null;
 
 	confirmed = confirmed[lastIndex].count;
@@ -690,16 +690,16 @@ var showStats = function(features, query){
 		var recovered = feature.properties.recovered;
 		var deaths = feature.properties.deaths;
 		var updated = Date.parse(confirmed[confirmed.length-1].time);
-		if(country != SouthKorea || province){
+		var lastIndex = confirmed.length - 1;
+		var lastConfirmed = confirmed[lastIndex].count;
+		var lastRecovered = recovered[lastIndex].count;
+		var lastDeaths = deaths[lastIndex].count;
+
+		if(!lastConfirmed)
+			return;
+
+		if(hasDuplicates.indexOf(country) < 0 || province){
 			var name = province ? province + ', ' + country : country;
-			var lastIndex = confirmed.length - 1;
-			var lastConfirmed = confirmed[lastIndex].count;
-			var lastRecovered = recovered[lastIndex].count;
-			var lastDeaths = deaths[lastIndex].count;
-
-			if(!lastConfirmed)
-				return;
-
 			statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
 				(isMobile ? '' :
 				 '<div>' + (province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
@@ -718,7 +718,7 @@ var showStats = function(features, query){
 			statsByCountry[country].recovered += lastRecovered;
 			statsByCountry[country].deaths += lastDeaths;
 
-			if(country == SouthKorea)
+			if(hasDuplicates.indexOf(country) >= 0)
 				return;
 		}
 		if(updated > lastUpdated)
@@ -886,7 +886,7 @@ var showStats = function(features, query){
 			var latitude = feature.geometry.coordinates[1];
 			var longitude = feature.geometry.coordinates[0];
 			var coor = ol.proj.fromLonLat([longitude, latitude]);
-			if(query == SouthKorea){
+			if(hasDuplicates.indexOf(query) >= 0){
 				if(query == country){
 					if(!province){
 						var s = calculateStats(feature);
