@@ -291,7 +291,7 @@ h3 {
 <div class="icons">
 <a href="https://github.com/HuidaeCho/covid-19"><span class="iconify" data-icon="fa-solid:code-branch"></span></a>
 <a href="https://github.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:github"></span></a>
-<a href="https://twitter.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:twitter"></a>
+<a href="https://twitter.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:twitter"></span></a>
 <a href="https://researchgate.net/profile/Huidae_Cho"><span class="iconify" data-icon="fa-brands:researchgate"></span></a>
 <a href="https://linkedin.com/in/HuidaeCho"><span class="iconify" data-icon="fa-brands:linkedin"></span></a>
 </div>
@@ -310,7 +310,7 @@ Local times except for plots in UTC.
 <a href="/covid-19.html">Suggestions?</a>
 </div>
 <div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Confirmed: logarithmic, Others: area proportional to confirmed, Active rate: opacity</div>
-<div id="country-links-wrap"><span class="iconify" data-icon="fa:flag"></span>&nbsp;<span id="country-links"></a></div>
+<div id="country-links-wrap"><span class="iconify" data-icon="fa:flag"></span>&nbsp;<span id="country-links"></span></div>
 </div>
 <div id="map"></div>
 <div id="info">
@@ -752,7 +752,13 @@ var showStats = function(features, query){
 	});
 	var sortedByCountry = [];
 	Object.entries(statsByCountry).forEach(([country, stats]) => {
-		sortedByCountry.push({country: country, active: stats.confirmed - stats.recovered - stats.deaths, confirmed: stats.confirmed, recovered: stats.recovered, deaths: stats.deaths});
+		sortedByCountry.push({
+			country: country,
+			active: stats.confirmed - stats.recovered - stats.deaths,
+			confirmed: stats.confirmed,
+			recovered: stats.recovered,
+			deaths: stats.deaths
+		});
 	});
 	sortedByCountry.sort(function(a, b){
 		return b.active - a.active;
@@ -761,7 +767,12 @@ var showStats = function(features, query){
 	for(var i = 0; i < sortedByCountry.length; i++){
 		var country = sortedByCountry[i].country;
 		var backup = countryLinksEl.innerHTML;
-		countryLinksEl.innerHTML += (countryLinksEl.innerHTML ? ', ' : '') + '<a href="?' + country.replace(/ /g, '%20') + '" title="' + sortedByCountry[i].active.toLocaleString() + ' active, ' + sortedByCountry[i].confirmed.toLocaleString() + ' confirmed, ' + sortedByCountry[i].recovered.toLocaleString() + ' recovered, ' + sortedByCountry[i].deaths.toLocaleString() + ' deaths">' + country + '</a>';
+		countryLinksEl.innerHTML += (countryLinksEl.innerHTML ? ', ' : '') +
+			'<a href="?' + country.replace(/ /g, '%20') + '" title="' +
+			sortedByCountry[i].active.toLocaleString() + ' active, ' +
+			sortedByCountry[i].confirmed.toLocaleString() + ' confirmed, ' +
+			sortedByCountry[i].recovered.toLocaleString() + ' recovered, ' +
+			sortedByCountry[i].deaths.toLocaleString() + ' deaths">' + country + '</a>';
 		if(countryLinksEl.offsetHeight > singleLineHeight){
 			countryLinksEl.innerHTML = backup;
 			break;
@@ -929,9 +940,9 @@ var showStats = function(features, query){
 				var geocodeUrl;
 				if(query.indexOf(', ') >= 0){
 					var q = query.split(', ');
-					geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + (q[1] == 'Mainland China' ? 'China' : q[1]) + '&adminDistrict=' + q[0] + '&key=' + bingMapsKey;
+					geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + q[1] + '&adminDistrict=' + q[0] + '&key=' + bingMapsKey;
 				}else
-					geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + (query == 'Mainland China' ? 'China' : query) + '&key=' + bingMapsKey;
+					geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + query + '&key=' + bingMapsKey;
 				var geocodeXhr = new XMLHttpRequest();
 				geocodeXhr.open('GET', geocodeUrl, true);
 				geocodeXhr.responseType = 'json';
