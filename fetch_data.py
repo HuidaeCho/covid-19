@@ -40,14 +40,15 @@ features_url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/servic
 confirmed_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv'
 recovered_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv'
 deaths_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
+
+dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
+dxy_re = 'window\.getListByCountryTypeService2true.*?"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
+
 kcdc_country_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do'
 kcdc_country_re = '발생현황\s*\(([0-9]+)\.([0-9]+).*?([0-9]+)시.*?기준\).*?>누적 확진자 현황<.*?tbody>\s*<tr>\s*<td>([0-9,]+)</td>\s*<td>([0-9,]+)</td>\s*<td>[0-9,]+</td>\s*<td>([0-9,]+)</td>'
 kcdc_provinces_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do?brdGubun=13'
 kcdc_provinces_re = '([0-9]+)\.([0-9]+)\.\s*([0-9]+)시.*?기준.*?<tr class="sumline">.*?</tr>.*?(<tr>.+?)</tbody>'
 kcdc_provinces_subre = '>([^>]+)</th>.*?<[^>]+?s_type1[^>]+>\s*([0-9,]+)\s*<.+?s_type4[^>]+>\s*([0-9,]+)\s*<.+?s_type2[^>]+>\s*([0-9,]+)\s*<'
-
-dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
-dxy_re = 'window\.getListByCountryTypeService2true.*?"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
 
 geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
@@ -272,9 +273,9 @@ def fetch_csse_rest():
             index = len(data)
             key2data[key] = index
             # create and populate three lists with REST data
-            confirmed = copy.deepcopy(data[south_korea_index]['confirmed'])
-            recovered = copy.deepcopy(data[south_korea_index]['recovered'])
-            deaths = copy.deepcopy(data[south_korea_index]['deaths'])
+            confirmed = copy.deepcopy(data[0]['confirmed'])
+            recovered = copy.deepcopy(data[0]['recovered'])
+            deaths = copy.deepcopy(data[0]['deaths'])
             if len(confirmed) > total_days:
                 index = len(confirmed) - 1
                 del confirmed[index], recovered[index], deaths[index]
@@ -393,6 +394,55 @@ def clean_us_data():
 def get_data_filename(country, province=None):
     return 'data/' + (province + ', ' if province else '') + country + '.csv'
 
+def fetch_dxy():
+    print('Fetching DXY...')
+
+    res = requests.get(dxy_url).content.decode()
+    m = re.search(dxy_re, res, re.DOTALL)
+    if not m:
+        print('Fetching DXY failed')
+        return
+
+    print('Fetching DXY matched')
+
+    last_updated = datetime.datetime.fromtimestamp(int(m[1])/1000,
+            tz=datetime.timezone.utc)
+    last_updated_iso = f'{last_updated.strftime("%Y-%m-%d %H:%M:%S+00:00")}'
+    for rec in json.loads(m[2]):
+        province = rec['provinceShortName']
+        if province not in dic.en:
+            return
+        province = dic.en[province]
+        confirmed = rec['confirmedCount']
+        recovered = rec['curedCount']
+        deaths = rec['deadCount']
+
+        country = 'China'
+        if province == 'Taiwan':
+            country = 'Taiwan'
+            province = ''
+
+        filename = get_data_filename(country, province)
+        add_header = True
+        if os.path.exists(filename):
+            add_header = False
+            with open(filename) as f:
+                reader = csv.reader(f)
+                reader = csv.reader(f)
+                for row in reader:
+                    pass
+                time = datetime.datetime.fromisoformat(row[0]).astimezone(
+                        datetime.timezone.utc)
+                if time >= last_updated:
+                    continue
+
+        with open(filename, 'a') as f:
+            if add_header:
+                f.write('time,confirmed,recovered,deaths\n')
+            f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
+
+    print('Fetching DXY completed')
+
 def fetch_kcdc_country():
     print('Fetching KCDC country...')
 
@@ -413,11 +463,11 @@ def fetch_kcdc_country():
     deaths = int(m[6].replace(',', ''))
     last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
 
-    file = get_data_filename('South Korea')
+    filename = get_data_filename('South Korea')
     add_header = True
-    if os.path.exists(file):
+    if os.path.exists(filename):
         add_header = False
-        with open(file) as f:
+        with open(filename) as f:
             reader = csv.reader(f)
             for row in reader:
                 pass
@@ -427,7 +477,7 @@ def fetch_kcdc_country():
                     astimezone(datetime.timezone.utc):
                 return
 
-    with open(file, 'a') as f:
+    with open(filename, 'a') as f:
         if add_header:
             f.write('time,confirmed,recovered,deaths\n')
         f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
@@ -471,12 +521,12 @@ def fetch_kcdc_provinces():
         recovered = int(m[2].replace(',', ''))
         deaths = int(m[3].replace(',', ''))
 
-        file = get_data_filename(country, province)
+        filename = get_data_filename(country, province)
         add_header = True
         append = True
-        if os.path.exists(file):
+        if os.path.exists(filename):
             add_header = False
-            with open(file) as f:
+            with open(filename) as f:
                 reader = csv.reader(f)
                 for row in reader:
                     pass
@@ -487,12 +537,12 @@ def fetch_kcdc_provinces():
                     append = False
 
         if append:
-            with open(file, 'a') as f:
+            with open(filename, 'a') as f:
                 if add_header:
                     f.write('time,confirmed,recovered,deaths\n')
                 f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
 
-        with open(file) as f:
+        with open(filename) as f:
             reader = csv.reader(f)
             reader.__next__()
             confirmed = []
@@ -607,62 +657,13 @@ def fetch_kcdc_provinces():
 
     print('Fetching KCDC provinces completed')
 
-def fetch_dxy():
-    print('Fetching DXY...')
-
-    res = requests.get(dxy_url).content.decode()
-    m = re.search(dxy_re, res, re.DOTALL)
-    if not m:
-        print('Fetching DXY failed')
-        return
-
-    print('Fetching DXY matched')
-
-    last_updated = datetime.datetime.fromtimestamp(int(m[1])/1000,
-            tz=datetime.timezone.utc)
-    last_updated_iso = f'{last_updated.strftime("%Y-%m-%d %H:%M:%S+00:00")}'
-    for rec in json.loads(m[2]):
-        province = rec['provinceShortName']
-        if province not in dic.en:
-            return
-        province = dic.en[province]
-        confirmed = rec['confirmedCount']
-        recovered = rec['curedCount']
-        deaths = rec['deadCount']
-
-        country = 'China'
-        if province == 'Taiwan':
-            country = 'Taiwan'
-            province = ''
-
-        file = get_data_filename(country, province)
-        add_header = True
-        if os.path.exists(file):
-            add_header = False
-            with open(file) as f:
-                reader = csv.reader(f)
-                reader = csv.reader(f)
-                for row in reader:
-                    pass
-                time = datetime.datetime.fromisoformat(row[0]).astimezone(
-                        datetime.timezone.utc)
-                if time >= last_updated:
-                    continue
-
-        with open(file, 'a') as f:
-            if add_header:
-                f.write('time,confirmed,recovered,deaths\n')
-            f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
-
-    print('Fetching DXY completed')
-
 def merge_data():
     for rec in data:
         country = rec['country']
         province = rec['province']
 
-        file = get_data_filename(country, province)
-        if not os.path.exists(file):
+        filename = get_data_filename(country, province)
+        if not os.path.exists(filename):
             continue
 
         confirmed = rec['confirmed']
@@ -671,7 +672,7 @@ def merge_data():
         index = len(confirmed) - 1
         time_str = confirmed[index]['time']
 
-        with open(file) as f:
+        with open(filename) as f:
             reader = csv.reader(f)
             for row in reader:
                 pass
