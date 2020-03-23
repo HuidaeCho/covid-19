@@ -913,6 +913,9 @@ def write_csv():
                     i += 1
                     count = x['count']
                     f.write(f',{count}')
+                while i < total_days:
+                    f.write(',0')
+                    i += 1
                 f.write('\n')
 
 if __name__ == '__main__':
