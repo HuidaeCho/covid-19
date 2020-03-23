@@ -2,8 +2,8 @@
 ################################################################################
 # Name:    fetch_data.py
 # Purpose: This Python 3 script fetches COVID-19 case data from the GitHub
-#          repository and REST API of Johns Hopkins CSSE, DXY, and KCDC, and
-#          creates GeoJSON and CSV files.
+#          repository and REST API of Johns Hopkins CSSE, DXY, KCDC, and
+#          StatisticheCoronavirus, and creates GeoJSON and CSV files.
 # Author:  Huidae Cho
 # Since:   February 2, 2020
 #
