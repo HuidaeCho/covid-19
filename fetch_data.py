@@ -685,14 +685,14 @@ def merge_data():
                 'deaths': deaths
             })
 
-    for co in has_duplicate_data:
+    for country in has_duplicate_data:
         total_confirmed = total_recovered = total_deaths = 0
         co_confirmed = co_recovered = co_deaths = 0
         co_rec = None
         last_updated_str = None
         for rec in data:
-            country = rec['country']
-            if country != co:
+            co = rec['country']
+            if co != country:
                 continue
             province = rec['province']
             confirmed = rec['confirmed']
@@ -724,78 +724,65 @@ def merge_data():
 
         index = len(co_rec['confirmed']) - 1
         add_others = False
-        if co_last_updated_str > last_updated_str:
-            # local data is older
-            if co_confirmed >= total_confirmed and \
-               co_recovered >= total_recovered and \
-               co_deaths >= total_deaths:
-                # recent data (co_) is greater than or equal to old data
-                # (total_); it makes sense! add others because there is
-                # discrepancy
-                add_others = True
-            else:
-                # recent data (co_) is less than old data (total_)? trust local
-                # data
-                pass
-        else:
+        c = r = d = 0
+        if last_updated_str > co_last_updated_str:
             # local data is newer
-            if total_confirmed >= co_confirmed and \
-               total_recovered >= co_recovered and \
-               total_deaths >= co_deaths:
-                # recent data (total_) is greater than or equal to old data
-                # (co_); it makes sense! adjust the country data
-                co_rec['confirmed'][index]['time'] = \
-                co_rec['recovered'][index]['time'] = \
-                co_rec['deaths'][index]['time'] = last_updated_str
-            else:
-                # recent data (total_) is less than old data (co_)? add others
-                add_others = True
-
-        if add_others:
-            country = co
-            province = 'Others'
-            latitude = co_rec['latitude']
-            longitude = co_rec['longitude']
-            c = co_confirmed - total_confirmed
-            r = co_recovered - total_recovered
-            d = co_deaths - total_deaths
-
-            print(f'data confirmed: {province}, {country}, {c}')
-            print(f'data recovered: {province}, {country}, {c}')
-            print(f'data deaths   : {province}, {country}, {c}')
-
-            confirmed = [{
-                'time': last_updated_str,
-                'count': c
-            }]
-            recovered = [{
-                'time': last_updated_str,
-                'count': r
-            }]
-            deaths = [{
-                'time': last_updated_str,
-                'count': d
-            }]
-            data.append({
-                'country': country,
-                'province': province,
-                'latitude': latitude,
-                'longitude': longitude,
-                'confirmed': confirmed,
-                'recovered': recovered,
-                'deaths': deaths
-            })
+            co_rec['confirmed'][index]['time'] = \
+            co_rec['recovered'][index]['time'] = \
+            co_rec['deaths'][index]['time'] = last_updated_str
         else:
-            if total_confirmed > co_confirmed:
-                print(f'data confirmed: {country}, {co_confirmed} => {total_confirmed}')
-            if total_recovered > co_recovered:
-                print(f'data recovered: {country}, {co_recovered} => {total_recovered}')
-            if total_deaths > co_deaths:
-                print(f'data deaths   : {country}, {co_deaths} => {total_deaths}')
+            # remote data is newer
+            last_updated_str = co_last_updated_str
 
+        # be conservative!
+        if co_confirmed > total_confirmed:
+            c = co_confirmed - total_confirmed
+        elif total_confirmed > co_confirmed:
+            print(f'data confirmed: {country}, {co_confirmed} => {total_confirmed}')
             co_rec['confirmed'][index]['count'] = total_confirmed
+        if co_recovered > total_recovered:
+            r = co_recovered - total_recovered
+        elif total_recovered > co_recovered:
+            print(f'data recovered: {country}, {co_recovered} => {total_recovered}')
             co_rec['recovered'][index]['count'] = total_recovered
+        if co_deaths > total_deaths:
+            d = co_deaths - total_deaths
+        elif total_deaths > co_deaths:
+            print(f'data deaths   : {country}, {co_deaths} => {total_deaths}')
             co_rec['deaths'][index]['count'] = total_deaths
+
+        if c + r + d == 0:
+            continue
+
+        province = 'Others'
+        latitude = co_rec['latitude']
+        longitude = co_rec['longitude']
+
+        print(f'data confirmed: {province}, {country}, {c}')
+        print(f'data recovered: {province}, {country}, {r}')
+        print(f'data deaths   : {province}, {country}, {d}')
+
+        confirmed = [{
+            'time': last_updated_str,
+            'count': c
+        }]
+        recovered = [{
+            'time': last_updated_str,
+            'count': r
+        }]
+        deaths = [{
+            'time': last_updated_str,
+            'count': d
+        }]
+        data.append({
+            'country': country,
+            'province': province,
+            'latitude': latitude,
+            'longitude': longitude,
+            'confirmed': confirmed,
+            'recovered': recovered,
+            'deaths': deaths
+        })
 
 def sort_data():
     global data
@@ -840,7 +827,10 @@ def write_geojson():
         rec = data[i]
         country = rec['country']
         province = rec['province']
-        if rec['confirmed'][len(rec['confirmed']) - 1]['count'] == 0:
+        index = len(rec['confirmed']) - 1
+        if rec['confirmed'][index]['count'] == 0 and \
+           rec['recovered'][index]['count'] == 0 and \
+           rec['deaths'][index]['count'] == 0:
             continue
         if country == 'United States':
             if (use_us_county_level and province in dic.us_states.values()) or \
@@ -884,7 +874,10 @@ def write_csv():
         for rec in data:
             country = rec['country']
             province = rec['province']
-            if rec['confirmed'][len(rec['confirmed']) - 1]['count'] == 0:
+            index = len(rec['confirmed']) - 1
+            if rec['confirmed'][index]['count'] == 0 and \
+               rec['recovered'][index]['count'] == 0 and \
+               rec['deaths'][index]['count'] == 0:
                 continue
             if country == 'United States':
                 if (use_us_county_level and province in dic.us_states.values()) or \

@@ -7,7 +7,7 @@
 Name:    index.html
 Purpose: This HTML file creates an interactive web map of COVID-19 cases using
          data from the GitHub repository and REST API of Johns Hopkins CSSE,
-         DXY, KCDC, and StatisticheCoronavirus.
+         DXY, KCDC, StatisticheCoronavirus, and Dr. Javier Concha.
 Author:  Huidae Cho
 Since:   February 2, 2020
 
@@ -91,6 +91,10 @@ h3 {
 #header {
 	line-height: 1.3;
 }
+#data-sources {
+	text-align: right;
+	font-size: 0.8em;
+}
 #legend {
 	text-align: right;
 	font-size: 0.8em;
@@ -104,6 +108,7 @@ h3 {
 }
 #country-links-wrap {
 	font-size: 0.8em;
+	white-space: nowrap;
 }
 #map {
 	display: inline-block;
@@ -302,7 +307,7 @@ h3 {
 </div>
 <div class="desktop-block">
 This open source web map was motivated by <a href="https://arcg.is/0fHmTX">the COVID-19 global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
-Data is fetched every 30 minutes from <span id="data-sources"></span>.
+Data is fetched every 30 minutes.
 All times are local except for plots in UTC.
 I am not responsible for any damages caused by using this website.
 <a href="/covid-19.html">Suggestions?</a>
@@ -312,6 +317,7 @@ Motivated by <a href="https://arcg.is/1DPOWm0">the JHU CSSE website</a>.
 Local times except for plots in UTC.
 <a href="/covid-19.html">Suggestions?</a>
 </div>
+<div id="data-sources"></div>
 <div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Confirmed: logarithmic, Others: area proportional to confirmed, Active rate: opacity</div>
 <div id="country-links-wrap"><span class="iconify" data-icon="fa:flag"></span>&nbsp;<span id="country-links"></span></div>
 </div>
@@ -340,6 +346,7 @@ var dataSources = '<a href="https://arcg.is/0fHmTX">CSSE</a><sup><a href="https:
 	', <a href="https://ncov.dxy.cn/ncovh5/view/pneumonia">DXY</a>' +
 	', <a href="http://ncov.mohw.go.kr/bdBoardList_Real.do">KCDC</a>' +
 	', <a href="https://statistichecoronavirus.it/regioni-coronavirus-italia/">StatisticheCoronavirus</a>' +
+	', <a href="https://github.com/javierconcha/covid-19-Chile/tree/master/data">Dr. Javier Concha</a>' +
 	'';
 // XXX: Add your Bing Maps key here and secure it from the Bing Maps Dev Center at https://www.bingmapsportal.com
 var bingMapsKey = 'AhuHr9JixtsyKu9uSOQ8W0lIr7_gC2KiFxOlmshvRDb_BSWDkhnGX7oeS5zJzHo0';
@@ -361,10 +368,10 @@ var statsByProvinceEl = document.getElementById('stats-by-province');
 var bodyStyle = window.getComputedStyle(bodyEl);
 var bodyWidth = Number(bodyStyle.width.replace('px', ''));
 var bodyHeight = Number(bodyStyle.height.replace('px', ''));
-dataSourcesEl.innerHTML = dataSources.replace(/(, )([^,]+)$/, '$1and $2');
+dataSourcesEl.innerHTML = 'Data sources: ' + dataSources;
 mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) + 'px';
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
-var hasDuplicateData = ['South Korea', 'Italy'];
+var hasDuplicateData = ['South Korea', 'Italy', 'Chile'];
 
 var getColor = function(category, opacity=null){
 	var color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
@@ -699,7 +706,7 @@ var showStats = function(features, query){
 		var lastRecovered = recovered[lastIndex].count;
 		var lastDeaths = deaths[lastIndex].count;
 
-		if(!lastConfirmed)
+		if(!lastConfirmed && !lastRecovered && !lastDeaths)
 			return;
 
 		if(hasDuplicateData.indexOf(country) < 0 || province){
@@ -709,7 +716,9 @@ var showStats = function(features, query){
 				 '<div>' + (province ? '<div><a href="?' + name.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
 				 '<div><a href="?' + country.replace(/ /g, '%20') + '"><span class="iconify" data-icon="fa:flag"></span></a></div></div>') +
 				'<div onclick="showFeatureStatsById(' + id + ')">' +
-				'<div class="province">' + name + '</div><div class="confirmed">' + lastConfirmed.toLocaleString() + ' confirmed</div>';
+				'<div class="province">' + name + '</div>';
+			if(lastConfirmed)
+				statsByProvince += '<div class="confirmed">' + lastConfirmed.toLocaleString() + ' confirmed</div>';
 			if(lastRecovered)
 				statsByProvince += '<div class="recovered">' + lastRecovered.toLocaleString() + ' recovered</div>';
 			if(lastDeaths)
@@ -767,7 +776,6 @@ var showStats = function(features, query){
 	sortedByCountry.sort(function(a, b){
 		return b.active - a.active;
 	});
-	var singleLineHeight = countryLinksEl.offsetHeight;
 	for(var i = 0; i < sortedByCountry.length; i++){
 		var country = sortedByCountry[i].country;
 		var backup = countryLinksEl.innerHTML;
@@ -777,7 +785,7 @@ var showStats = function(features, query){
 			sortedByCountry[i].confirmed.toLocaleString() + ' confirmed, ' +
 			sortedByCountry[i].recovered.toLocaleString() + ' recovered, ' +
 			sortedByCountry[i].deaths.toLocaleString() + ' deaths">' + country + '</a>';
-		if(countryLinksEl.offsetHeight > singleLineHeight){
+		if(countryLinksEl.offsetWidth > headerEl.offsetWidth - 10){
 			countryLinksEl.innerHTML = backup;
 			break;
 		}
