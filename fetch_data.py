@@ -553,6 +553,7 @@ def fetch_statistichecoronavirus():
 
     country = 'Italy'
     now_iso = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S+00:00')
+    now_date = now_iso.split()[0]
     for m in matches:
         province = m[0]
         confirmed = int(m[1].replace('.', ''))
@@ -561,22 +562,30 @@ def fetch_statistichecoronavirus():
 
         filename = get_data_filename(country, province)
         add_header = True
+        overwrite_row = 0
         if os.path.exists(filename):
             add_header = False
             with open(filename) as f:
                 reader = csv.reader(f)
                 for row in reader:
-                    pass
-                c = int(row[1])
-                r = int(row[2])
-                d = int(row[3])
-                if confirmed == c and recovered == r and deaths == d:
-                    continue
+                    overwrite_row += 1
+                time_iso = row[0]
+                time_date = time_iso.split()[0]
+                if time_date != now_date:
+                    overwrite_row = 0
 
-        with open(filename, 'a') as f:
-            if add_header:
-                f.write('time,confirmed,recovered,deaths\n')
-            f.write(f'{now_iso},{confirmed},{recovered},{deaths}\n')
+        if overwrite_row:
+            with open(filename, 'r+') as f:
+                for i in range(0, overwrite_row - 1):
+                    f.readline()
+                    seek = f.tell()
+                f.seek(seek)
+                f.write(f'{now_iso},{confirmed},{recovered},{deaths}\n')
+        else:
+            with open(filename, 'a') as f:
+                if add_header:
+                    f.write('time,confirmed,recovered,deaths\n')
+                f.write(f'{now_iso},{confirmed},{recovered},{deaths}\n')
 
     print('Fetching StatisticheCoronavirus completed')
 
