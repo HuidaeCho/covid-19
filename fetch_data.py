@@ -877,7 +877,7 @@ def write_csv():
     with open(data_csv, 'w') as f:
         f.write('province,country,latitude,longitude,category')
         for x in data[0]['confirmed']:
-            date = x['time'].split(' ')[0].replace('/', '')
+            date = x['time'].split()[0].replace('/', '')
             f.write(f',utc_{date}')
         f.write('\n')
         for rec in data:
@@ -903,10 +903,16 @@ def write_csv():
             longitude = rec['longitude']
             for category in ('confirmed', 'recovered', 'deaths'):
                 f.write(f'{province},{country},{latitude},{longitude},{category}')
-                for i in range(len(rec[category]), total_days):
-                    f.write(',0')
+                i = 0
+                count = 0
                 for x in rec[category]:
-                    f.write(f',{x["count"]}')
+                    date = x['time'].split()[0]
+                    while data[0]['confirmed'][i]['time'].split()[0] < date:
+                        f.write(f',{count}')
+                        i += 1
+                    i += 1
+                    count = x['count']
+                    f.write(f',{count}')
                 f.write('\n')
 
 if __name__ == '__main__':
