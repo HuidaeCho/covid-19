@@ -200,6 +200,7 @@ keymap = {
     ', French Guiana': 'French Guiana, France',
     ', Guadeloupe': 'Guadeloupe, France',
     'St Martin, France': 'Saint Martin, France',
+    ', France': 'France, France',
     ', Aruba': 'Aruba, Netherlands',
     ', Greenland': 'Greenland, Denmark',
     ', Netherlands': 'Netherlands, Netherlands',
