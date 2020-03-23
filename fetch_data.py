@@ -62,7 +62,7 @@ coors_json = 'coors.json'
 data = []
 key2data = {}
 has_countries_to_display = True if len(config.countries_to_display) else False
-has_detail_data = []
+has_duplicate_data = []
 use_us_county_level = False
 
 def geocode(country, province, latitude=None, longitude=None):
@@ -595,8 +595,8 @@ def merge_data():
                         'count': d
                     }
         else:
-            if province and country not in has_detail_data:
-                has_detail_data.append(country)
+            if province and country not in has_duplicate_data:
+                has_duplicate_data.append(country)
 
             latitude, longitude = geocode(country, province)
             latitude = round(latitude, 4)
@@ -643,7 +643,7 @@ def merge_data():
                 'deaths': deaths
             })
 
-    for co in has_detail_data:
+    for co in has_duplicate_data:
         total_confirmed = total_recovered = total_deaths = 0
         co_confirmed = co_recovered = co_deaths = 0
         co_rec = None
@@ -746,7 +746,7 @@ def report_data():
         c = rec['confirmed'][index]['count']
         r = rec['recovered'][index]['count']
         d = rec['deaths'][index]['count']
-        if c == 0 or (country in has_detail_data and not province):
+        if c == 0 or (country in has_duplicate_data and not province):
             continue
         if country == 'United States' and \
            ((use_us_county_level and province in dic.us_states.values()) or

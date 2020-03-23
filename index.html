@@ -363,7 +363,7 @@ var bodyHeight = Number(bodyStyle.height.replace('px', ''));
 dataSourcesEl.innerHTML = dataSources.replace(/(, )([^,]+)$/, '$1and $2');
 mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) + 'px';
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
-var hasDuplicates = ['South Korea'];
+var hasDuplicateData = ['South Korea'];
 
 var getColor = function(category, opacity=null){
 	var color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
@@ -382,7 +382,7 @@ var createStyle = function(feature, resolution){
 	var recovered = feature.get('recovered');
 	var deaths = feature.get('deaths');
 	var lastIndex = confirmed.length - 1;
-	if(hasDuplicates.indexOf(country) >= 0 && !province)
+	if(hasDuplicateData.indexOf(country) >= 0 && !province)
 		return null;
 
 	confirmed = confirmed[lastIndex].count;
@@ -701,7 +701,7 @@ var showStats = function(features, query){
 		if(!lastConfirmed)
 			return;
 
-		if(hasDuplicates.indexOf(country) < 0 || province){
+		if(hasDuplicateData.indexOf(country) < 0 || province){
 			var name = province ? province + ', ' + country : country;
 			statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
 				(isMobile ? '' :
@@ -721,7 +721,7 @@ var showStats = function(features, query){
 			statsByCountry[country].recovered += lastRecovered;
 			statsByCountry[country].deaths += lastDeaths;
 
-			if(hasDuplicates.indexOf(country) >= 0)
+			if(hasDuplicateData.indexOf(country) >= 0)
 				return;
 		}
 		if(updated > lastUpdated)
@@ -889,7 +889,7 @@ var showStats = function(features, query){
 			var latitude = feature.geometry.coordinates[1];
 			var longitude = feature.geometry.coordinates[0];
 			var coor = ol.proj.fromLonLat([longitude, latitude]);
-			if(hasDuplicates.indexOf(query) >= 0){
+			if(hasDuplicateData.indexOf(query) >= 0){
 				if(query == country){
 					if(!province){
 						var s = calculateStats(feature);
