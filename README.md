@@ -4,7 +4,7 @@
 
 I found [CSSE](https://systems.jhu.edu)'s data unreliable because they keep changing country names and adding duplicate entries with incomplete records. I am trying to clean up their data as much as possible to avoid double counting (e.g., as of March 17, Guam vs. Guam, US and French Guiana vs. French Guiana, France), so there can be some discrepancy between my cleaned up data and their original data.
 
-Also, remember that I am fetching data from [DXY](https://ncov.dxy.cn/ncovh5/view/pneumonia) (China), [KCDC](http://ncov.mohw.go.kr/bdBoardList_Real.do) (South Korea), [StatisticheCoronavirus](https://statistichecoronavirus.it/regioni-coronavirus-italia/) (Italy) every 30 minutes.
+Also, remember that I am fetching data from [DXY](https://ncov.dxy.cn/ncovh5/view/pneumonia) (China), [KCDC](http://ncov.mohw.go.kr/bdBoardList_Real.do) (South Korea), and [StatisticheCoronavirus](https://statistichecoronavirus.it/regioni-coronavirus-italia/) (Italy) every 30 minutes.
 
 ## Disclaimer
 
