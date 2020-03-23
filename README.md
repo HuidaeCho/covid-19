@@ -4,7 +4,7 @@
 
 ## Data sources
 
-* World: [CSSE](https://systems.jhu.edu)'s [time series data](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series) and [REST API](https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json)
+* Main data source: [CSSE](https://systems.jhu.edu)'s [time series data](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series) and [REST API](https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json)
 * China: [DXY](https://ncov.dxy.cn/ncovh5/view/pneumonia)
 * South Korea: [KCDC](http://ncov.mohw.go.kr/bdBoardList_Real.do)
 * Italy: [StatisticheCoronavirus](https://statistichecoronavirus.it/regioni-coronavirus-italia/)
