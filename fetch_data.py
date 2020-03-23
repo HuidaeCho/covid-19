@@ -703,37 +703,55 @@ def merge_data():
             c = confirmed[index]['count']
             r = recovered[index]['count']
             d = deaths[index]['count']
-            if not last_updated_str or time_str > last_updated_str:
-                last_updated_str = time_str
             if province:
+                if not last_updated_str or time_str > last_updated_str:
+                    last_updated_str = time_str
                 total_confirmed += c
                 total_recovered += r
                 total_deaths += d
             else:
                 co_rec = rec
+                co_last_updated_str = time_str
                 co_confirmed = c
                 co_recovered = r
                 co_deaths = d
 
+        if co_confirmed == total_confirmed and \
+           co_recovered == total_recovered and \
+           co_deaths == total_deaths:
+            # remote data is exactly the same as local data
+            continue
+
         index = len(co_rec['confirmed']) - 1
-        co_rec['confirmed'][index]['time'] = \
-        co_rec['recovered'][index]['time'] = \
-        co_rec['deaths'][index]['time'] = last_updated_str
-
-        if total_confirmed >= co_confirmed and \
-           total_recovered >= co_recovered and \
-           total_deaths >= co_deaths:
-            co_rec['confirmed'][index]['count'] = total_confirmed
-            co_rec['recovered'][index]['count'] = total_recovered
-            co_rec['deaths'][index]['count'] = total_deaths
-
-            if total_confirmed > co_confirmed:
-                print(f'data confirmed: {country}, {co_confirmed} => {total_confirmed}')
-            if total_recovered > co_recovered:
-                print(f'data recovered: {country}, {co_recovered} => {total_recovered}')
-            if total_deaths > co_deaths:
-                print(f'data deaths   : {country}, {co_deaths} => {total_deaths}')
+        add_others = False
+        if co_last_updated_str > last_updated_str:
+            # local data is older
+            if co_confirmed >= total_confirmed and \
+               co_recovered >= total_recovered and \
+               co_deaths >= total_deaths:
+                # recent data (co_) is greater than or equal to old data
+                # (total_); it makes sense! add others because there is
+                # discrepancy
+                add_others = True
+            else:
+                # recent data (co_) is less than old data (total_)? trust local
+                # data
+                pass
         else:
+            # local data is newer
+            if total_confirmed >= co_confirmed and \
+               total_recovered >= co_recovered and \
+               total_deaths >= co_deaths:
+                # recent data (total_) is greater than or equal to old data
+                # (co_); it makes sense! adjust the country data
+                co_rec['confirmed'][index]['time'] = \
+                co_rec['recovered'][index]['time'] = \
+                co_rec['deaths'][index]['time'] = last_updated_str
+            else:
+                # recent data (total_) is less than old data (co_)? add others
+                add_others = True
+
+        if add_others:
             country = co
             province = 'Others'
             latitude = co_rec['latitude']
@@ -767,6 +785,17 @@ def merge_data():
                 'recovered': recovered,
                 'deaths': deaths
             })
+        else:
+            if total_confirmed > co_confirmed:
+                print(f'data confirmed: {country}, {co_confirmed} => {total_confirmed}')
+            if total_recovered > co_recovered:
+                print(f'data recovered: {country}, {co_recovered} => {total_recovered}')
+            if total_deaths > co_deaths:
+                print(f'data deaths   : {country}, {co_deaths} => {total_deaths}')
+
+            co_rec['confirmed'][index]['count'] = total_confirmed
+            co_rec['recovered'][index]['count'] = total_recovered
+            co_rec['deaths'][index]['count'] = total_deaths
 
 def sort_data():
     global data
