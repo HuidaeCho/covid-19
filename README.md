@@ -12,6 +12,10 @@
 
 I found [CSSE](https://systems.jhu.edu)'s data unreliable because they keep changing country names and adding duplicate entries with incomplete records. I am trying to clean up their data as much as possible to avoid double counting (e.g., as of March 17, Guam vs. Guam, US and French Guiana vs. French Guiana, France), so there can be some discrepancy between my cleaned up data and their original data.
 
+## TODO
+
+https://github.com/CSSEGISandData/COVID-19/issues/1250
+
 ## Disclaimer
 
 Data that `fetch_data.py` collects from various data sources is copyrighted by its orignal owners. Post-processing of the data by the script may introduce errors and the author is not responsible for any damages caused by using the processed data and the web map.
