@@ -95,6 +95,10 @@ h3 {
 	text-align: right;
 	font-size: 0.8em;
 }
+#data-sources > .iconify {
+	font-size: 1.5em;
+	margin-bottom: -2px;
+}
 #legend {
 	text-align: right;
 	font-size: 0.8em;
@@ -368,7 +372,7 @@ var statsByProvinceEl = document.getElementById('stats-by-province');
 var bodyStyle = window.getComputedStyle(bodyEl);
 var bodyWidth = Number(bodyStyle.width.replace('px', ''));
 var bodyHeight = Number(bodyStyle.height.replace('px', ''));
-dataSourcesEl.innerHTML = 'Data sources: ' + dataSources;
+dataSourcesEl.innerHTML = '<span class="iconify" data-icon="mdi:database-sync"></span> Data sources: ' + dataSources;
 mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) + 'px';
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
 var hasDuplicateData = ['South Korea', 'Italy', 'Chile'];
