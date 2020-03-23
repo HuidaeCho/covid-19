@@ -202,6 +202,8 @@ keymap = {
     'St Martin, France': 'Saint Martin, France',
     ', Aruba': 'Aruba, Netherlands',
     ', Greenland': 'Greenland, Denmark',
+    ', Netherlands': 'Netherlands, Netherlands',
+    ', Denmark': 'Denmark, Denmark',
 }
 
 latlong = {
