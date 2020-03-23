@@ -204,6 +204,7 @@ keymap = {
     ', Greenland': 'Greenland, Denmark',
     ', Netherlands': 'Netherlands, Netherlands',
     ', Denmark': 'Denmark, Denmark',
+    ', United Kingdom': 'United Kingdom, United Kingdom',
 }
 
 latlong = {
