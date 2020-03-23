@@ -7,7 +7,7 @@
 Name:    index.html
 Purpose: This HTML file creates an interactive web map of COVID-19 cases using
          data from the GitHub repository and REST API of Johns Hopkins CSSE,
-         DXY, and KCDC.
+         DXY, KCDC, and StatisticheCoronavirus.
 Author:  Huidae Cho
 Since:   February 2, 2020
 
@@ -339,6 +339,7 @@ var dataSources = '<a href="https://arcg.is/0fHmTX">CSSE</a><sup><a href="https:
 	',<a href="https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">2</a></sup>' +
 	', <a href="https://ncov.dxy.cn/ncovh5/view/pneumonia">DXY</a>' +
 	', <a href="http://ncov.mohw.go.kr/bdBoardList_Real.do">KCDC</a>' +
+	', <a href="https://statistichecoronavirus.it/regioni-coronavirus-italia/">StatisticheCoronavirus</a>' +
 	'';
 // XXX: Add your Bing Maps key here and secure it from the Bing Maps Dev Center at https://www.bingmapsportal.com
 var bingMapsKey = 'AhuHr9JixtsyKu9uSOQ8W0lIr7_gC2KiFxOlmshvRDb_BSWDkhnGX7oeS5zJzHo0';
@@ -363,7 +364,7 @@ var bodyHeight = Number(bodyStyle.height.replace('px', ''));
 dataSourcesEl.innerHTML = dataSources.replace(/(, )([^,]+)$/, '$1and $2');
 mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) + 'px';
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
-var hasDuplicateData = ['South Korea'];
+var hasDuplicateData = ['South Korea', 'Italy'];
 
 var getColor = function(category, opacity=null){
 	var color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;

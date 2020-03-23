@@ -41,14 +41,17 @@ confirmed_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/maste
 recovered_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv'
 deaths_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
 
-dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
-dxy_re = 'window\.getListByCountryTypeService2true.*?"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
-
 kcdc_country_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do'
 kcdc_country_re = '발생현황\s*\(([0-9]+)\.([0-9]+).*?([0-9]+)시.*?기준\).*?>누적 확진자 현황<.*?tbody>\s*<tr>\s*<td>([0-9,]+)</td>\s*<td>([0-9,]+)</td>\s*<td>[0-9,]+</td>\s*<td>([0-9,]+)</td>'
 kcdc_provinces_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do?brdGubun=13'
 kcdc_provinces_re = '([0-9]+)\.([0-9]+)\.\s*([0-9]+)시.*?기준.*?<tr class="sumline">.*?</tr>.*?(<tr>.+?)</tbody>'
 kcdc_provinces_subre = '>([^>]+)</th>.*?<[^>]+?s_type1[^>]+>\s*([0-9,]+)\s*<.+?s_type4[^>]+>\s*([0-9,]+)\s*<.+?s_type2[^>]+>\s*([0-9,]+)\s*<'
+
+dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
+dxy_re = 'window\.getListByCountryTypeService2true.*?"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
+
+statistichecoronavirus_url = 'https://statistichecoronavirus.it/regioni-coronavirus-italia/'
+statistichecoronavirus_re = '<tr[^>]*>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>'
 
 geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
@@ -392,6 +395,102 @@ def clean_us_data():
 def get_data_filename(country, province=None):
     return 'data/' + (province + ', ' if province else '') + country + '.csv'
 
+def fetch_kcdc_country():
+    print('Fetching KCDC country...')
+
+    res = requests.get(kcdc_country_url).content.decode()
+    m = re.search(kcdc_country_re, res, re.DOTALL)
+    if not m:
+        print('Fetching KCDC country failed')
+        return
+
+    print('Fetching KCDC country matched')
+
+    year = 2020
+    month = int(m[1])
+    date = int(m[2])
+    hour = int(m[3])
+    confirmed = int(m[4].replace(',', ''))
+    recovered = int(m[5].replace(',', ''))
+    deaths = int(m[6].replace(',', ''))
+    last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
+
+    filename = get_data_filename('South Korea')
+    add_header = True
+    if os.path.exists(filename):
+        add_header = False
+        with open(filename) as f:
+            reader = csv.reader(f)
+            for row in reader:
+                pass
+            time = datetime.datetime.fromisoformat(row[0]).astimezone(
+                    datetime.timezone.utc)
+            if time >= datetime.datetime.fromisoformat(last_updated_iso).\
+                    astimezone(datetime.timezone.utc):
+                return
+
+    with open(filename, 'a') as f:
+        if add_header:
+            f.write('time,confirmed,recovered,deaths\n')
+        f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
+
+    print('Fetching KCDC country completed')
+
+def fetch_kcdc_provinces():
+    print('Fetching KCDC provinces...')
+
+    if not kcdc_provinces_re:
+        print('Fetching KCDC provinces skipped')
+        return
+
+    res = requests.get(kcdc_provinces_url).content.decode()
+    m = re.search(kcdc_provinces_re, res, re.DOTALL)
+    if not m:
+        print('Fetching KCDC provinces 1/2 failed')
+        return
+
+    print('Fetching KCDC provinces 1/2 matched')
+
+    country = 'South Korea'
+    year = 2020
+    month = int(m[1])
+    date = int(m[2])
+    hour = int(m[3])
+    last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
+    matches = re.findall(kcdc_provinces_subre, m[4])
+    if not matches:
+        print('Fetching KCDC provinces 2/2 failed')
+
+    print('Fetching KCDC provinces 2/2 matched')
+
+    last_updated = None
+    for m in matches:
+        province = dic.en[m[0]]
+        confirmed = int(m[1].replace(',', ''))
+        recovered = int(m[2].replace(',', ''))
+        deaths = int(m[3].replace(',', ''))
+
+        filename = get_data_filename(country, province)
+        add_header = True
+        if os.path.exists(filename):
+            add_header = False
+            with open(filename) as f:
+                reader = csv.reader(f)
+                for row in reader:
+                    pass
+                time = datetime.datetime.fromisoformat(row[0]).astimezone(
+                        datetime.timezone.utc)
+                if time >= datetime.datetime.fromisoformat(last_updated_iso).\
+                        astimezone(datetime.timezone.utc):
+                    continue
+
+        with open(filename, 'a') as f:
+            if add_header:
+                f.write('time,confirmed,recovered,deaths\n')
+            f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
+
+    print('Fetching KCDC provinces completed')
+
 def fetch_dxy():
     print('Fetching DXY...')
 
@@ -441,81 +540,24 @@ def fetch_dxy():
 
     print('Fetching DXY completed')
 
-def fetch_kcdc_country():
-    print('Fetching KCDC country...')
+def fetch_statistichecoronavirus():
+    print('Fetching StatisticheCoronavirus...')
 
-    res = requests.get(kcdc_country_url).content.decode()
-    m = re.search(kcdc_country_re, res, re.DOTALL)
-    if not m:
-        print('Fetching KCDC country failed')
-        return
-
-    print('Fetching KCDC country matched')
-
-    year = 2020
-    month = int(m[1])
-    date = int(m[2])
-    hour = int(m[3])
-    confirmed = int(m[4].replace(',', ''))
-    recovered = int(m[5].replace(',', ''))
-    deaths = int(m[6].replace(',', ''))
-    last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
-
-    filename = get_data_filename('South Korea')
-    add_header = True
-    if os.path.exists(filename):
-        add_header = False
-        with open(filename) as f:
-            reader = csv.reader(f)
-            for row in reader:
-                pass
-            time = datetime.datetime.fromisoformat(row[0]).astimezone(
-                    datetime.timezone.utc)
-            if time >= datetime.datetime.fromisoformat(last_updated_iso).\
-                    astimezone(datetime.timezone.utc):
-                return
-
-    with open(filename, 'a') as f:
-        if add_header:
-            f.write('time,confirmed,recovered,deaths\n')
-        f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
-
-    print('Fetching KCDC country completed')
-
-def fetch_kcdc_provinces():
-    print('Fetching KCDC provinces...')
-
-    if not kcdc_provinces_re:
-        print('Fetching KCDC provinces skipped')
-        return
-
-    print('Fetching KCDC provinces 1/2 matched')
-
-    res = requests.get(kcdc_provinces_url).content.decode()
-    m = re.search(kcdc_provinces_re, res, re.DOTALL)
-    if not m:
-        print('Fetching KCDC provinces 1/2 failed')
-        return
-
-    print('Fetching KCDC provinces 2/2 matched')
-
-    country = 'South Korea'
-    year = 2020
-    month = int(m[1])
-    date = int(m[2])
-    hour = int(m[3])
-    last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
-    matches = re.findall(kcdc_provinces_subre, m[4])
+    res = requests.get(statistichecoronavirus_url).content.decode()
+    matches = re.findall(statistichecoronavirus_re, res, re.DOTALL)
     if not matches:
-        print('Fetching KCDC provinces 2/2 failed')
+        print('Fetching StatisticheCoronavirus failed')
+        return
 
-    total_confirmed = total_recovered = total_deaths = 0
-    last_updated = None
+    print('Fetching StatisticheCoronavirus matched')
+
+    country = 'Italy'
+    now_iso = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S+00:00')
     for m in matches:
-        province = dic.en[m[0]]
-        confirmed = int(m[1].replace(',', ''))
-        recovered = int(m[2].replace(',', ''))
-        deaths = int(m[3].replace(',', ''))
+        province = m[0]
+        confirmed = int(m[1].replace('.', ''))
+        recovered = int(m[3].replace('.', ''))
+        deaths = int(m[2].replace('.', ''))
 
         filename = get_data_filename(country, province)
         add_header = True
@@ -525,18 +567,18 @@ def fetch_kcdc_provinces():
                 reader = csv.reader(f)
                 for row in reader:
                     pass
-                time = datetime.datetime.fromisoformat(row[0]).astimezone(
-                        datetime.timezone.utc)
-                if time >= datetime.datetime.fromisoformat(last_updated_iso).\
-                        astimezone(datetime.timezone.utc):
+                c = int(row[1])
+                r = int(row[2])
+                d = int(row[3])
+                if confirmed == c and recovered == r and deaths == d:
                     continue
 
         with open(filename, 'a') as f:
             if add_header:
                 f.write('time,confirmed,recovered,deaths\n')
-            f.write(f'{last_updated_iso},{confirmed},{recovered},{deaths}\n')
+            f.write(f'{now_iso},{confirmed},{recovered},{deaths}\n')
 
-    print('Fetching KCDC provinces completed')
+    print('Fetching StatisticheCoronavirus completed')
 
 def merge_data():
     for filename in glob.glob('data/*.csv'):
@@ -686,11 +728,11 @@ def merge_data():
             co_rec['deaths'][index]['count'] = total_deaths
 
             if total_confirmed > co_confirmed:
-                printf(f'data confirmed: {country}, {co_confirmed} => {total_confirmed}')
+                print(f'data confirmed: {country}, {co_confirmed} => {total_confirmed}')
             if total_recovered > co_recovered:
-                printf(f'data recovered: {country}, {co_recovered} => {total_recovered}')
+                print(f'data recovered: {country}, {co_recovered} => {total_recovered}')
             if total_deaths > co_deaths:
-                printf(f'data deaths   : {country}, {co_deaths} => {total_deaths}')
+                print(f'data deaths   : {country}, {co_deaths} => {total_deaths}')
         else:
             country = co
             province = 'Others'
@@ -841,9 +883,10 @@ if __name__ == '__main__':
     fetch_csse_rest()
     clean_us_data()
 
-    fetch_dxy()
     fetch_kcdc_country()
     fetch_kcdc_provinces()
+    fetch_dxy()
+    fetch_statistichecoronavirus()
     merge_data()
 
     sort_data()
