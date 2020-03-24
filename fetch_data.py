@@ -255,6 +255,11 @@ def fetch_csse_rest():
         last_updated = datetime.datetime.fromtimestamp(
                 attr['Last_Update']/1000, tz=datetime.timezone.utc)
         last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+        # sometimes, the last date in the CSV file is later than REST; in this
+        # case, let's use today's date at 00:00:00
+        today_str = datetime.datetime.utcnow().strftime('%Y/%m/%d 00:00:00 UTC')
+        if today_str > last_updated_str:
+            last_updated_str = today_str
         latitude = feature['geometry']['y']
         longitude = feature['geometry']['x']
 
