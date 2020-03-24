@@ -296,7 +296,13 @@ def fetch_csse_rest():
                 'recovered': recovered,
                 'deaths': deaths
             })
-            existing = False
+
+            if c:
+                print(f'REST confirmed: {province}, {country}, 0 => {c}')
+            if r:
+                print(f'REST recovered: {province}, {country}, 0 => {r}')
+            if d:
+                print(f'REST deaths   : {province}, {country}, 0 => {d}')
         else:
             # retrieve existing lists
             index = key2data[key]
@@ -311,9 +317,7 @@ def fetch_csse_rest():
             # recent than the last updated time from the REST server
             if time_str > last_updated_str:
                 last_updated_str = time_str
-            existing = True
 
-        if existing:
             index = len(confirmed) - 1
             c = max(confirmed[index]['count'], c)
             r = max(recovered[index]['count'], r)
@@ -324,13 +328,6 @@ def fetch_csse_rest():
                 print(f'REST recovered: {province}, {country}, {recovered[index]["count"]} => {r}')
             if d != deaths[index]['count']:
                 print(f'REST deaths   : {province}, {country}, {deaths[index]["count"]} => {d}')
-        else:
-            if c:
-                print(f'REST confirmed: {province}, {country}, 0 => {c}')
-            if r:
-                print(f'REST recovered: {province}, {country}, 0 => {r}')
-            if d:
-                print(f'REST deaths   : {province}, {country}, 0 => {d}')
 
         if len(confirmed) == total_days + 1:
             continue
