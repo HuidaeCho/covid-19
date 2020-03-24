@@ -907,7 +907,8 @@ def write_csv():
                 count = 0
                 for x in rec[category]:
                     date = x['time'].split()[0]
-                    while data[0]['confirmed'][i]['time'].split()[0] < date:
+                    while i < total_days - 1 and \
+                          data[0]['confirmed'][i]['time'].split()[0] < date:
                         f.write(f',{count}')
                         i += 1
                     i += 1
