@@ -23,7 +23,7 @@ https://github.com/CSSEGISandData/COVID-19/issues/1250
 
 ## Disclaimer
 
-Data that `fetch_data.py` collects from various data sources is copyrighted by its orignal owners. Post-processing of the data by the script may introduce errors and the author is not responsible for any damages caused by using the processed data and the web map.
+Data that `fetch_data.py` collects from various data sources is copyrighted by its original owners. Post-processing of the data by the script may introduce errors and the author is not responsible for any damages caused by using the processed data and the web map.
 
 ## License
 
