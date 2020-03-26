@@ -50,3 +50,5 @@ along with this program.  If not, see <<https://www.gnu.org/licenses/>>.
 
 * [Corona Data Scraper](https://coronadatascraper.com/)
 * [Novel Coronavirus COVID-19 (2019-nCoV): Global Cases over time](https://covid19visualiser.com/)
+* [Pandemic Estimator](https://pandemic-estimator.net/)
+* [Tomas Pueyo's Model](https://medium.com/@tomaspueyo/coronavirus-act-today-or-people-will-die-f4d3d9cd99ca)
