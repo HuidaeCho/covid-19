@@ -8,7 +8,7 @@ As of March 26, 2020 at 10am EDT, `fetch_data.py` is broken because CSSE depreca
 
 [Corona Data Scraper](https://coronadatascraper.com/)'s data is inconsistent in reporting recovered and deaths counts for some counties in the US.
 
-I'm trying to find a better solution.
+I decided to use CSSE's daily reports to create timeseries data myself. A work-in-progress version is committed. I'm still working on it...
 
 ## Data Sources
 
