@@ -35,11 +35,10 @@ import copy
 import dic
 import config
 
-features_url = 'https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json'
+ts_confirmed_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv'
+daily_url_format = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{date}.csv'
 
-confirmed_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Confirmed.csv'
-recovered_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Recovered.csv'
-deaths_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_19-covid-Deaths.csv'
+features_url = 'https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json'
 
 kcdc_country_url = 'http://ncov.mohw.go.kr/bdBoardList_Real.do'
 kcdc_country_re = '발생현황\s*\(([0-9]+)\.([0-9]+).*?([0-9]+)시.*?기준\).*?>누적 확진자 현황<.*?tbody>\s*<tr>\s*<td>([0-9,]+)</td>\s*<td>([0-9,]+)</td>\s*<td>[0-9,]+</td>\s*<td>([0-9,]+)</td>'
@@ -66,9 +65,9 @@ data = []
 key2data = {}
 has_countries_to_display = True if len(config.countries_to_display) else False
 has_duplicate_data = []
-use_us_county_level = False
 
 def geocode(country, province, latitude=None, longitude=None):
+    # TODO: admin2
     # read existing data
     if os.path.exists(coors_json):
         with open(coors_json) as f:
@@ -109,65 +108,166 @@ def fetch_csse_csv():
 
     print('Fetching CSSE CSV...')
 
-    confirmed_res = requests.get(confirmed_url)
-    recovered_res = requests.get(recovered_url)
-    deaths_res = requests.get(deaths_url)
+    ts_confirmed_res = requests.get(ts_confirmed_url)
+    dates = []
+    with io.StringIO(ts_confirmed_res.content.decode()) as ts_confirmed_f:
+        ts_confirmed_reader = csv.reader(ts_confirmed_f)
+        header = ts_confirmed_reader.__next__()
+        # reverse order to find more recent and fully populated data first
+        for i in range(len(header) - 1, 3, -1):
+            date = header[i].split('/')
+            year = 2000 + int(date[2])
+            month = int(date[0])
+            day = int(date[1])
 
-    with open('data/csse_confirmed.csv', 'w') as f:
-        f.write(confirmed_res.content.decode())
-    with open('data/csse_recovered.csv', 'w') as f:
-        f.write(recovered_res.content.decode())
-    with open('data/csse_deaths.csv', 'w') as f:
-        f.write(deaths_res.content.decode())
+            date = f'{year}/{month:02}/{day:02}'
+            dates.insert(0, date)
+            print(f'{date}...', end='', flush=True)
 
-    with io.StringIO(confirmed_res.content.decode()) as confirmed_f,\
-         io.StringIO(recovered_res.content.decode()) as recovered_f,\
-         io.StringIO(deaths_res.content.decode()) as deaths_f:
-        confirmed_reader = csv.reader(confirmed_f)
-        recovered_reader = csv.reader(recovered_f)
-        deaths_reader = csv.reader(deaths_f)
+            fetch_csse_daily_csv(year, month, day)
+        print('')
 
-        # assume these header rows are all identical
-        confirmed_header = confirmed_reader.__next__()
-        recovered_header = recovered_reader.__next__()
-        deaths_header = deaths_reader.__next__()
-        num_cols = len(confirmed_header)
-        total_days = num_cols - 4
+    total_days = len(dates)
+    for rec in data:
+        for category in ('confirmed', 'recovered', 'deaths'):
+            i = 0
+            prepend = []
+            for x in rec[category]:
+                date = x['time'].split()[0]
+                while i < total_days - 1 and dates[i] < date:
+                    prepend.append({
+                        'time': f'{dates[i]} 23:59:59 UTC',
+                        'count': 0,
+                    })
+                    i += 1
+                i += 1
+            prepend.extend(rec[category])
+            rec[category] = prepend
+            index = len(rec[category]) - 1
+            while i < total_days:
+                # TODO: aggregate
+                rec[category].append({
+                    'time': f'{dates[i]} 23:59:59 UTC',
+                    'count': rec[category][index]['count']
+                })
+                i += 1
 
-        # for each province
-        for confirmed_row in confirmed_reader:
-            recovered_row = recovered_reader.__next__()
-            deaths_row = deaths_reader.__next__()
+    print('Fetching CSSE CSV completed')
 
-            if len(confirmed_row) < num_cols:
-                continue
+def generate_key(country, province, admin2):
+    if admin2:
+        key = f'{admin2}, {province}, {country}'
+    elif province:
+        key = f'{province}, {country}'
+    else:
+        key = country
+    return key
 
-            col = 0
-            province = confirmed_row[col]; col += 1
-            province = '' if province == 'None' else province.strip()
-            country = confirmed_row[col].strip(); col += 1
+def read_key(key):
+    x = key.split(', ')
+    country = x.pop()
+    province = x.pop() if len(x) else ''
+    admin2 = x.pop() if len(x) else ''
+    return country, province, admin2
+
+def fetch_csse_daily_csv(year, month, day):
+    date_iso = f'{year}-{month:02}-{day:02}'
+    date_csv = f'{month:02}-{day:02}-{year}'
+
+    url = daily_url_format.format(date=date_csv)
+    res = requests.get(url)
+    with io.StringIO(res.content.decode()) as f:
+        reader = csv.reader(f)
+        header = reader.__next__()
+        ncols = len(header)
+        for row in reader:
+            admin2 = latitude = longitude = ''
+            if ncols == 12:
+                # since 03-22-2020
+                # 0: FIPS
+                # 1: Admin2
+                # 2: Province_State
+                # 3: Country_Region
+                # 4: Last_Update
+                # 5: Lat
+                # 6: Long_
+                # 7: Confirmed
+                # 8: Deaths
+                # 9: Recovered
+                # 10: Active
+                # 11: Combined_Key
+                admin2 = '' if row[1] == 'None' else row[1]
+                province = '' if row[2] == 'None' else row[2]
+                country = row[3]
+                # don't use last_updated; there can be duplicate entries with different counts
+                last_updated = row[4]
+                if row[5] and row[5] != '0':
+                    latitude = round(float(row[5]), 4)
+                if row[6] and row[6] != '0':
+                    longitude = round(float(row[6]), 4)
+                c = int(0 if row[7] == '' else row[7])
+                d = int(0 if row[8] == '' else row[8])
+                r = int(0 if row[9] == '' else row[9])
+            elif ncols == 8:
+                # since 03-01-2020
+                # 0: Province/State
+                # 1: Country/Region
+                # 2: Last Update
+                # 3: Confirmed
+                # 4: Deaths
+                # 5: Recovered
+                # 6: Latitude
+                # 7: Longitude
+                province = '' if row[0] == 'None' else row[0]
+                country = row[1]
+                last_updated = row[2]
+                c = int(0 if row[3] == '' else row[3])
+                d = int(0 if row[4] == '' else row[4])
+                r = int(0 if row[5] == '' else row[5])
+                if row[6] and row[6] != '0':
+                    latitude = round(float(row[6]), 4)
+                if row[7] and row[7] != '0':
+                    longitude = round(float(row[7]), 4)
+            elif ncols == 6:
+                # since 01-22-2020
+                # 0: Province/State
+                # 1: Country/Region
+                # 2: Last Update
+                # 3: Confirmed
+                # 4: Deaths
+                # 5: Recovered
+                province = '' if row[0] == 'None' else row[0]
+                country = row[1]
+                last_updated = row[2]
+                c = int(0 if row[3] == '' else row[3])
+                d = int(0 if row[4] == '' else row[4])
+                r = int(0 if row[5] == '' else row[5])
+            else:
+                raise Exception(f'Unexpected format for daily report {date}')
             if country in dic.co_names:
                 country = dic.co_names[country]
-
-            # retrieve coordinates from the geocoding server if desired;
-            # otherwise, just use coordinates from the spreadsheet
-            latitude = float(confirmed_row[col]); col += 1
-            longitude = float(confirmed_row[col]); col += 1
-            if config.geocode:
-                latitude, longitude = geocode(country, province,
-                        latitude, longitude)
-
-            key = f'{province}, {country}'
+            if ', ' in province and not admin2:
+                admin2, province = province.split(', ')
+            if ',' in admin2:
+                raise Exception(f'Commas are not allowed in admin2 names: {admin2} in {date}')
+            if ',' in province:
+                raise Exception(f'Commas are not allowed in province names: {province} in {date}')
+            if ',' in country:
+                raise Exception(f'Commas are not allowed in country names: {country} in {date}')
+            last_updated = datetime.datetime.fromisoformat(f'{date_iso}T23:59:59+00:00')
+            time_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+            key = generate_key(country, province, admin2)
+            if key in dic.keymap:
+                key = dic.keymap[key]
+                country, province, admin2 = read_key(key)
             if key in dic.latlong:
                 latlong = dic.latlong[key]
                 latitude = latlong['latitude']
                 longitude = latlong['longitude']
-            latitude = round(latitude, 4)
-            longitude = round(longitude, 4)
-
-            if key in dic.keymap:
-                key = dic.keymap[key]
-                (province, country) = key.split(', ')
+            if not latitude or not longitude:
+                latitude, longitude = geocode(country, province)
+                if not latitude or not longitude:
+                    raise Exception(f'Latitude or longitude is not defined for {key} in {date}')
             if key not in key2data:
                 # new record not in data
                 index = len(data)
@@ -179,13 +279,13 @@ def fetch_csse_csv():
                 data.append({
                     'country': country,
                     'province': province,
+                    'admin2': admin2,
                     'latitude': latitude,
                     'longitude': longitude,
                     'confirmed': confirmed,
                     'recovered': recovered,
                     'deaths': deaths
                 })
-                append = True
             else:
                 # retrieve existing lists
                 index = key2data[key]
@@ -193,45 +293,41 @@ def fetch_csse_csv():
                 confirmed = rec['confirmed']
                 recovered = rec['recovered']
                 deaths = rec['deaths']
-                append = False
+                found = False
+                for i in range(0, len(confirmed)):
+                    if rec['confirmed'][i]['time'] == time_str:
+                        if c > rec['confirmed'][i]['count']:
+                            rec['confirmed'][i]['count'] = c
+                        if c > rec['recovered'][i]['count']:
+                            rec['recovered'][i]['count'] = c
+                        if c > rec['deaths'][i]['count']:
+                            rec['deaths'][i]['count'] = c
+                        found = True
+                        break
+                if found:
+                    continue
 
-            for j in range(col, len(confirmed_row)):
-                date = confirmed_header[j].split('/')
-                time = datetime.datetime(2000 + int(date[2]), int(date[0]),
-                        int(date[1]), 23, 59, tzinfo=datetime.timezone.utc)
-                # YYYY/MM/DD UTC for iOS
-                time_str = f'{time.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-
-                c = int(confirmed_row[j]) if confirmed_row[j] else 0
-                r = int(recovered_row[j]) if recovered_row[j] else 0
-                d = int(deaths_row[j]) if deaths_row[j] else 0
-
-                if append:
-                    confirmed.append({
-                        'time': time_str,
-                        'count': c
-                    })
-                    recovered.append({
-                        'time': time_str,
-                        'count': r
-                    })
-                    deaths.append({
-                        'time': time_str,
-                        'count': d
-                    })
-                else:
-                    confirmed[j - col]['count'] = max(confirmed[j - col]['count'], c)
-                    recovered[j - col]['count'] = max(recovered[j - col]['count'], r)
-                    deaths[j - col]['count'] = max(deaths[j - col]['count'], d)
-
-    print('Fetching CSSE CSV completed')
+            confirmed.insert(0, {
+                'time': time_str,
+                'count': c
+            })
+            recovered.insert(0, {
+                'time': time_str,
+                'count': r
+            })
+            deaths.insert(0, {
+                'time': time_str,
+                'count': d
+            })
 
 def fetch_csse_rest():
     global total_days
 
     print('Fetching CSSE REST...')
 
-    res = requests.get(features_url)
+    res = requests.get(features_url, headers={
+        'referer': config.app_url
+    })
 
     with open('data/csse_rest.json', 'w') as f:
         f.write(res.content.decode())
@@ -252,6 +348,7 @@ def fetch_csse_rest():
         if country in dic.co_names:
             country = dic.co_names[country]
         province = attr['Province_State'].strip() if attr['Province_State'] else ''
+        admin2 = attr['Admin2'].strip() if attr['Admin2'] else ''
         last_updated = datetime.datetime.fromtimestamp(
                 attr['Last_Update']/1000, tz=datetime.timezone.utc)
         last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
@@ -263,17 +360,18 @@ def fetch_csse_rest():
         latitude = feature['geometry']['y']
         longitude = feature['geometry']['x']
 
-        key = f'{province}, {country}'
+        key = generate_key(country, province, admin2)
+        if key in dic.keymap:
+            key = dic.keymap[key]
+            country, province, admin2 = read_key(key)
         if key in dic.latlong:
             latlong = dic.latlong[key]
             latitude = latlong['latitude']
             longitude = latlong['longitude']
-        latitude = round(latitude, 4)
-        longitude = round(longitude, 4)
-
-        if key in dic.keymap:
-            key = dic.keymap[key]
-            (province, country) = key.split(', ')
+        if not latitude or not longitude:
+            latitude, longitude = geocode(country, province)
+            if not latitude or not longitude:
+                raise Exception(f'Latitude or longitude is not defined for {key} in {date}')
         if key not in key2data:
             # new record not in data
             index = len(data)
@@ -290,6 +388,7 @@ def fetch_csse_rest():
             data.append({
                 'country': country,
                 'province': province,
+                'admin2': admin2,
                 'latitude': latitude,
                 'longitude': longitude,
                 'confirmed': confirmed,
@@ -298,17 +397,18 @@ def fetch_csse_rest():
             })
 
             if c:
-                print(f'REST confirmed: {province}, {country}, 0 => {c}')
+                print(f'REST confirmed: {admin2}, {province}, {country}, 0 => {c}')
             if r:
-                print(f'REST recovered: {province}, {country}, 0 => {r}')
+                print(f'REST recovered: {admin2}, {province}, {country}, 0 => {r}')
             if d:
-                print(f'REST deaths   : {province}, {country}, 0 => {d}')
+                print(f'REST deaths   : {admin2}, {province}, {country}, 0 => {d}')
         else:
             # retrieve existing lists
             index = key2data[key]
             rec = data[index]
             country = rec['country']
             province = rec['province']
+            admin2 = rec['admin2']
             confirmed = rec['confirmed']
             recovered = rec['recovered']
             deaths = rec['deaths']
@@ -323,11 +423,11 @@ def fetch_csse_rest():
             r = max(recovered[index]['count'], r)
             d = max(deaths[index]['count'], d)
             if c != confirmed[index]['count']:
-                print(f'REST confirmed: {province}, {country}, {confirmed[index]["count"]} => {c}')
+                print(f'REST confirmed: {admin2}, {province}, {country}, {confirmed[index]["count"]} => {c}')
             if r != recovered[index]['count']:
-                print(f'REST recovered: {province}, {country}, {recovered[index]["count"]} => {r}')
+                print(f'REST recovered: {admin2}, {province}, {country}, {recovered[index]["count"]} => {r}')
             if d != deaths[index]['count']:
-                print(f'REST deaths   : {province}, {country}, {deaths[index]["count"]} => {d}')
+                print(f'REST deaths   : {admin2}, {province}, {country}, {deaths[index]["count"]} => {d}')
 
         if len(confirmed) == total_days + 1:
             continue
@@ -362,9 +462,6 @@ def fetch_csse_rest():
     print('Fetching CSSE REST completed')
 
 def clean_us_data():
-    if use_us_county_level:
-        return
-
     sts = list(dic.us_states.keys())
     states = list(dic.us_states.values())
     n = len(data)
@@ -410,12 +507,12 @@ def fetch_kcdc_country():
 
     year = 2020
     month = int(m[1])
-    date = int(m[2])
+    day = int(m[2])
     hour = int(m[3])
     confirmed = int(m[4].replace(',', ''))
     recovered = int(m[5].replace(',', ''))
     deaths = int(m[6].replace(',', ''))
-    last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
+    last_updated_iso = f'{year}-{month:02}-{day:02} {hour:02}:00:00+09:00'
 
     filename = get_data_filename('South Korea')
     add_header = True
@@ -456,9 +553,9 @@ def fetch_kcdc_provinces():
     country = 'South Korea'
     year = 2020
     month = int(m[1])
-    date = int(m[2])
+    day = int(m[2])
     hour = int(m[3])
-    last_updated_iso = f'{year}-{month:02}-{date:02} {hour:02}:00:00+09:00'
+    last_updated_iso = f'{year}-{month:02}-{day:02} {hour:02}:00:00+09:00'
     matches = re.findall(kcdc_provinces_subre, m[4])
     if not matches:
         print('Fetching KCDC provinces 2/2 failed')
@@ -593,20 +690,16 @@ def fetch_statistichecoronavirus():
 
 def merge_data():
     for filename in glob.glob('data/*.csv'):
-        name = filename.replace('data/', '').replace('.csv', '')
-        if name.startswith('csse_'):
+        key = filename.replace('data/', '').replace('.csv', '')
+        if key.startswith('csse_'):
             continue
-        if ',' in name:
-            x = name.split(',')
-            province = x[0].strip()
-            country = x[1].strip()
-        else:
-            province = ''
-            country = name
+        country, province, admin2 = read_key(key)
 
         found = False
         for rec in data:
-            if country == rec['country'] and province == rec['province']:
+            if country == rec['country'] and \
+               province == rec['province'] and \
+               admin2 == rec['admin2']:
                 found = True
                 break
 
@@ -689,6 +782,7 @@ def merge_data():
             data.append({
                 'country': country,
                 'province': province,
+                'admin2': admin2,
                 'latitude': latitude,
                 'longitude': longitude,
                 'confirmed': confirmed,
@@ -765,7 +859,7 @@ def merge_data():
         if c + r + d == 0:
             continue
 
-        province = 'Others'
+        province = 'Unassigned'
         latitude = co_rec['latitude']
         longitude = co_rec['longitude']
 
@@ -788,6 +882,7 @@ def merge_data():
         data.append({
             'country': country,
             'province': province,
+            'admin2': admin2,
             'latitude': latitude,
             'longitude': longitude,
             'confirmed': confirmed,
@@ -817,10 +912,6 @@ def report_data():
         d = rec['deaths'][index]['count']
         if c == 0 or (country in has_duplicate_data and not province):
             continue
-        if country == 'United States' and \
-           ((use_us_county_level and province in dic.us_states.values()) or
-            (not use_us_county_level and province[-2:] in dic.us_states)):
-            continue
         print(f'final: {province}; {country}; {latitude}; {longitude}; {c}; {r}; {d}')
         total_confirmed += c
         total_recovered += r
@@ -843,10 +934,6 @@ def write_geojson():
            rec['recovered'][index]['count'] == 0 and \
            rec['deaths'][index]['count'] == 0:
             continue
-        if country == 'United States':
-            if (use_us_county_level and province in dic.us_states.values()) or \
-               (not use_us_county_level and province[-2:] in dic.us_states):
-                continue
         if has_countries_to_display and \
            country not in config.countries_to_display:
             continue
@@ -860,6 +947,7 @@ def write_geojson():
             'properties': {
                 'country': rec['country'],
                 'province': rec['province'],
+                'admin2': rec['admin2'],
                 'confirmed': rec['confirmed'],
                 'recovered': rec['recovered'],
                 'deaths': rec['deaths']
@@ -877,7 +965,7 @@ def write_geojson():
 
 def write_csv():
     with open(data_csv, 'w') as f:
-        f.write('province,country,latitude,longitude,category')
+        f.write('admin2,province,country,latitude,longitude,category')
         for x in data[0]['confirmed']:
             date = x['time'].split()[0].replace('/', '')
             f.write(f',utc_{date}')
@@ -885,18 +973,17 @@ def write_csv():
         for rec in data:
             country = rec['country']
             province = rec['province']
+            admin2 = rec['admin2']
             index = len(rec['confirmed']) - 1
             if rec['confirmed'][index]['count'] == 0 and \
                rec['recovered'][index]['count'] == 0 and \
                rec['deaths'][index]['count'] == 0:
                 continue
-            if country == 'United States':
-                if (use_us_county_level and province in dic.us_states.values()) or \
-                   (not use_us_county_level and province[-2:] in dic.us_states):
-                    continue
             if has_countries_to_display and \
                country not in config.countries_to_display:
                 continue
+            if ',' in admin2:
+                admin2 = f'"{admin2}"'
             if ',' in province:
                 province = f'"{province}"'
             if ',' in country:
@@ -904,21 +991,9 @@ def write_csv():
             latitude = rec['latitude']
             longitude = rec['longitude']
             for category in ('confirmed', 'recovered', 'deaths'):
-                f.write(f'{province},{country},{latitude},{longitude},{category}')
-                i = 0
-                count = 0
+                f.write(f'{admin2},{province},{country},{latitude},{longitude},{category}')
                 for x in rec[category]:
-                    date = x['time'].split()[0]
-                    while i < total_days - 1 and \
-                          data[0]['confirmed'][i]['time'].split()[0] < date:
-                        f.write(f',{count}')
-                        i += 1
-                    i += 1
-                    count = x['count']
-                    f.write(f',{count}')
-                while i < total_days:
-                    f.write(',0')
-                    i += 1
+                    f.write(f',{x["count"]}')
                 f.write('\n')
 
 if __name__ == '__main__':

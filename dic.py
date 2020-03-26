@@ -174,9 +174,12 @@ us_states = {
 }
 
 co_names = {
-    'US': 'United States',
     'Republic of Korea': 'South Korea',
     'Korea, South': 'South Korea',
+
+    'Mainland China': 'China',
+    'US': 'United States',
+    'UK': 'United Kingdom',
     'Iran (Islamic Republic of)': 'Iran',
     'Republic of Moldova': 'Moldova',
     'Taiwan*': 'Taiwan',
@@ -187,33 +190,41 @@ co_names = {
     'Congo (Brazzaville)': 'Congo Republic',
     'Congo (Kinshasa)': 'Congo Democratic Republic',
     'Czechia': 'Czech Republic',
+    'North Ireland': 'Ireland',
 }
 
 keymap = {
+    'Diamond Princess': 'Diamond Princess Cruise Ship',
+    'Diamond Princess, Cruise Ship': 'Diamond Princess Cruise Ship',
+    'Diamond Princess cruise ship, Others': 'Diamond Princess Cruise Ship',
+    'Cruise Ship, Others': 'Diamond Princess Cruise Ship',
+
     'US, United States': 'United States, United States',
-    'Washington, D.C., United States': 'District of Columbia, United States',
-    ', Puerto Rico': 'Puerto Rico, United States',
-    ', Guam': 'Guam, United States',
+    'Washington, D.C., United States': 'District of Columbia, District of Columbia, United States',
+    'Puerto Rico': 'Puerto Rico, United States',
+    'Guam': 'Guam, United States',
+    'Virgin Islands, U.S., United States': 'Virgin Islands, United States',
     'United States Virgin Islands, United States': 'Virgin Islands, United States',
 
-    ', France': 'France, France',
-    ', Reunion': 'Reunion, France',
-    ', Mayotte': 'Mayotte, France',
-    ', French Guiana': 'French Guiana, France',
-    ', Guadeloupe': 'Guadeloupe, France',
-    ', Martinique': 'Martinique, France',
+    'France': 'France, France',
+    'Reunion': 'Reunion, France',
+    'Mayotte': 'Mayotte, France',
+    'French Guiana': 'French Guiana, France',
+    'Guadeloupe': 'Guadeloupe, France',
+    'Martinique': 'Martinique, France',
     'St Martin, France': 'Saint Martin, France',
 
-    ', Netherlands': 'Netherlands, Netherlands',
-    ', Aruba': 'Aruba, Netherlands',
+    'Netherlands': 'Netherlands, Netherlands',
+    'Aruba': 'Aruba, Netherlands',
 
-    ', Denmark': 'Denmark, Denmark',
-    ', Greenland': 'Greenland, Denmark',
+    'Denmark': 'Denmark, Denmark',
+    'Greenland': 'Greenland, Denmark',
 
-    ', United Kingdom': 'United Kingdom, United Kingdom',
+    'UK, United Kingdom': 'United Kingdom, United Kingdom',
 }
 
 latlong = {
-    ', Congo Republic': {'latitude': -0.2280, 'longitude': 15.8277},
-    ', Congo Democratic Republic': {'latitude': -4.0383, 'longitude': 21.7587},
+    'Diamond Princess Cruise Ship': {'latitude': 35.4437, 'longitude': 139.6380},
+    'Congo Republic': {'latitude': -0.2280, 'longitude': 15.8277},
+    'Congo Democratic Republic': {'latitude': -4.0383, 'longitude': 21.7587},
 }
