@@ -4,7 +4,11 @@
 
 ## UPDATES
 
-`fetch_data.py` is broken at this time because CSSE deprecated the CSV files that this script relied on. Their new global CSV files do not report county-level data for the US and the number of columns in the recovered file is one day short. I'm trying to find a better solution.
+`fetch_data.py` is broken at this time because CSSE deprecated the CSV files that this script relied on. Their new global CSV files do not report county-level data for the US as mentioned in [their announcement](https://github.com/CSSEGISandData/COVID-19/issues/1250) and the number of columns in the global recovered file is one day short. Last, they closed down [their county-level REST service](https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json) to the public. There is a workaround, but you know... if they don't want to open it, I don't want to use it.
+
+[Corona Data Scraper](https://coronadatascraper.com/)'s data is inconsistent in reporting recovered and deaths counts for some counties in the US.
+
+I'm trying to find a better solution.
 
 ## Data Sources
 
