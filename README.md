@@ -41,3 +41,8 @@ GNU Affero General Public License for more details.
 
 You should have received a copy of the GNU Affero General Public License
 along with this program.  If not, see <<https://www.gnu.org/licenses/>>.
+
+## Other Resources
+
+* [Corona Data Scraper](https://coronadatascraper.com/)
+* [Novel Coronavirus COVID-19 (2019-nCoV): Global Cases over time](https://covid19visualiser.com/)
