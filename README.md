@@ -4,7 +4,7 @@
 
 ## UPDATES
 
-`fetch_data.py` is broken at this time because CSSE deprecated the CSV files that this script relied on. I'm trying to find a better solution.
+`fetch_data.py` is broken at this time because CSSE deprecated the CSV files that this script relied on. Their new global CSV files do not report county-level data for the US and the number of columns in the recovered file is one day short. I'm trying to find a better solution.
 
 ## Data Sources
 
@@ -20,10 +20,6 @@ I found [CSSE](https://systems.jhu.edu)'s data unreliable because they keep chan
 
 * geodata.json: GeoJSON file with case locations and time series data
 * data.csv: CSV file with the same information in a tabular format
-
-## TODO
-
-https://github.com/CSSEGISandData/COVID-19/issues/1250
 
 ## Disclaimer
 
