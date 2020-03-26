@@ -2,6 +2,10 @@
 
 [This web map](https://app.isnew.info/covid-19) is an open source version of [the COVID-19 global cases website](https://arcg.is/0fHmTX) by [Johns Hopkins CSSE](https://systems.jhu.edu). It uses [OpenLayers](https://openlayers.org) for mapping, [Plotly.js](https://github.com/plotly/plotly.js) for plotting, and [Iconify](https://iconify.design/) for icons.
 
+## UPDATES
+
+`fetch_data.py` is broken at this time because CSSE deprecated the CSV files that this script relied on. I'm trying to find a better solution.
+
 ## Data Sources
 
 * Main data source: [CSSE](https://systems.jhu.edu)'s [time series data](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series) and [REST API](https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json)
