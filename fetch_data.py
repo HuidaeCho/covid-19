@@ -1027,9 +1027,7 @@ def write_geojson():
             rec['recovered'][index]['count'] +
             rec['deaths'][index]['count'] == 0) or \
            (has_countries_to_display and
-            country not in config.countries_to_display) or \
-                    (country in has_duplicate_data and not province):# or \
-           #(country == 'United States' and province and not admin2):
+            country not in config.countries_to_display):
             continue
         features.append({
             'id': i,
@@ -1073,10 +1071,8 @@ def write_csv():
                 rec['recovered'][index]['count'] +
                 rec['deaths'][index]['count'] == 0) or \
                (has_countries_to_display and
-                country not in config.countries_to_display) or \
-                        (country in has_duplicate_data and not province):# or \
-               #(country == 'United States' and province and not admin2):
-                    continue
+                country not in config.countries_to_display):
+                continue
             if ',' in admin2:
                 admin2 = f'"{admin2}"'
             if ',' in province:
