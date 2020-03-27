@@ -921,7 +921,9 @@ var showStats = function(features, query){
 				}
 			}else if(id == query - 1 ||
 			    id == features.length + Number(query) ||
+			    admin2 + ', ' + province + ', ' + country == query ||
 			    province + ', ' + country == query ||
+			    (admin2 + ', ' + province + ', ' + country).indexOf(query) >= 0 ||
 			    (province + ', ' + country).indexOf(query) >= 0 ||
 			    (query != 'Others' && province.indexOf(query) >= 0) ||
 			    country.indexOf(query) >= 0){
