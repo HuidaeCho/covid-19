@@ -4,7 +4,7 @@
 
 ## UPDATES
 
-As of March 27, 2020 at 6pm EDT, `fetch_data.py`'s count of the United States cases is 697 greater than CSSE's. I just checked one state, Illinois:
+As of March 27, 2020 at 6pm EDT, `fetch_data.py`'s count of the United States cases is 697 greater than CSSE's. I checked individual states and created the following table:
 | County     | State | [CSSE CSV](https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_daily_reports/03-26-2020.csv) | [CSSE REST](https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json) |
 | -------------------- | ------------- | --: | --: |
 | Coffee               | Alabama       |   1 |   0 |
