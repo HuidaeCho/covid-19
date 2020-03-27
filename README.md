@@ -4,7 +4,14 @@
 
 ## UPDATES
 
-As of March 27, 2020 at 6pm EDT, `fetch_data.py`'s count of the United States cases is 697 greater than CSSE's.
+As of March 27, 2020 at 6pm EDT, `fetch_data.py`'s count of the United States cases is 697 greater than CSSE's. I just checked one state, Illinois:
+| County     | [CSSE CSV](https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_daily_reports/03-26-2020.csv) | [CSSE REST](https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json) |
+| ---------- | --: | --: |
+| Unassigned | 668 | N/A |
+| LaSalle    |   3 |   0 |
+| Logan      |   1 |   0 |
+
+That's already 672 records more in my app. Data from their REST API is supposed to be current, but those numbers are decreasing for some counties. I have no idea which version to trust more between their daily reports vs. REST data.
 
 ## Data Sources
 
