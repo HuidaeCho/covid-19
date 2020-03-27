@@ -202,9 +202,9 @@ def fetch_csse_daily_csv(year, month, day):
                 # 9: Recovered
                 # 10: Active
                 # 11: Combined_Key
-                admin2 = '' if row[1] == 'None' else row[1]
-                province = '' if row[2] == 'None' else row[2]
-                country = row[3]
+                admin2 = '' if row[1].strip() == 'None' else row[1].strip()
+                province = '' if row[2].strip() == 'None' else row[2].strip()
+                country = row[3].strip()
                 # don't use last_updated; there can be duplicate entries with different counts
                 last_updated = row[4]
                 if row[5] and row[5] != '0':
@@ -224,8 +224,8 @@ def fetch_csse_daily_csv(year, month, day):
                 # 5: Recovered
                 # 6: Latitude
                 # 7: Longitude
-                province = '' if row[0] == 'None' else row[0]
-                country = row[1]
+                province = '' if row[0].strip() == 'None' else row[0].strip()
+                country = row[1].strip()
                 last_updated = row[2]
                 c = int(0 if row[3] == '' else row[3])
                 d = int(0 if row[4] == '' else row[4])
@@ -242,8 +242,8 @@ def fetch_csse_daily_csv(year, month, day):
                 # 3: Confirmed
                 # 4: Deaths
                 # 5: Recovered
-                province = '' if row[0] == 'None' else row[0]
-                country = row[1]
+                province = '' if row[0].strip() == 'None' else row[0].strip()
+                country = row[1].strip()
                 last_updated = row[2]
                 c = int(0 if row[3] == '' else row[3])
                 d = int(0 if row[4] == '' else row[4])
@@ -254,6 +254,10 @@ def fetch_csse_daily_csv(year, month, day):
                 country = dic.co_names[country]
             if ', ' in province and not admin2:
                 admin2, province = province.split(', ')
+            if ' County' in admin2:
+                admin2 = admin2.replace(' County', '')
+            if province in dic.us_states.keys():
+                province = dic.us_states[province]
             if ',' in admin2:
                 raise Exception(f'Commas are not allowed in admin2 names: {admin2} in {date}')
             if ',' in province:
@@ -482,34 +486,100 @@ def fetch_csse_rest():
     print('Fetching CSSE REST completed')
 
 def clean_us_data():
-    sts = list(dic.us_states.keys())
-    states = list(dic.us_states.values())
+    country = 'United States'
     n = len(data)
-
-    for rec in data:
-        if rec['country'] != 'United States':
+    unassigned_data = []
+    for i in range(0, n):
+        rec = data[i]
+        if rec['country'] != country:
             continue
 
         province = rec['province']
-        if province not in states:
+        admin2 = rec['admin2']
+        if province not in dic.us_states.values() or admin2:
             continue
 
-        st = sts[states.index(province)]
+        # state-wide record
         confirmed = rec['confirmed']
         recovered = rec['recovered']
         deaths = rec['deaths']
 
-        st_indices = []
-        for i in range(0, n):
-            rec2 = data[i]
-            if rec2['country'] == 'United States' and rec2['province'].endswith(f', {st}'):
-                st_indices.append(i)
+        admin2_indices = []
+        unassigned_index = -1
+        for j in range(0, n):
+            rec2 = data[j]
+            if rec2['country'] == country and \
+               rec2['province'] == province and \
+               rec2['admin2']:
+                admin2_indices.append(j)
+                if rec2['admin2'] == 'Unassigned':
+                    unassigned_index = j
+        unassigned_new = unassigned_index == -1
 
-        for i in range(0, len(confirmed)):
-            if confirmed[i]['count'] > 0:
-                break
-            for j in st_indices:
-                confirmed[i]['count'] += data[j]['confirmed'][i]['count']
+        # no admin2 records
+        if len(admin2_indices) == 0:
+            continue
+
+        for j in range(0, len(confirmed)):
+            c = r = d = 0
+            for k in admin2_indices:
+                c += data[k]['confirmed'][j]['count']
+                r += data[k]['recovered'][j]['count']
+                d += data[k]['deaths'][j]['count']
+            unassigned_c = unassigned_r = unassigned_d = 0
+            if c > confirmed[j]['count']:
+                confirmed[j]['count'] = c
+            else:
+                unassigned_c = confirmed[j]['count'] - c
+            if r > recovered[j]['count']:
+                recovered[j]['count'] = r
+            else:
+                unassigned_r = recovered[j]['count'] - r
+            if d > deaths[j]['count']:
+                deaths[j]['count'] = d
+            else:
+                unassigned_d = deaths[j]['count'] - d
+            if unassigned_c + unassigned_r + unassigned_d == 0:
+                continue
+            if unassigned_index == -1:
+                unassigned_index = n
+                data.append({
+                    'country': country,
+                    'province': province,
+                    'admin2': 'Unassigned',
+                    'latitude': rec['latitude'],
+                    'longitude': rec['longitude'],
+                    'confirmed': [{
+                        'time': confirmed[j]['time'],
+                        'count': unassigned_c
+                    }],
+                    'recovered': [{
+                        'time': recovered[j]['time'],
+                        'count': unassigned_r
+                    }],
+                    'deaths': [{
+                        'time': deaths[j]['time'],
+                        'count': unassigned_d
+                    }]
+                })
+                n += 1
+            elif unassigned_new:
+                data[unassigned_index]['confirmed'].append({
+                    'time': confirmed[j]['time'],
+                    'count': unassigned_c
+                })
+                data[unassigned_index]['recovered'].append({
+                    'time': recovered[j]['time'],
+                    'count': unassigned_r
+                })
+                data[unassigned_index]['deaths'].append({
+                    'time': deaths[j]['time'],
+                    'count': unassigned_d
+                })
+            else:
+                data[unassigned_index]['confirmed'][j]['count'] = unassigned_c
+                data[unassigned_index]['recovered'][j]['count'] = unassigned_r
+                data[unassigned_index]['deaths'][j]['count'] = unassigned_d
 
 def get_data_filename(country, province=None):
     return 'data/' + (province + ', ' if province else '') + country + '.csv'
@@ -848,7 +918,6 @@ def merge_data():
             continue
 
         index = len(co_rec['confirmed']) - 1
-        add_others = False
         c = r = d = 0
         if last_updated_str > co_last_updated_str:
             # local data is newer
@@ -924,15 +993,18 @@ def report_data():
     for rec in data:
         country = rec['country']
         province = rec['province']
+        admin2 = rec['admin2']
         latitude = rec['latitude']
         longitude = rec['longitude']
         index = len(rec['confirmed']) - 1
         c = rec['confirmed'][index]['count']
         r = rec['recovered'][index]['count']
         d = rec['deaths'][index]['count']
-        if c == 0 or (country in has_duplicate_data and not province):
+        if c + r + d == 0 or \
+           (country in has_duplicate_data and not province) or \
+           (country == 'United States' and province and admin2):
             continue
-        print(f'final: {province}; {country}; {latitude}; {longitude}; {c}; {r}; {d}')
+        print(f'final: {admin2}, {province}, {country}, {latitude}, {longitude}, {c}, {r}, {d}')
         total_confirmed += c
         total_recovered += r
         total_deaths += d
@@ -1030,7 +1102,7 @@ def write_csv():
 if __name__ == '__main__':
     fetch_csse_csv()
     fetch_csse_rest()
-    #clean_us_data()
+    clean_us_data()
 
     fetch_kcdc_country()
     fetch_kcdc_provinces()
