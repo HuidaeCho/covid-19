@@ -109,6 +109,7 @@ def fetch_csse_csv():
 
     print('Fetching CSSE CSV...')
 
+    total_days = 0
     ts_confirmed_res = requests.get(ts_confirmed_url)
     with io.StringIO(ts_confirmed_res.content.decode()) as ts_confirmed_f:
         ts_confirmed_reader = csv.reader(ts_confirmed_f)
@@ -130,9 +131,9 @@ def fetch_csse_csv():
                 print('')
 
             fetch_csse_daily_csv(year, month, day)
+            total_days += 1
         if j % 5:
             print('')
-    total_days = len(dates)
 
     for rec in data:
         for category in ('confirmed', 'recovered', 'deaths'):
@@ -256,6 +257,8 @@ def fetch_csse_daily_csv(year, month, day):
                 admin2, province = province.split(', ')
             if ' County' in admin2:
                 admin2 = admin2.replace(' County', '')
+            elif ' Parish' in admin2:
+                admin2 = admin2.replace(' Parish', '')
             if province in dic.us_states.keys():
                 province = dic.us_states[province]
             if ',' in admin2:
@@ -279,6 +282,11 @@ def fetch_csse_daily_csv(year, month, day):
                 if not latitude or not longitude:
                     raise Exception(f'Latitude or longitude is not defined for {key} in {date}')
             if key not in key2data:
+                if total_days > 0 and \
+                   (country != 'United States' or
+                    province not in dic.us_states.values() or
+                    admin2 == 'Unassigned'):
+                    continue
                 # new record not in data
                 index = len(data)
                 key2data[key] = index
@@ -954,7 +962,7 @@ def report_data():
            (country in has_duplicate_data and not province) or \
            (country == 'United States' and
             province in dic.us_states.values() and not admin2) or \
-           country == 'REMOVEME':
+           country == 'REMOVE':
             continue
         print(f'final: {admin2}, {province}, {country}, {latitude}, {longitude}, {c}, {r}, {d}')
         total_confirmed += c
@@ -980,7 +988,7 @@ def write_geojson():
             rec['deaths'][index]['count'] == 0) or \
            (has_countries_to_display and
             country not in config.countries_to_display) or \
-           country == 'REMOVEME':
+           country == 'REMOVE':
             continue
         features.append({
             'id': i,
@@ -1025,7 +1033,7 @@ def write_csv():
                 rec['deaths'][index]['count'] == 0) or \
                (has_countries_to_display and
                 country not in config.countries_to_display) or \
-               country == 'REMOVEME':
+               country == 'REMOVE':
                 continue
             if ',' in admin2:
                 admin2 = f'"{admin2}"'
