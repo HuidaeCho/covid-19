@@ -191,6 +191,7 @@ co_names = {
     'Congo (Kinshasa)': 'Congo Democratic Republic',
     'Czechia': 'Czech Republic',
     'North Ireland': 'Ireland',
+    'Republic of Ireland': 'Ireland',
 }
 
 keymap = {
