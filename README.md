@@ -5,13 +5,35 @@
 ## UPDATES
 
 As of March 27, 2020 at 6pm EDT, `fetch_data.py`'s count of the United States cases is 697 greater than CSSE's. I just checked one state, Illinois:
-| County     | [CSSE CSV](https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_daily_reports/03-26-2020.csv) | [CSSE REST](https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json) |
-| ---------- | --: | --: |
-| Unassigned | 668 | N/A |
-| LaSalle    |   3 |   0 |
-| Logan      |   1 |   0 |
+| County     | State | [CSSE CSV](https://github.com/CSSEGISandData/COVID-19/blob/master/csse_covid_19_data/csse_covid_19_daily_reports/03-26-2020.csv) | [CSSE REST](https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json) |
+| -------------------- | ------------- | --: | --: |
+| Coffee               | Alabama       |   1 |   0 |
+| Fairbanks North Star | Alaska        |  11 |  10 |
+| Cleburne             | Arkansas      |  47 |  46 |
+| Dawson               | Georgia       |   3 |   2 |
+| Unassigned           | Hawaii        |   8 |   6 |
+| Bannock              | Idaho         |   3 |   2 |
+| Bingham              | Idaho         |   2 |   1 |
+| Unassigned           | Illinois      | 668 | N/A |
+| LaSalle              | Illinois      |   3 |   0 |
+| Logan                | Illinois      |   1 |   0 |
+| Ascension            | Louisiana     |  91 |  90 |
+| Morehouse            | Louisiana     |   3 |   2 |
+| Jackson              | Michigan      |  17 |  16 |
+| Newaygo              | Michigan      |   2 |   1 |
+| Amite                | Mississippi   |   1 |   0 |
+| Houston              | Tennessee     |   3 |   2 |
+| Guadalupe            | Texas         |   9 |   8 |
+| Walker               | Texas         |   3 |   2 |
+| Unassigned           | Vermont       |   8 |   6 |
+| Norfolk              | Virginia      |   9 |   8 |
+| Fairfax City         | virginia      |   1 |   0 |
+| Unassigned           | Washington    |  69 |  67 |
+| Preston              | West Virginia |   2 |   1 |
+| Ohio                 | West Virginia |   2 |   1 |
+| Hancock              | West Virginia |   1 |   0 |
 
-That's already 672 records more in my app. Data from their REST API is supposed to be current, but those numbers are decreasing for some counties. I have no idea which version to trust more between their daily reports vs. REST data.
+Data from their REST API is supposed to be current because their web map directly uses this data for visualization, but some of those numbers are decreasing for some counties in the United States. I have no idea which version to trust more between their daily reports vs. REST data.
 
 ## Data Sources
 
