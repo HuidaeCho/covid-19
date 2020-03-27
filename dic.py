@@ -162,15 +162,15 @@ us_states = {
     'WI': 'Wisconsin',
     'WY': 'Wyoming',
 
-    'AS': 'American Samoa',
-    'DC': 'District of Columbia',
-    'FM': 'Federated States of Micronesia',
-    'GU': 'Guam',
-    'MH': 'Marshall Islands',
-    'MP': 'Northern Mariana Islands',
-    'PW': 'Palau',
-    'PR': 'Puerto Rico',
-    'VI': 'Virgin Islands',
+#    'AS': 'American Samoa',
+#    'DC': 'District of Columbia',
+#    'FM': 'Federated States of Micronesia',
+#    'GU': 'Guam',
+#    'MH': 'Marshall Islands',
+#    'MP': 'Northern Mariana Islands',
+#    'PW': 'Palau',
+#    'PR': 'Puerto Rico',
+#    'VI': 'Virgin Islands',
 }
 
 co_names = {
@@ -199,12 +199,16 @@ keymap = {
     'Diamond Princess cruise ship, Others': 'Diamond Princess Cruise Ship',
     'Cruise Ship, Others': 'Diamond Princess Cruise Ship',
 
-    'US, United States': 'United States, United States',
-    'Washington, D.C., United States': 'District of Columbia, District of Columbia, United States',
+    'US, United States': 'REMOVEME',
+    'Washington, D.C., United States': 'District of Columbia, United States',
+    'District of Columbia, District of Columbia, United States': 'District of Columbia, United States',
+    'Chicago, United States': 'Chicago, Illinois, United States',
     'Puerto Rico': 'Puerto Rico, United States',
     'Guam': 'Guam, United States',
     'Virgin Islands, U.S., United States': 'Virgin Islands, United States',
     'United States Virgin Islands, United States': 'Virgin Islands, United States',
+    'Diamond Princess, United States': 'Diamond Princess Cruise Ship, United States',
+    'Grand Princess, United States': 'Grand Princess Cruise Ship, United States',
 
     'France': 'France, France',
     'Reunion': 'Reunion, France',
@@ -220,7 +224,13 @@ keymap = {
     'Denmark': 'Denmark, Denmark',
     'Greenland': 'Greenland, Denmark',
 
+    'United Kingdom': 'United Kingdom, United Kingdom',
     'UK, United Kingdom': 'United Kingdom, United Kingdom',
+
+    'Hong Kong, Hong Kong': 'Hong Kong, China',
+    'Hong Kong, Hong Kong SAR': 'Hong Kong, China',
+
+    'Taiwan, Taiwan': 'Taiwan',
 }
 
 latlong = {

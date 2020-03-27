@@ -331,7 +331,7 @@ def fetch_csse_daily_csv(year, month, day):
             })
 
 def fetch_all_features(features_url):
-    count = 100
+    count = 1000
     offset = 0
 
     features = []
@@ -488,7 +488,6 @@ def fetch_csse_rest():
 def clean_us_data():
     country = 'United States'
     n = len(data)
-    unassigned_data = []
     for i in range(0, n):
         rec = data[i]
         if rec['country'] != country:
@@ -497,6 +496,9 @@ def clean_us_data():
         province = rec['province']
         admin2 = rec['admin2']
         if province not in dic.us_states.values() or admin2:
+            # non-CONUS admin2
+            if not admin2:
+                rec['admin2'] = province
             continue
 
         # state-wide record
@@ -505,16 +507,12 @@ def clean_us_data():
         deaths = rec['deaths']
 
         admin2_indices = []
-        unassigned_index = -1
         for j in range(0, n):
             rec2 = data[j]
             if rec2['country'] == country and \
                rec2['province'] == province and \
                rec2['admin2']:
                 admin2_indices.append(j)
-                if rec2['admin2'] == 'Unassigned':
-                    unassigned_index = j
-        unassigned_new = unassigned_index == -1
 
         # no admin2 records
         if len(admin2_indices) == 0:
@@ -526,60 +524,12 @@ def clean_us_data():
                 c += data[k]['confirmed'][j]['count']
                 r += data[k]['recovered'][j]['count']
                 d += data[k]['deaths'][j]['count']
-            unassigned_c = unassigned_r = unassigned_d = 0
             if c > confirmed[j]['count']:
                 confirmed[j]['count'] = c
-            else:
-                unassigned_c = confirmed[j]['count'] - c
             if r > recovered[j]['count']:
                 recovered[j]['count'] = r
-            else:
-                unassigned_r = recovered[j]['count'] - r
             if d > deaths[j]['count']:
                 deaths[j]['count'] = d
-            else:
-                unassigned_d = deaths[j]['count'] - d
-            if unassigned_c + unassigned_r + unassigned_d == 0:
-                continue
-            if unassigned_index == -1:
-                unassigned_index = n
-                data.append({
-                    'country': country,
-                    'province': province,
-                    'admin2': 'Unassigned',
-                    'latitude': rec['latitude'],
-                    'longitude': rec['longitude'],
-                    'confirmed': [{
-                        'time': confirmed[j]['time'],
-                        'count': unassigned_c
-                    }],
-                    'recovered': [{
-                        'time': recovered[j]['time'],
-                        'count': unassigned_r
-                    }],
-                    'deaths': [{
-                        'time': deaths[j]['time'],
-                        'count': unassigned_d
-                    }]
-                })
-                n += 1
-            elif unassigned_new:
-                data[unassigned_index]['confirmed'].append({
-                    'time': confirmed[j]['time'],
-                    'count': unassigned_c
-                })
-                data[unassigned_index]['recovered'].append({
-                    'time': recovered[j]['time'],
-                    'count': unassigned_r
-                })
-                data[unassigned_index]['deaths'].append({
-                    'time': deaths[j]['time'],
-                    'count': unassigned_d
-                })
-            else:
-                data[unassigned_index]['confirmed'][j]['count'] = unassigned_c
-                data[unassigned_index]['recovered'][j]['count'] = unassigned_r
-                data[unassigned_index]['deaths'][j]['count'] = unassigned_d
 
 def get_data_filename(country, province=None):
     return 'data/' + (province + ', ' if province else '') + country + '.csv'
@@ -948,7 +898,7 @@ def merge_data():
         if c + r + d == 0:
             continue
 
-        province = 'Unassigned'
+        province = 'Others'
         latitude = co_rec['latitude']
         longitude = co_rec['longitude']
 
@@ -1002,7 +952,9 @@ def report_data():
         d = rec['deaths'][index]['count']
         if c + r + d == 0 or \
            (country in has_duplicate_data and not province) or \
-           (country == 'United States' and province and not admin2):
+           (country == 'United States' and
+            province in dic.us_states.values() and not admin2) or \
+           country == 'REMOVEME':
             continue
         print(f'final: {admin2}, {province}, {country}, {latitude}, {longitude}, {c}, {r}, {d}')
         total_confirmed += c
@@ -1027,7 +979,8 @@ def write_geojson():
             rec['recovered'][index]['count'] +
             rec['deaths'][index]['count'] == 0) or \
            (has_countries_to_display and
-            country not in config.countries_to_display):
+            country not in config.countries_to_display) or \
+           country == 'REMOVEME':
             continue
         features.append({
             'id': i,
@@ -1071,7 +1024,8 @@ def write_csv():
                 rec['recovered'][index]['count'] +
                 rec['deaths'][index]['count'] == 0) or \
                (has_countries_to_display and
-                country not in config.countries_to_display):
+                country not in config.countries_to_display) or \
+               country == 'REMOVEME':
                 continue
             if ',' in admin2:
                 admin2 = f'"{admin2}"'
