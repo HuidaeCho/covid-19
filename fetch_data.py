@@ -542,10 +542,13 @@ def clean_us_data():
                 r += rec2['recovered'][j]['count']
                 d += rec2['deaths'][j]['count']
             if c > confirmed[j]['count']:
+                print(f'US   confirmed: {province}, {country}, {confirmed[j]["count"]} => {c}')
                 confirmed[j]['count'] = c
             if r > recovered[j]['count']:
+                print(f'US   recovered: {province}, {country}, {recovered[j]["count"]} => {r}')
                 recovered[j]['count'] = r
             if d > deaths[j]['count']:
+                print(f'US   deaths   : {province}, {country}, {deaths[j]["count"]} => {d}')
                 deaths[j]['count'] = d
 
     if len(others_indices):
@@ -573,10 +576,15 @@ def clean_us_data():
                 'count': d
             })
         latitude, longitude = geocode(country)
+        province = 'Others'
+
+        print(f'US   confirmed: {province}, {country}, {c}')
+        print(f'US   recovered: {province}, {country}, {r}')
+        print(f'US   deaths   : {province}, {country}, {d}')
 
         data.append({
             'country': country,
-            'province': 'Others',
+            'province': province,
             'admin2': '',
             'latitude': latitude,
             'longitude': longitude,
@@ -1013,9 +1021,7 @@ def report_data():
         d = rec['deaths'][index]['count']
         if c + r + d == 0 or \
            (country in has_duplicate_data and not province) or \
-           (country == 'United States' and
-            province in dic.us_states.values() and not admin2) or \
-           country == 'REMOVE':
+           (country == 'United States' and not admin2):
             continue
         print(f'final: {admin2}, {province}, {country}, {latitude}, {longitude}, {c}, {r}, {d}')
         total_confirmed += c
@@ -1040,8 +1046,7 @@ def write_geojson():
             rec['recovered'][index]['count'] +
             rec['deaths'][index]['count'] == 0) or \
            (has_countries_to_display and
-            country not in config.countries_to_display) or \
-           country == 'REMOVE':
+            country not in config.countries_to_display):
             continue
         features.append({
             'id': i,
@@ -1085,8 +1090,7 @@ def write_csv():
                 rec['recovered'][index]['count'] +
                 rec['deaths'][index]['count'] == 0) or \
                (has_countries_to_display and
-                country not in config.countries_to_display) or \
-               country == 'REMOVE':
+                country not in config.countries_to_display):
                 continue
             if ',' in admin2:
                 admin2 = f'"{admin2}"'
