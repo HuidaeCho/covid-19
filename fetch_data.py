@@ -114,6 +114,7 @@ def fetch_csse_csv():
         ts_confirmed_reader = csv.reader(ts_confirmed_f)
         header = ts_confirmed_reader.__next__()
         # reverse order to find more recent and fully populated data first
+        j = 0
         for i in range(len(header) - 1, 3, -1):
             date = header[i].split('/')
             year = 2000 + int(date[2])
@@ -122,10 +123,15 @@ def fetch_csse_csv():
 
             date = f'{year}/{month:02}/{day:02}'
             dates.insert(0, date)
+
             print(f'{date}...', end='', flush=True)
+            j += 1
+            if j % 5 == 0:
+                print('')
 
             fetch_csse_daily_csv(year, month, day)
-        print('')
+        if j % 5:
+            print('')
     total_days = len(dates)
 
     for rec in data:
@@ -366,7 +372,6 @@ def fetch_csse_rest():
         last_updated = datetime.datetime.fromtimestamp(
                 attr['Last_Update']/1000, tz=datetime.timezone.utc)
         last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-        print(f'XXX {last_updated_str}')
         # sometimes, the last date in the CSV file is later than REST; in this
         # case, let's use today's date at 00:00:00
         if today_str > last_updated_str:
