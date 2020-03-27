@@ -61,6 +61,7 @@ data_csv = 'data.csv'
 # use this dictionary to avoid geocoding the same province multiple times
 coors_json = 'coors.json'
 
+dates = []
 data = []
 key2data = {}
 has_countries_to_display = True if len(config.countries_to_display) else False
@@ -109,7 +110,6 @@ def fetch_csse_csv():
     print('Fetching CSSE CSV...')
 
     ts_confirmed_res = requests.get(ts_confirmed_url)
-    dates = []
     with io.StringIO(ts_confirmed_res.content.decode()) as ts_confirmed_f:
         ts_confirmed_reader = csv.reader(ts_confirmed_f)
         header = ts_confirmed_reader.__next__()
@@ -126,23 +126,23 @@ def fetch_csse_csv():
 
             fetch_csse_daily_csv(year, month, day)
         print('')
-
     total_days = len(dates)
+
     for rec in data:
         for category in ('confirmed', 'recovered', 'deaths'):
             i = 0
-            prepend = []
+            insert = {}
             for x in rec[category]:
                 date = x['time'].split()[0]
                 while i < total_days - 1 and dates[i] < date:
-                    prepend.append({
+                    insert[i] = {
                         'time': f'{dates[i]} 23:59:59 UTC',
                         'count': 0,
-                    })
+                    }
                     i += 1
                 i += 1
-            prepend.extend(rec[category])
-            rec[category] = prepend
+            for key in sorted(insert.keys()):
+                rec[category].insert(key, insert[key])
             index = len(rec[category]) - 1
             while i < total_days:
                 # TODO: aggregate
@@ -320,19 +320,33 @@ def fetch_csse_daily_csv(year, month, day):
                 'count': d
             })
 
+def fetch_all_features(features_url):
+    count = 100
+    offset = 0
+
+    features = []
+    while True:
+        url = f'{features_url}&resultRecordCount={count}&resultOffset={offset}'
+        res = requests.get(url, headers={
+            'referer': config.app_url
+        })
+        res = json.loads(res.content.decode())
+        features.extend(res['features'])
+        if 'exceededTransferLimit' not in res or res['exceededTransferLimit'] == 'false':
+            break
+        offset += count
+    return features
+
 def fetch_csse_rest():
     global total_days
 
     print('Fetching CSSE REST...')
 
-    res = requests.get(features_url, headers={
-        'referer': config.app_url
-    })
-
+    features = fetch_all_features(features_url)
     with open('data/csse_rest.json', 'w') as f:
-        f.write(res.content.decode())
+        f.write(json.dumps(features))
 
-    features = json.loads(res.content)['features']
+    today_str = datetime.datetime.utcnow().strftime('%Y/%m/%d 00:00:00 UTC')
 
     # try to find most up-to-date info from the REST server
     for feature in features:
@@ -341,7 +355,7 @@ def fetch_csse_rest():
         r = int(attr['Recovered'])
         d = int(attr['Deaths'])
 
-        if c == 0:
+        if c + r + d == 0:
             continue
 
         country = attr['Country_Region'].strip()
@@ -352,9 +366,9 @@ def fetch_csse_rest():
         last_updated = datetime.datetime.fromtimestamp(
                 attr['Last_Update']/1000, tz=datetime.timezone.utc)
         last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+        print(f'XXX {last_updated_str}')
         # sometimes, the last date in the CSV file is later than REST; in this
         # case, let's use today's date at 00:00:00
-        today_str = datetime.datetime.utcnow().strftime('%Y/%m/%d 00:00:00 UTC')
         if today_str > last_updated_str:
             last_updated_str = today_str
         latitude = feature['geometry']['y']
@@ -445,6 +459,7 @@ def fetch_csse_rest():
             'count': d
         })
 
+    dates.append(today_str.split()[0])
     total_days += 1
 
     # oops! some provinces are missing from the REST data?
@@ -775,9 +790,9 @@ def merge_data():
                         'count': d
                     })
 
-                print(f'data confirmed: {province}, {country}, {c}')
-                print(f'data recovered: {province}, {country}, {r}')
-                print(f'data deaths   : {province}, {country}, {d}')
+                print(f'data confirmed: {admin2}, {province}, {country}, {c}')
+                print(f'data recovered: {admin2}, {province}, {country}, {r}')
+                print(f'data deaths   : {admin2}, {province}, {country}, {d}')
 
             data.append({
                 'country': country,
@@ -930,8 +945,8 @@ def write_geojson():
         country = rec['country']
         province = rec['province']
         index = len(rec['confirmed']) - 1
-        if rec['confirmed'][index]['count'] == 0 and \
-           rec['recovered'][index]['count'] == 0 and \
+        if rec['confirmed'][index]['count'] + \
+           rec['recovered'][index]['count'] + \
            rec['deaths'][index]['count'] == 0:
             continue
         if has_countries_to_display and \
@@ -966,8 +981,8 @@ def write_geojson():
 def write_csv():
     with open(data_csv, 'w') as f:
         f.write('admin2,province,country,latitude,longitude,category')
-        for x in data[0]['confirmed']:
-            date = x['time'].split()[0].replace('/', '')
+        for date in dates:
+            date = date.replace('/', '')
             f.write(f',utc_{date}')
         f.write('\n')
         for rec in data:
@@ -975,8 +990,8 @@ def write_csv():
             province = rec['province']
             admin2 = rec['admin2']
             index = len(rec['confirmed']) - 1
-            if rec['confirmed'][index]['count'] == 0 and \
-               rec['recovered'][index]['count'] == 0 and \
+            if rec['confirmed'][index]['count'] + \
+               rec['recovered'][index]['count'] + \
                rec['deaths'][index]['count'] == 0:
                 continue
             if has_countries_to_display and \
@@ -992,14 +1007,25 @@ def write_csv():
             longitude = rec['longitude']
             for category in ('confirmed', 'recovered', 'deaths'):
                 f.write(f'{admin2},{province},{country},{latitude},{longitude},{category}')
+                i = 0
+                count = 0
                 for x in rec[category]:
-                    f.write(f',{x["count"]}')
+                    date = x['time'].split()[0]
+                    while i < total_days - 1 and dates[i] < date:
+                        f.write(f',{count}')
+                        i += 1
+                    i += 1
+                    count = x['count']
+                    f.write(f',{count}')
+                while i < total_days:
+                    f.write(f',{count}')
+                    i += 1
                 f.write('\n')
 
 if __name__ == '__main__':
     fetch_csse_csv()
     fetch_csse_rest()
-    clean_us_data()
+    #clean_us_data()
 
     fetch_kcdc_country()
     fetch_kcdc_provinces()
