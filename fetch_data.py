@@ -517,7 +517,7 @@ def clean_us_data():
             # CONUS admin2 records
             continue
 
-        # state-wide record
+        # state-wide records
         confirmed = rec['confirmed']
         recovered = rec['recovered']
         deaths = rec['deaths']
