@@ -33,7 +33,7 @@ As of March 27, 2020 at 6pm EDT, `fetch_data.py`'s count of the United States ca
 | Ohio                 | West Virginia |   2 |   1 |
 | Hancock              | West Virginia |   1 |   0 |
 
-Data from their REST API is supposed to be current because their web map directly uses this data for visualization, but some of those numbers are decreasing for some counties in the United States. I have no idea which version to trust more between their daily reports vs. REST data.
+Data from the REST API is supposed to be current because their web map directly uses this data for visualization, but some of those numbers are decreasing for some counties in the United States. I have no idea which version to trust more between their daily reports vs. REST data.
 
 ## Data Sources
 
