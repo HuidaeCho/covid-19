@@ -4,13 +4,7 @@
 
 ## UPDATES
 
-As of March 26, 2020 at 10am EDT, `fetch_data.py` is broken because CSSE deprecated the CSV files that this script relied on. Their new global CSV files do not report county-level data for the US as mentioned in [their announcement](https://github.com/CSSEGISandData/COVID-19/issues/1250) and the number of columns in the global recovered file is one day short. Last, they closed down to the public [their county-level REST service](https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json) they use for their web map. There is a workaround, but you know... if they don't want to open it, I don't want to use it. Hmm... working now?
-
-[Corona Data Scraper](https://coronadatascraper.com/)'s data is inconsistent in reporting recovered and deaths counts for some counties in the US.
-
-I decided to use CSSE's daily reports to create timeseries data myself. A work-in-progress version is committed. I'm still working on it... The US has now three levels (country, states, and counties). It's so messy to aggregate different levels of localities into seamless statistics.
-
-Almost done! I still need to figure out why my global total without any additional data sources is slightly greater than CSSE's.
+As of March 27, 2020 at 6pm EDT, `fetch_data.py`'s count of the United States cases is 697 greater than CSSE's.
 
 ## Data Sources
 
