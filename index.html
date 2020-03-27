@@ -712,7 +712,8 @@ var showStats = function(features, query){
 		if(!lastConfirmed && !lastRecovered && !lastDeaths)
 			return;
 
-		if(hasDuplicateData.indexOf(country) < 0 || province){
+		if((country == 'United States' && admin2) || (country != 'United States' && (hasDuplicateData.indexOf(country) < 0 || province))){
+			// country statistics
 			var admin2Query = admin2 ? admin2 + ', ' + province + ', ' + country : null;
 			var provinceQuery = province ? province + ', ' + country : null;
 			var name = (admin2 ? admin2 + ', ' : '') + (province ? province + ', ' : '') + country;
@@ -739,9 +740,11 @@ var showStats = function(features, query){
 			statsByCountry[country].recovered += lastRecovered;
 			statsByCountry[country].deaths += lastDeaths;
 
-			if(hasDuplicateData.indexOf(country) >= 0)
+			// don't double count for global statistics
+			if(country == 'United States' || hasDuplicateData.indexOf(country) >= 0)
 				return;
 		}
+		// global statistics
 		if(updated > lastUpdated)
 			lastUpdated = updated;
 		for(var i = 0; i < confirmed.length; i++){
