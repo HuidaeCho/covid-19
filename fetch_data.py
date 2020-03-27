@@ -66,6 +66,7 @@ data = []
 key2data = {}
 has_countries_to_display = True if len(config.countries_to_display) else False
 has_duplicate_data = []
+total_days = 0
 
 def geocode(country, province, latitude=None, longitude=None):
     # TODO: admin2
@@ -109,7 +110,6 @@ def fetch_csse_csv():
 
     print('Fetching CSSE CSV...')
 
-    total_days = 0
     ts_confirmed_res = requests.get(ts_confirmed_url)
     with io.StringIO(ts_confirmed_res.content.decode()) as ts_confirmed_f:
         ts_confirmed_reader = csv.reader(ts_confirmed_f)
@@ -736,7 +736,9 @@ def fetch_statistichecoronavirus():
 
     print('Fetching StatisticheCoronavirus completed')
 
-def merge_data():
+def merge_local_data():
+    global total_days
+
     for filename in glob.glob('data/*.csv'):
         key = filename.replace('data/', '').replace('.csv', '')
         if key.startswith('csse_'):
@@ -807,6 +809,11 @@ def merge_data():
                     time = datetime.datetime.fromisoformat(row[0]).\
                             astimezone(datetime.timezone.utc)
                     time_str = f'{time.strftime("%Y/%m/%d %H:%M:%S UTC")}'
+                    if config.use_local_data_only:
+                        date = time_str.split()[0]
+                        if date not in dates:
+                            dates.append(date)
+
                     c = int(row[1])
                     r = int(row[2])
                     d = int(row[3])
@@ -823,9 +830,9 @@ def merge_data():
                         'count': d
                     })
 
-                print(f'data confirmed: {admin2}, {province}, {country}, {c}')
-                print(f'data recovered: {admin2}, {province}, {country}, {r}')
-                print(f'data deaths   : {admin2}, {province}, {country}, {d}')
+            print(f'data confirmed: {admin2}, {province}, {country}, {c}')
+            print(f'data recovered: {admin2}, {province}, {country}, {r}')
+            print(f'data deaths   : {admin2}, {province}, {country}, {d}')
 
             data.append({
                 'country': country,
@@ -837,6 +844,10 @@ def merge_data():
                 'recovered': recovered,
                 'deaths': deaths
             })
+
+    if config.use_local_data_only:
+        dates.sort()
+        total_days = len(dates)
 
     for country in has_duplicate_data:
         total_confirmed = total_recovered = total_deaths = 0
@@ -938,10 +949,8 @@ def merge_data():
         })
 
 def sort_data():
-    global data
-
     # sort records by confirmed, country, and province
-    data = sorted(data, key=lambda x: (
+    data.sort(key=lambda x: (
         -x['confirmed'][len(x['confirmed'])-1]['count'],
         x['country'],
         x['province']))
@@ -1061,15 +1070,17 @@ def write_csv():
                 f.write('\n')
 
 if __name__ == '__main__':
-    fetch_csse_csv()
-    fetch_csse_rest()
-    clean_us_data()
+    if not config.use_local_data_only:
+        fetch_csse_csv()
+        fetch_csse_rest()
+        clean_us_data()
 
-    fetch_kcdc_country()
-    fetch_kcdc_provinces()
-    fetch_dxy()
-    fetch_statistichecoronavirus()
-    merge_data()
+        fetch_kcdc_country()
+        fetch_kcdc_provinces()
+        fetch_dxy()
+        fetch_statistichecoronavirus()
+
+    merge_local_data()
 
     sort_data()
     report_data()
