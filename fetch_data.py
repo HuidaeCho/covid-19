@@ -68,8 +68,11 @@ has_countries_to_display = True if len(config.countries_to_display) else False
 has_duplicate_data = []
 total_days = 0
 
-def geocode(country, province, latitude=None, longitude=None):
+def geocode(country, province='', latitude=None, longitude=None):
     # TODO: admin2
+    # https://docs.microsoft.com/en-us/bingmaps/rest-services/common-parameters-and-types/location-and-area-types
+    # adminDistrict2 doesn't work?
+
     # read existing data
     if os.path.exists(coors_json):
         with open(coors_json) as f:
@@ -209,9 +212,9 @@ def fetch_csse_daily_csv(year, month, day):
                 # don't use last_updated; there can be duplicate entries with different counts
                 last_updated = row[4]
                 if row[5] and row[5] != '0':
-                    latitude = round(float(row[5]), 4)
+                    latitude = float(row[5])
                 if row[6] and row[6] != '0':
-                    longitude = round(float(row[6]), 4)
+                    longitude = float(row[6])
                 c = int(0 if row[7] == '' else row[7])
                 d = int(0 if row[8] == '' else row[8])
                 r = int(0 if row[9] == '' else row[9])
@@ -232,9 +235,9 @@ def fetch_csse_daily_csv(year, month, day):
                 d = int(0 if row[4] == '' else row[4])
                 r = int(0 if row[5] == '' else row[5])
                 if row[6] and row[6] != '0':
-                    latitude = round(float(row[6]), 4)
+                    latitude = float(row[6])
                 if row[7] and row[7] != '0':
-                    longitude = round(float(row[7]), 4)
+                    longitude = float(row[7])
             elif ncols == 6:
                 # since 01-22-2020
                 # 0: Province/State
@@ -495,6 +498,7 @@ def fetch_csse_rest():
 
 def clean_us_data():
     country = 'United States'
+    others_indices = []
     n = len(data)
     for i in range(0, n):
         rec = data[i]
@@ -503,10 +507,14 @@ def clean_us_data():
 
         province = rec['province']
         admin2 = rec['admin2']
-        if province not in dic.us_states.values() or admin2:
-            # non-CONUS admin2
+        if province not in dic.us_states.values():
+            # non-CONUS records
+            others_indices.append(i)
             if not admin2:
                 rec['admin2'] = province
+            continue
+        elif admin2:
+            # CONUS admin2 records
             continue
 
         # state-wide record
@@ -523,21 +531,59 @@ def clean_us_data():
                 admin2_indices.append(j)
 
         # no admin2 records
-        if len(admin2_indices) == 0:
+        if not len(admin2_indices):
             continue
 
         for j in range(0, len(confirmed)):
             c = r = d = 0
             for k in admin2_indices:
-                c += data[k]['confirmed'][j]['count']
-                r += data[k]['recovered'][j]['count']
-                d += data[k]['deaths'][j]['count']
+                rec2 = data[k]
+                c += rec2['confirmed'][j]['count']
+                r += rec2['recovered'][j]['count']
+                d += rec2['deaths'][j]['count']
             if c > confirmed[j]['count']:
                 confirmed[j]['count'] = c
             if r > recovered[j]['count']:
                 recovered[j]['count'] = r
             if d > deaths[j]['count']:
                 deaths[j]['count'] = d
+
+    if len(others_indices):
+        confirmed = []
+        recovered = []
+        deaths = []
+        for i in range(0, total_days):
+            c = r = d = 0
+            for j in others_indices:
+                rec = data[j]
+                c += rec['confirmed'][i]['count']
+                r += rec['recovered'][i]['count']
+                d += rec['deaths'][i]['count']
+            time_str = f'{dates[i]} 23:59:59 UTC'
+            confirmed.append({
+                'time': time_str,
+                'count': c
+            })
+            recovered.append({
+                'time': time_str,
+                'count': r
+            })
+            deaths.append({
+                'time': time_str,
+                'count': d
+            })
+        latitude, longitude = geocode(country)
+
+        data.append({
+            'country': country,
+            'province': 'Others',
+            'admin2': '',
+            'latitude': latitude,
+            'longitude': longitude,
+            'confirmed': confirmed,
+            'recovered': recovered,
+            'deaths': deaths
+        })
 
 def get_data_filename(country, province=None):
     return 'data/' + (province + ', ' if province else '') + country + '.csv'
@@ -795,8 +841,6 @@ def merge_local_data():
                 has_duplicate_data.append(country)
 
             latitude, longitude = geocode(country, province)
-            latitude = round(latitude, 4)
-            longitude = round(longitude, 4)
 
             confirmed = []
             recovered = []
