@@ -1002,7 +1002,7 @@ def report_data():
         d = rec['deaths'][index]['count']
         if c + r + d == 0 or \
            (country in has_duplicate_data and not province) or \
-           (country == 'United States' and province and admin2):
+           (country == 'United States' and province and not admin2):
             continue
         print(f'final: {admin2}, {province}, {country}, {latitude}, {longitude}, {c}, {r}, {d}')
         total_confirmed += c
@@ -1021,13 +1021,15 @@ def write_geojson():
         rec = data[i]
         country = rec['country']
         province = rec['province']
+        admin2 = rec['admin2']
         index = len(rec['confirmed']) - 1
-        if rec['confirmed'][index]['count'] + \
-           rec['recovered'][index]['count'] + \
-           rec['deaths'][index]['count'] == 0:
-            continue
-        if has_countries_to_display and \
-           country not in config.countries_to_display:
+        if (rec['confirmed'][index]['count'] +
+            rec['recovered'][index]['count'] +
+            rec['deaths'][index]['count'] == 0) or \
+           (has_countries_to_display and
+            country not in config.countries_to_display) or \
+                    (country in has_duplicate_data and not province):# or \
+           #(country == 'United States' and province and not admin2):
             continue
         features.append({
             'id': i,
@@ -1037,9 +1039,9 @@ def write_geojson():
                 'coordinates': [rec['longitude'], rec['latitude']]
             },
             'properties': {
-                'country': rec['country'],
-                'province': rec['province'],
-                'admin2': rec['admin2'],
+                'country': country,
+                'province': province,
+                'admin2': admin2,
                 'confirmed': rec['confirmed'],
                 'recovered': rec['recovered'],
                 'deaths': rec['deaths']
@@ -1067,13 +1069,14 @@ def write_csv():
             province = rec['province']
             admin2 = rec['admin2']
             index = len(rec['confirmed']) - 1
-            if rec['confirmed'][index]['count'] + \
-               rec['recovered'][index]['count'] + \
-               rec['deaths'][index]['count'] == 0:
-                continue
-            if has_countries_to_display and \
-               country not in config.countries_to_display:
-                continue
+            if (rec['confirmed'][index]['count'] +
+                rec['recovered'][index]['count'] +
+                rec['deaths'][index]['count'] == 0) or \
+               (has_countries_to_display and
+                country not in config.countries_to_display) or \
+                        (country in has_duplicate_data and not province):# or \
+               #(country == 'United States' and province and not admin2):
+                    continue
             if ',' in admin2:
                 admin2 = f'"{admin2}"'
             if ',' in province:
