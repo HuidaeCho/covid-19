@@ -301,7 +301,6 @@ h3 {
 </div>
 <div class="author">Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a></div>
 </div>
-<div style="color:red;">CSSE has changed their data structure significantly. This version is work in progress... There can be duplicate entries and double counting.</div>
 <div class="desktop-block">
 This open source web map was motivated by <a href="https://arcg.is/0fHmTX">the COVID-19 global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
 Data is fetched every 30 minutes.
@@ -377,7 +376,7 @@ var getColor = function(category, opacity=null){
 	return color;
 }
 var calculateConfirmedRadius = function(confirmed){
-	return 5 * Math.log10(confirmed + 1) * (isMobile ? 0.5 : 1);
+	return 3 * Math.log10(confirmed + 1) * (isMobile ? 0.5 : 1);
 }
 var createStyle = function(feature, resolution){
 	var radiusFactor = Math.log10(maxResolution / resolution) * 0.5 + 1;
@@ -388,7 +387,7 @@ var createStyle = function(feature, resolution){
 	var recovered = feature.get('recovered');
 	var deaths = feature.get('deaths');
 	var lastIndex = confirmed.length - 1;
-	if(hasDuplicateData.indexOf(country) >= 0 && !province)
+	if((country == 'United States' && !admin2) || (country != 'United States' && hasDuplicateData.indexOf(country) >= 0 && !province))
 		return null;
 
 	confirmed = confirmed[lastIndex].count;
@@ -406,7 +405,10 @@ var createStyle = function(feature, resolution){
 		var minOpacity = 0.05;
 		var maxOpacity = 0.4;
 		var opacity = minOpacity + (maxOpacity - minOpacity) * (confirmed - recovered - deaths) / confirmed;
-		var strokeColor = 'rgba(85, 85, 85, ' + 2 * opacity + ')';
+		var stroke = new ol.style.Stroke({
+			color: 'rgba(85, 85, 85, ' + 2 * opacity + ')'
+		});
+		stroke = null;
 		style = [
 			new ol.style.Style({
 				image: new ol.style.Circle({
@@ -414,9 +416,7 @@ var createStyle = function(feature, resolution){
 					fill: new ol.style.Fill({
 						color: getColor('confirmed', opacity)
 					}),
-					stroke: new ol.style.Stroke({
-						color: strokeColor
-					})
+					stroke: stroke
 				})
 			}),
 			new ol.style.Style({
@@ -425,9 +425,7 @@ var createStyle = function(feature, resolution){
 					fill: new ol.style.Fill({
 						color: getColor('recovered', opacity)
 					}),
-					stroke: new ol.style.Stroke({
-						color: strokeColor
-					})
+					stroke: stroke
 				})
 			}),
 			new ol.style.Style({
@@ -436,9 +434,7 @@ var createStyle = function(feature, resolution){
 					fill: new ol.style.Fill({
 						color: getColor('deaths', 2 * opacity)
 					}),
-					stroke: new ol.style.Stroke({
-						color: strokeColor
-					})
+					stroke: stroke
 				})
 			})
 		];
