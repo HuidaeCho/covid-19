@@ -610,8 +610,9 @@ var showPopup = function(stats, coor){
 
 	popup.show(coor, content);
 
-	var start = -1;
-	while(!stats.confirmed[++start]);
+	var start = stats.confirmed.length;
+	while(stats.confirmed[--start]);
+	start++;
 
 	var trends = [];
 	trends.push({
