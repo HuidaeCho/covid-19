@@ -727,7 +727,7 @@ var showFeatureStatsByQuery = function(query){
 				if(country == 'United States' && !admin2)
 					return;
 				var s = calculateStats(feature, true);
-				if(!s.confirmed[s.confirmed.length - 1])
+				if(s.confirmed[s.confirmed.length - 1] + s.recovered[s.recovered.length - 1] + s.deaths[s.deaths.length - 1] == 0)
 					return;
 				featureIds.push(featureId);
 				if(stats.time.length == 0){
