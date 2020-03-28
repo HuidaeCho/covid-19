@@ -510,8 +510,9 @@ var map = new ol.Map({
 var view = map.getView();
 var maxResolution = view.getResolution();
 var layerSwitcher = new ol.control.LayerSwitcher();
-map.addControl(layerSwitcher);
+var layerSource = map.getLayers().item(1).getSource();
 
+map.addControl(layerSwitcher);
 map.on('pointermove', function(evt){
 	map.getTargetElement().style.cursor = map.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
 });
@@ -521,14 +522,36 @@ map.on('singleclick', function(evt){
 	});
 	if(feature){
 		window.location.hash = 'feature-' + feature.getId();
-		showFeatureStats(feature, evt.coordinate);
+		showFeatureStatsAtCoordinates(feature, evt.coordinate);
 	}else{
 		highlightProvinceStats([]);
 		popup.hide();
 	}
 });
 
+var createLinks = function(country, province, admin2, featureId){
+	var admin2Query = admin2 ? admin2 + ', ' + province + ', ' + country : null;
+	var provinceQuery = province ? province + ', ' + country : null;
+	var links =
+		(admin2 ? '<a onclick="showFeatureStatsById(' + featureId + ')">' + admin2 + '</a>, ' : '') +
+		(province ? '<a onclick="' + (admin2 ? 'showFeatureStatsByQuery(\'' + provinceQuery + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + province + '</a>, ' : '') +
+		'<a onclick="' + (province ? 'showFeatureStatsByQuery(\'' + country + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + country + '</a>';
+	return links;
+}
+
+var highlightedFeatureIds = [];
+var highlightProvinceStats = function(featureIds){
+	highlightedFeatureIds.forEach(featureId => {
+		document.getElementById('feature-' + featureId).classList.remove('highlighted');
+	});
+	highlightedFeatureIds = featureIds;
+	highlightedFeatureIds.forEach(featureId => {
+		document.getElementById('feature-' + featureId).classList.add('highlighted');
+	});
+};
+
 var calculateStats = function(feature, all=false){
+	var featureId = feature.id;
 	var country = feature.get ? feature.get('country') : feature.properties.country;
 	var province = feature.get ? feature.get('province') : feature.properties.province;
 	var admin2 = feature.get ? feature.get('admin2') : feature.properties.admin2;
@@ -565,23 +588,6 @@ var calculateStats = function(feature, all=false){
 	};
 };
 
-var highlightedFeatureIds = [];
-var highlightProvinceStats = function(featureIds){
-	highlightedFeatureIds.forEach(featureId => {
-		document.getElementById('feature-' + featureId).classList.remove('highlighted');
-	});
-	highlightedFeatureIds = featureIds;
-	highlightedFeatureIds.forEach(featureId => {
-		document.getElementById('feature-' + featureId).classList.add('highlighted');
-	});
-};
-
-var showFeatureStats = function(feature, coor){
-	highlightProvinceStats([feature.getId()]);
-	var stats = calculateStats(feature);
-	showPopup(stats, coor);
-};
-
 var showPopup = function(stats, coor){
 	var lastUpdated = stats.lastUpdated;
 	var lastIndex = stats.confirmed.length - 1;
@@ -593,13 +599,8 @@ var showPopup = function(stats, coor){
 	if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
 	if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
 
-	var admin2Query = stats.admin2 ? stats.admin2 + ', ' + stats.province + ', ' + stats.country : null;
-	var provinceQuery = stats.province ? stats.province + ', ' + stats.country : null;
 	var content =
-		'<div id="popup"><h3>' +
-		(admin2Query ? '<a href="?' + admin2Query.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + stats.admin2 + '</a>, ' : '') +
-		(provinceQuery ? '<a href=?' + provinceQuery.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + stats.province + '</a>, ' : '') +
-		'<a href="?' + stats.country.replace(/ /g, '%20') + '">' + stats.country + '</a></h3>' +
+		'<div id="popup"><h3>' + createLinks(stats.country, stats.province, stats.admin2, stats.featureId) + '</h3>' +
 		'<div id="popup-last-updated">' + new Date(lastUpdated).toLocaleString() + '</div>' +
 		'<table id="popup-stats">' +
 		(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="right">' + lastConfirmed + '</td></tr>' : '') +
@@ -659,16 +660,134 @@ var showPopup = function(stats, coor){
 	Plotly.newPlot('popup-plot', trends, layout, {displayModeBar: false});
 };
 
-var layerSource = map.getLayers().item(1).getSource();
-
-var showFeatureStatsById = function(id){
-	var feature = layerSource.getFeatureById(id);
-	var coor = feature.getGeometry().getCoordinates();
-	view.animate({center: coor});
-	showFeatureStats(feature, coor);
+var showFeatureStatsAtCoordinates = function(feature, coor){
+	highlightProvinceStats([feature.getId()]);
+	var stats = calculateStats(feature);
+	showPopup(stats, coor);
 };
 
-var showStats = function(features, query){
+var showFeatureStatsById = function(featureId){
+	var feature = layerSource.getFeatureById(featureId);
+	var coor = feature.getGeometry().getCoordinates();
+	view.animate({center: coor});
+	showFeatureStatsAtCoordinates(feature, coor);
+};
+
+var showFeatureStatsByQuery = function(query){
+	var extent = new ol.extent.createEmpty();
+	var featureIds = [];
+	var stats = {
+		time: [],
+		confirmed: [],
+		recovered: [],
+		deaths: []
+	};
+	var featureId = Number(query);
+	if(!isNaN(featureId) && Number.isInteger(featureId)){
+		if(featureId > 0)
+			featureId--;
+		else if(featureId < 0)
+			featureId = features.length + featureId;
+
+		var feature = features[featureId];
+		if(feature && document.getElementById('feature-' + featureId)){
+			var latitude = feature.geometry.coordinates[1];
+			var longitude = feature.geometry.coordinates[0];
+			var coor = ol.proj.fromLonLat([longitude, latitude]);
+			ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
+			featureIds.push(featureId);
+		}
+	}else
+		features.forEach(feature => {
+			var featureId = feature.id;
+			var country = feature.properties.country;
+			var province = feature.properties.province;
+			var admin2 = feature.properties.admin2;
+			var latitude = feature.geometry.coordinates[1];
+			var longitude = feature.geometry.coordinates[0];
+			var coor = ol.proj.fromLonLat([longitude, latitude]);
+			if(hasDuplicateData.indexOf(query) >= 0){
+				if(query == country){
+					if(!province){
+						var s = calculateStats(feature);
+						stats.lastUpdated = s.lastUpdated;
+						stats.time = s.time;
+						stats.confirmed = s.confirmed;
+						stats.recovered = s.recovered;
+						stats.deaths = s.deaths;
+					}else
+						featureIds.push(featureId);
+				}
+			}else if(admin2 + ', ' + province + ', ' + country == query ||
+				 province + ', ' + country == query ||
+				 (admin2 + ', ' + province + ', ' + country).indexOf(query) >= 0 ||
+				 (province + ', ' + country).indexOf(query) >= 0 ||
+				 (query != 'Others' && province.indexOf(query) >= 0) ||
+				 country.indexOf(query) >= 0){
+				if(country == 'United States' && !admin2)
+					return;
+				var s = calculateStats(feature, true);
+				if(!s.confirmed[s.confirmed.length - 1])
+					return;
+				featureIds.push(featureId);
+				if(stats.time.length == 0){
+					stats.lastUpdated = s.lastUpdated;
+					stats.time = s.time;
+					stats.confirmed = s.confirmed;
+					stats.recovered = s.recovered;
+					stats.deaths = s.deaths;
+				}else{
+					if(s.lastUpdated > stats.lastUpdated)
+						stats.lastUpdated = s.lastUpdated;
+					for(var i = stats.time.length - 1, j = s.time.length - 1; i >= 0 && j >= 0; i--, j--){
+						stats.confirmed[i] += s.confirmed[j];
+						stats.recovered[i] += s.recovered[j];
+						stats.deaths[i] += s.deaths[j];
+					}
+				}
+				ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
+			}
+		});
+	if(featureIds.length){
+		window.location.hash = 'feature-' + featureIds[0];
+		highlightProvinceStats(featureIds);
+		var options = {duration: 1000};
+		if(featureIds.length == 1){
+			options.maxZoom = 6;
+			view.fit(extent, options);
+			setTimeout(function(){
+				showFeatureStatsById(featureIds[0]);
+			}, 1000);
+		}else{
+			var geocodeUrl;
+			if(query.indexOf(', ') >= 0){
+				var q = query.split(', ');
+				geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + q[1] + '&adminDistrict=' + q[0] + '&key=' + bingMapsKey;
+			}else
+				geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + query + '&key=' + bingMapsKey;
+			var geocodeXhr = new XMLHttpRequest();
+			geocodeXhr.open('GET', geocodeUrl, true);
+			geocodeXhr.responseType = 'json';
+			geocodeXhr.onload = function(){
+				var status = geocodeXhr.status;
+				if(status == 200 && geocodeXhr.response.resourceSets[0].estimatedTotal){
+					var resource = geocodeXhr.response.resourceSets[0].resources[0];
+					var coor = ol.proj.fromLonLat(resource.geocodePoints[0].coordinates.reverse());
+					var c1 = ol.proj.fromLonLat([resource.bbox[1], resource.bbox[0]]);
+					var c2 = ol.proj.fromLonLat([resource.bbox[3], resource.bbox[2]]);
+					extent = [c1[0], c1[1], c2[0], c2[1]];
+					stats.country = query;
+					showPopup(stats, coor);
+				}else
+					console.log(status);
+				view.fit(extent);
+			};
+			geocodeXhr.send();
+		}
+	}
+}
+
+var showGlobalStats = function(features, query){
 	var time = [];
 	var confirmedCounts = [];
 	var recoveredCounts = [];
@@ -679,7 +798,7 @@ var showStats = function(features, query){
 	var maxCoor;
 	var statsByCountry = {};
 	features.forEach(feature => {
-		var id = feature.id;
+		var featureId = feature.id;
 		var country = feature.properties.country;
 		var province = feature.properties.province;
 		var admin2 = feature.properties.admin2;
@@ -699,15 +818,10 @@ var showStats = function(features, query){
 
 		if((country == 'United States' && admin2) || (country != 'United States' && (hasDuplicateData.indexOf(country) < 0 || province))){
 			// country statistics
-			var admin2Query = admin2 ? admin2 + ', ' + province + ', ' + country : null;
-			var provinceQuery = province ? province + ', ' + country : null;
-			statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
-				'<div>' +
-				(admin2 ? '<a href="?' + admin2Query.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + admin2 + '</a>, ' : '') +
-				(province ? '<a href="?' + provinceQuery.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + province + '</a>, ' : '') +
-				'<a href="?' + country.replace(/ /g, '%20') + '">' + country + '</a>' +
-				'</div>' +
-				'<div onclick="showFeatureStatsById(' + id + ')">';
+			statsByProvince +=
+				'<div id="feature-' + featureId + '" class="stats-by-province">' +
+				'<div>' + createLinks(country, province, admin2, featureId) + '</div>' +
+				'<div onclick="showFeatureStatsById(' + featureId + ')">';
 			if(lastConfirmed)
 				statsByProvince += '<div class="confirmed">' + lastConfirmed.toLocaleString() + ' confirmed</div>';
 			if(lastRecovered)
@@ -874,106 +988,6 @@ var showStats = function(features, query){
 	};
 	Plotly.newPlot('cfr-plot', trends, layout, {displayModeBar: false});
 	statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
-
-	if(query){
-		var extent = new ol.extent.createEmpty();
-		var featureIds = [];
-		var stats = {
-			time: [],
-			confirmed: [],
-			recovered: [],
-			deaths: []
-		};
-		features.forEach(feature => {
-			var id = feature.id;
-			var country = feature.properties.country;
-			var province = feature.properties.province;
-			var admin2 = feature.properties.admin2;
-			var latitude = feature.geometry.coordinates[1];
-			var longitude = feature.geometry.coordinates[0];
-			var coor = ol.proj.fromLonLat([longitude, latitude]);
-			if(hasDuplicateData.indexOf(query) >= 0){
-				if(query == country){
-					if(!province){
-						var s = calculateStats(feature);
-						stats.lastUpdated = s.lastUpdated;
-						stats.time = s.time;
-						stats.confirmed = s.confirmed;
-						stats.recovered = s.recovered;
-						stats.deaths = s.deaths;
-					}else
-						featureIds.push(id);
-				}
-			}else if(id == query - 1 ||
-			    id == features.length + Number(query) ||
-			    admin2 + ', ' + province + ', ' + country == query ||
-			    province + ', ' + country == query ||
-			    (admin2 + ', ' + province + ', ' + country).indexOf(query) >= 0 ||
-			    (province + ', ' + country).indexOf(query) >= 0 ||
-			    (query != 'Others' && province.indexOf(query) >= 0) ||
-			    country.indexOf(query) >= 0){
-				if(country == 'United States' && !admin2)
-					return;
-				var s = calculateStats(feature, true);
-				if(!s.confirmed[s.confirmed.length - 1])
-					return;
-				featureIds.push(id);
-				if(stats.time.length == 0){
-					stats.lastUpdated = s.lastUpdated;
-					stats.time = s.time;
-					stats.confirmed = s.confirmed;
-					stats.recovered = s.recovered;
-					stats.deaths = s.deaths;
-				}else{
-					if(s.lastUpdated > stats.lastUpdated)
-						stats.lastUpdated = s.lastUpdated;
-					for(var i = stats.time.length - 1, j = s.time.length - 1; i >= 0 && j >= 0; i--, j--){
-						stats.confirmed[i] += s.confirmed[j];
-						stats.recovered[i] += s.recovered[j];
-						stats.deaths[i] += s.deaths[j];
-					}
-				}
-				ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
-			}
-		});
-		if(featureIds.length){
-			window.location.hash = 'feature-' + featureIds[0];
-			highlightProvinceStats(featureIds);
-			var options = {duration: 1000};
-			if(featureIds.length == 1){
-				options.maxZoom = 6;
-				view.fit(extent, options);
-				setTimeout(function(){
-					showFeatureStatsById(featureIds[0]);
-				}, 1000);
-			}else{
-				var geocodeUrl;
-				if(query.indexOf(', ') >= 0){
-					var q = query.split(', ');
-					geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + q[1] + '&adminDistrict=' + q[0] + '&key=' + bingMapsKey;
-				}else
-					geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + query + '&key=' + bingMapsKey;
-				var geocodeXhr = new XMLHttpRequest();
-				geocodeXhr.open('GET', geocodeUrl, true);
-				geocodeXhr.responseType = 'json';
-				geocodeXhr.onload = function(){
-					var status = geocodeXhr.status;
-					if(status == 200 && geocodeXhr.response.resourceSets[0].estimatedTotal){
-						var resource = geocodeXhr.response.resourceSets[0].resources[0];
-						var coor = ol.proj.fromLonLat(resource.geocodePoints[0].coordinates.reverse());
-						var c1 = ol.proj.fromLonLat([resource.bbox[1], resource.bbox[0]]);
-						var c2 = ol.proj.fromLonLat([resource.bbox[3], resource.bbox[2]]);
-						extent = [c1[0], c1[1], c2[0], c2[1]];
-						stats.country = query;
-						showPopup(stats, coor);
-					}else
-						console.log(status);
-					view.fit(extent);
-				};
-				geocodeXhr.send();
-			}
-		}
-	}
 }
 
 var features;
@@ -988,7 +1002,8 @@ xhr.onload = function(){
 		var query = window.location.search.match(/^\?(.+)$/);
 		if(query)
 			query = query[1].replace(/\+|%20/g, ' ').replace(/%22/g, '"');
-		showStats(features, query);
+		showGlobalStats(features);
+		showFeatureStatsByQuery(query);
 	}else
 		console.log(status);
 };
