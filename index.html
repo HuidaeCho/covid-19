@@ -176,10 +176,7 @@ h3 {
 	font-size: 0.95em;
 	cursor: pointer;
 }
-.stats-by-province > div:nth-child(2) {
-	width: 100%;
-}
-.stats-by-province .province {
+.stats-by-province > div:first-child {
 	font-weight: bold;
 	margin-bottom: 0;
 }
@@ -266,19 +263,6 @@ h3 {
 	#stats-by-province {
 		font-size: 0.9em;
 	}
-	.stats-by-province > div {
-		display: inline-block;
-		vertical-align: top;
-	}
-	.stats-by-province > div:first-child {
-		width: 20px;
-	}
-	.stats-by-province > div:nth-child(2) {
-		max-width: 250px;
-	}
-	.stats-by-province {
-		padding: 5px;
-	}
 	.stats-by-province .province {
 		margin-bottom: 5px;
 	}
@@ -315,7 +299,7 @@ Local times except for plots in UTC.
 </div>
 <div id="data-sources"></div>
 <div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Confirmed: logarithmic, Others: area proportional to confirmed, Active rate: opacity</div>
-<div id="country-links-wrap"><span class="iconify" data-icon="fa:flag"></span>&nbsp;<span id="country-links"></span></div>
+<div id="country-links-wrap"><span class="iconify" data-icon="fa:link"></span>&nbsp;<span id="country-links"></span></div>
 </div>
 <div id="map"></div>
 <div id="info">
@@ -713,16 +697,13 @@ var showStats = function(features, query){
 			// country statistics
 			var admin2Query = admin2 ? admin2 + ', ' + province + ', ' + country : null;
 			var provinceQuery = province ? province + ', ' + country : null;
-			var name = (admin2 ? admin2 + ', ' : '') + (province ? province + ', ' : '') + country;
 			statsByProvince += '<div id="feature-' + id + '" class="stats-by-province">' +
-				(isMobile ? '' :
-				 '<div>' +
-				 (admin2 ? '<div><a href="?' + admin2Query.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
-				 (province ? '<div><a href="?' + provinceQuery.replace(/ /g, '%20').replace(/"/g, '%22') + '"><span class="iconify" data-icon="fa:link"></span></a></div>' : '') +
-				 '<div><a href="?' + country.replace(/ /g, '%20') + '"><span class="iconify" data-icon="fa:flag"></span></a></div>' +
-				 '</div>') +
-				'<div onclick="showFeatureStatsById(' + id + ')">' +
-				'<div class="province">' + name + '</div>';
+				'<div>' +
+				(admin2 ? '<a href="?' + admin2Query.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + admin2 + '</a>, ' : '') +
+				(province ? '<a href="?' + provinceQuery.replace(/ /g, '%20').replace(/"/g, '%22') + '">' + province + '</a>, ' : '') +
+				'<a href="?' + country.replace(/ /g, '%20') + '">' + country + '</a>' +
+				'</div>' +
+				'<div onclick="showFeatureStatsById(' + id + ')">';
 			if(lastConfirmed)
 				statsByProvince += '<div class="confirmed">' + lastConfirmed.toLocaleString() + ' confirmed</div>';
 			if(lastRecovered)
@@ -927,6 +908,8 @@ var showStats = function(features, query){
 			    (province + ', ' + country).indexOf(query) >= 0 ||
 			    (query != 'Others' && province.indexOf(query) >= 0) ||
 			    country.indexOf(query) >= 0){
+				if(country == 'United States' && !admin2)
+					return;
 				var s = calculateStats(feature, true);
 				if(!s.confirmed[s.confirmed.length - 1])
 					return;
