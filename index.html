@@ -358,10 +358,10 @@ var getColor = function(category, opacity=null){
 	if(opacity != null)
 		color = color.replace(/,[^,]*\)/, ', ' + opacity + ')');
 	return color;
-}
+};
 var calculateConfirmedRadius = function(confirmed){
 	return 3 * Math.log10(confirmed + 1) * (isMobile ? 0.5 : 1);
-}
+};
 var createStyle = function(feature, resolution){
 	var radiusFactor = Math.log10(maxResolution / resolution) * 0.5 + 1;
 	var country = feature.get('country');
@@ -441,7 +441,7 @@ var createStyle = function(feature, resolution){
 		});
 	}
 	return style;
-}
+};
 
 var popup = new ol.Overlay.Popup();
 
@@ -537,7 +537,7 @@ var createLinks = function(country, province, admin2, featureId){
 		(province ? '<a onclick="' + (admin2 ? 'showFeatureStatsByQuery(\'' + provinceQuery + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + province + '</a>, ' : '') +
 		'<a onclick="' + (province ? 'showFeatureStatsByQuery(\'' + country + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + country + '</a>';
 	return links;
-}
+};
 
 var highlightedFeatureIds = [];
 var highlightProvinceStats = function(featureIds){
@@ -785,7 +785,7 @@ var showFeatureStatsByQuery = function(query){
 			geocodeXhr.send();
 		}
 	}
-}
+};
 
 var showGlobalStats = function(features, query){
 	var time = [];
@@ -988,7 +988,7 @@ var showGlobalStats = function(features, query){
 	};
 	Plotly.newPlot('cfr-plot', trends, layout, {displayModeBar: false});
 	statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
-}
+};
 
 var features;
 var xhr = new XMLHttpRequest();
