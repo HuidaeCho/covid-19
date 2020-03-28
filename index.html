@@ -610,11 +610,14 @@ var showPopup = function(stats, coor){
 
 	popup.show(coor, content);
 
+	var start = -1;
+	while(!stats.confirmed[++start]);
+
 	var trends = [];
 	trends.push({
 		name: 'Confirmed',
-		x: stats.time,
-		y: stats.confirmed,
+		x: stats.time.slice(start),
+		y: stats.confirmed.slice(start),
 		marker: {
 			color: getColor('confirmed')
 		}
@@ -622,8 +625,8 @@ var showPopup = function(stats, coor){
 	if(stats.recovered[stats.recovered.length - 1] > 0)
 		trends.push({
 			name: 'Recovered',
-			x: stats.time,
-			y: stats.recovered,
+			x: stats.time.slice(start),
+			y: stats.recovered.slice(start),
 			marker: {
 				color: getColor('recovered')
 			}
@@ -631,8 +634,8 @@ var showPopup = function(stats, coor){
 	if(stats.deaths[stats.deaths.length - 1] > 0)
 		trends.push({
 			name: 'Deaths',
-			x: stats.time,
-			y: stats.deaths,
+			x: stats.time.slice(start),
+			y: stats.deaths.slice(start),
 			marker: {
 				color: getColor('deaths')
 			}
