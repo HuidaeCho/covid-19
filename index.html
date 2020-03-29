@@ -513,7 +513,6 @@ var map = new ol.Map({
 var view = map.getView();
 var maxResolution = view.getResolution();
 var layerSwitcher = new ol.control.LayerSwitcher();
-var layerSource = map.getLayers().item(1).getSource();
 
 map.addControl(layerSwitcher);
 map.on('pointermove', function(evt){
@@ -521,10 +520,10 @@ map.on('pointermove', function(evt){
 });
 map.on('singleclick', function(evt){
 	var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer){
-		return feature;
+		return features[feature.getId()];
 	});
 	if(feature){
-		window.location.hash = 'feature-' + feature.getId();
+		window.location.hash = 'feature-' + feature.id;
 		showFeatureStatsAtCoordinates(feature, evt.coordinate);
 	}else if(keepPopupOpen)
 		keepPopupOpen = false;
@@ -598,8 +597,6 @@ var calculateStats = function(feature, all=false){
 
 var keepPopupOpen = false;
 var showPopup = function(stats, coor){
-	keepPopupOpen = true;
-
 	var lastUpdated = stats.lastUpdated;
 	var lastIndex = stats.confirmed.length - 1;
 	var lastConfirmed = stats.confirmed[lastIndex];
@@ -620,6 +617,14 @@ var showPopup = function(stats, coor){
 		'</table>' +
 		'<div id="popup-plot"></div></div>';
 
+	// XXX: why does popup.show() trigger a singleclick event when an
+	// aggregating query link is clicked from the popup? this extra event
+	// closes the popup window later that is shown by this function;
+	// this is a workaround; again, this problem only occurs with
+	// aggregating links such as provinces for countries with duplicate
+	// data; these stats have undefined featureId
+	if(stats.featureId == undefined)
+		keepPopupOpen = true;
 	popup.show(coor, content);
 
 	var start = stats.confirmed.length;
