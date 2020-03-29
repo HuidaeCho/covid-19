@@ -253,7 +253,7 @@ def fetch_csse_daily_csv(year, month, day):
                 d = int(0 if row[4] == '' else row[4])
                 r = int(0 if row[5] == '' else row[5])
             else:
-                raise Exception(f'Unexpected format for daily report {date}')
+                raise Exception(f'Unexpected format for daily report {date_csv}')
             if country in dic.co_names:
                 country = dic.co_names[country]
             if ', ' in province and not admin2:
@@ -265,11 +265,11 @@ def fetch_csse_daily_csv(year, month, day):
             if province in dic.us_states.keys():
                 province = dic.us_states[province]
             if ',' in admin2:
-                raise Exception(f'Commas are not allowed in admin2 names: {admin2} in {date}')
+                raise Exception(f'Commas are not allowed in admin2 names: {admin2} in {date_csv}')
             if ',' in province:
-                raise Exception(f'Commas are not allowed in province names: {province} in {date}')
+                raise Exception(f'Commas are not allowed in province names: {province} in {date_csv}')
             if ',' in country:
-                raise Exception(f'Commas are not allowed in country names: {country} in {date}')
+                raise Exception(f'Commas are not allowed in country names: {country} in {date_csv}')
             last_updated = datetime.datetime.fromisoformat(f'{date_iso}T23:59:59+00:00')
             time_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
             key = generate_key(country, province, admin2)
@@ -283,7 +283,7 @@ def fetch_csse_daily_csv(year, month, day):
             if not latitude or not longitude:
                 latitude, longitude = geocode(country, province)
                 if not latitude or not longitude:
-                    raise Exception(f'Latitude or longitude is not defined for {key} in {date}')
+                    raise Exception(f'Latitude or longitude is not defined for {key} in {date_csv}')
             if key not in key2data:
                 if total_days > 0 and \
                    (country != 'United States' or
@@ -405,7 +405,7 @@ def fetch_csse_rest():
         if not latitude or not longitude:
             latitude, longitude = geocode(country, province)
             if not latitude or not longitude:
-                raise Exception(f'Latitude or longitude is not defined for {key} in {date}')
+                raise Exception(f'Latitude or longitude is not defined for {key} in {date_csv}')
         if key not in key2data:
             # new record not in data
             index = len(data)
