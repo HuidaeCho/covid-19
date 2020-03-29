@@ -533,7 +533,6 @@ map.on('singleclick', function(evt){
 });
 
 var createLinks = function(country, province, admin2, featureId){
-	console.log('HERE', country, province, admin2, featureId);
 	var admin2Query = admin2 ? admin2 + ', ' + province + ', ' + country : null;
 	var provinceQuery = province ? province + ', ' + country : null;
 	var links = featureId != null ?
@@ -557,7 +556,7 @@ var highlightProvinceStats = function(featureIds){
 };
 
 var calculateStats = function(feature, all=false){
-	var featureId = feature.id;
+	var featureId = feature.getId ? feature.getId() : feature.id;
 	var country = feature.get ? feature.get('country') : feature.properties.country;
 	var province = feature.get ? feature.get('province') : feature.properties.province;
 	var admin2 = feature.get ? feature.get('admin2') : feature.properties.admin2;
@@ -583,6 +582,7 @@ var calculateStats = function(feature, all=false){
 	}
 
 	return {
+		featureId: featureId,
 		country: country,
 		province: province,
 		admin2: admin2,
