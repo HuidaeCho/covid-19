@@ -531,6 +531,9 @@ def clean_us_data():
                rec2['province'] == province and \
                rec2['admin2']:
                 admin2_indices.append(j)
+                if rec2['admin2'] == 'Unassigned':
+                    rec2['latitude'] = rec['latitude']
+                    rec2['longitude'] = rec['longitude']
 
         # no admin2 records
         if not len(admin2_indices):
