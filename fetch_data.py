@@ -1123,10 +1123,13 @@ if __name__ == '__main__':
         fetch_csse_rest()
         clean_us_data()
 
-        fetch_kcdc_country()
-        fetch_kcdc_provinces()
-        fetch_dxy()
-        fetch_statistichecoronavirus()
+        try:
+            fetch_kcdc_country()
+            fetch_kcdc_provinces()
+            fetch_dxy()
+            fetch_statistichecoronavirus()
+        except Exception as ex:
+            print(ex)
 
     merge_local_data()
 
