@@ -533,12 +533,15 @@ map.on('singleclick', function(evt){
 });
 
 var createLinks = function(country, province, admin2, featureId){
+	console.log('HERE', country, province, admin2, featureId);
 	var admin2Query = admin2 ? admin2 + ', ' + province + ', ' + country : null;
 	var provinceQuery = province ? province + ', ' + country : null;
-	var links =
+	var links = featureId != null ?
 		(admin2 ? '<a onclick="showFeatureStatsById(' + featureId + ')">' + admin2 + '</a>, ' : '') +
 		(province ? '<a onclick="' + (admin2 ? 'showFeatureStatsByQuery(\'' + provinceQuery + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + province + '</a>, ' : '') +
-		'<a onclick="' + (province ? 'showFeatureStatsByQuery(\'' + country + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + country + '</a>';
+		'<a onclick="' + (province ? 'showFeatureStatsByQuery(\'' + country + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + country + '</a>' :
+		(province ? '<a onclick="showFeatureStatsByQuery(\'' + provinceQuery + '\')">' + province + '</a>, ' : '') +
+		'<a onclick="showFeatureStatsByQuery(\'' + country + '\')">' + country + '</a>';
 	return links;
 };
 
@@ -763,11 +766,17 @@ var showFeatureStatsByQuery = function(query){
 			}, 1000);
 		}else{
 			var geocodeUrl;
+			var country;
+			var province;
 			if(query.indexOf(', ') >= 0){
-				var q = query.split(', ');
-				geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + q[1] + '&adminDistrict=' + q[0] + '&key=' + bingMapsKey;
-			}else
-				geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + query + '&key=' + bingMapsKey;
+				var x = query.split(', ');
+				country = x[1];
+				province = x[0];
+				geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + country + '&adminDistrict=' + province + '&key=' + bingMapsKey;
+			}else{
+				country = query;
+				geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + country + '&key=' + bingMapsKey;
+			}
 			var geocodeXhr = new XMLHttpRequest();
 			geocodeXhr.open('GET', geocodeUrl, true);
 			geocodeXhr.responseType = 'json';
@@ -779,7 +788,8 @@ var showFeatureStatsByQuery = function(query){
 					var c1 = ol.proj.fromLonLat([resource.bbox[1], resource.bbox[0]]);
 					var c2 = ol.proj.fromLonLat([resource.bbox[3], resource.bbox[2]]);
 					extent = [c1[0], c1[1], c2[0], c2[1]];
-					stats.country = query;
+					stats.country = country;
+					stats.province = province;
 					showPopup(stats, coor);
 				}else
 					console.log(status);
