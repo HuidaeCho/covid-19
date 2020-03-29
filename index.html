@@ -106,6 +106,9 @@ h3 {
 	font-size: 0.8em;
 	white-space: nowrap;
 }
+#country-links > a {
+	cursor: pointer;
+}
 #map {
 	display: inline-block;
 }
@@ -299,7 +302,7 @@ Local times except for plots in UTC.
 </div>
 <div id="data-sources"></div>
 <div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Confirmed: logarithmic, Others: area proportional to confirmed, Active rate: opacity</div>
-<div id="country-links-wrap"><span class="iconify" data-icon="fa:link"></span>&nbsp;<span id="country-links"></span></div>
+<div id="country-links-wrap"><span id="country-links"></span></div>
 </div>
 <div id="map"></div>
 <div id="info">
@@ -886,12 +889,16 @@ var showGlobalStats = function(features, query){
 	for(var i = 0; i < sortedByCountry.length; i++){
 		var country = sortedByCountry[i].country;
 		var backup = countryLinksEl.innerHTML;
-		countryLinksEl.innerHTML += (countryLinksEl.innerHTML ? ', ' : '') +
-			'<a href="?' + country.replace(/ /g, '%20') + '" title="' +
+		var popup =
 			sortedByCountry[i].active.toLocaleString() + ' active, ' +
 			sortedByCountry[i].confirmed.toLocaleString() + ' confirmed, ' +
 			sortedByCountry[i].recovered.toLocaleString() + ' recovered, ' +
-			sortedByCountry[i].deaths.toLocaleString() + ' deaths">' + country + '</a>';
+			sortedByCountry[i].deaths.toLocaleString() + ' deaths';
+		countryLinksEl.innerHTML += (countryLinksEl.innerHTML ? ', ' : '') +
+			'<a onclick="showFeatureStatsByQuery(\'' + country + '\')" title="' + popup + '">' + country + '</a>' +
+			'<sup><a href="?' + country.replace(/ /g, '%20') + '" title="' + popup + '">' +
+			'<span class="iconify" data-icon="fa:link"></span>' +
+			'</a></sup>';
 		if(countryLinksEl.offsetWidth > headerEl.offsetWidth - 10){
 			countryLinksEl.innerHTML = backup;
 			break;
