@@ -519,7 +519,6 @@ map.on('pointermove', function(evt){
 	map.getTargetElement().style.cursor = map.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
 });
 map.on('singleclick', function(evt){
-	console.log('SINGLECLICK', keepPopupOpen);
 	var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer){
 		return features[feature.getId()];
 	});
