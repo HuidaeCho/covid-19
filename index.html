@@ -518,6 +518,8 @@ map.addControl(layerSwitcher);
 map.on('pointermove', function(evt){
 	map.getTargetElement().style.cursor = map.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
 });
+
+var keepPopupOpen = false;
 map.on('singleclick', function(evt){
 	var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer){
 		return features[feature.getId()];
@@ -595,7 +597,6 @@ var calculateStats = function(feature, all=false){
 	};
 };
 
-var keepPopupOpen = false;
 var showPopup = function(stats, coor){
 	var lastUpdated = stats.lastUpdated;
 	var lastIndex = stats.confirmed.length - 1;
