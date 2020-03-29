@@ -34,6 +34,8 @@ import glob
 import copy
 import dic
 import config
+import traceback
+import sys
 
 ts_confirmed_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv'
 daily_url_format = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{date}.csv'
@@ -1128,8 +1130,8 @@ if __name__ == '__main__':
             fetch_kcdc_provinces()
             fetch_dxy()
             fetch_statistichecoronavirus()
-        except Exception as ex:
-            print(ex)
+        except:
+            traceback.print_exc(file=sys.stdout)
 
     merge_local_data()
 
