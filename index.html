@@ -873,37 +873,15 @@ var showGlobalStats = function(features, query){
 			maxCoor = [longitude, latitude];
 		}
 	});
-	var sortedByCountry = [];
 	Object.entries(statsByCountry).forEach(([country, stats]) => {
 		sortedByCountry.push({
 			country: country,
-			active: stats.confirmed - stats.recovered - stats.deaths,
 			confirmed: stats.confirmed,
 			recovered: stats.recovered,
-			deaths: stats.deaths
+			deaths: stats.deaths,
+			active: stats.confirmed - stats.recovered - stats.deaths
 		});
 	});
-	sortedByCountry.sort(function(a, b){
-		return b.active - a.active;
-	});
-	for(var i = 0; i < sortedByCountry.length; i++){
-		var country = sortedByCountry[i].country;
-		var backup = countryLinksEl.innerHTML;
-		var popup =
-			sortedByCountry[i].active.toLocaleString() + ' active, ' +
-			sortedByCountry[i].confirmed.toLocaleString() + ' confirmed, ' +
-			sortedByCountry[i].recovered.toLocaleString() + ' recovered, ' +
-			sortedByCountry[i].deaths.toLocaleString() + ' deaths';
-		countryLinksEl.innerHTML += (countryLinksEl.innerHTML ? ', ' : '') +
-			'<a onclick="showFeatureStatsByQuery(\'' + country + '\')" title="' + popup + '">' + country + '</a>' +
-			'<sup><a href="?' + country.replace(/ /g, '%20') + '" title="' + popup + '">' +
-			'<span class="iconify" data-icon="fa:link"></span>' +
-			'</a></sup>';
-		if(countryLinksEl.offsetWidth > headerEl.offsetWidth - 10){
-			countryLinksEl.innerHTML = backup;
-			break;
-		}
-	}
 
 	statsByProvinceEl.innerHTML = statsByProvince;
 	view.animate({center: ol.proj.fromLonLat(maxCoor)});
@@ -997,7 +975,56 @@ var showGlobalStats = function(features, query){
 	statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
 };
 
+var sortStatsByCountry = function(category){
+	var nextCategory, a, b;
+	sortedByCountry.sort(function(a, b){
+		switch(category){
+		case 'Confirmed':
+			nextCategory = 'Recovered';
+			a = a.confirmed;
+			b = b.confirmed;
+			break;
+		case 'Recovered':
+			nextCategory = 'Deaths';
+			a = a.recovered;
+			b = b.recovered;
+			break;
+		case 'Deaths':
+			nextCategory = 'Active';
+			a = a.deaths;
+			b = b.deaths;
+			break;
+		case 'Active':
+			nextCategory = 'Confirmed';
+			a = a.active;
+			b = b.active;
+			break;
+		}
+		return b - a;
+	});
+	countryLinksEl.innerHTML = '<a onclick="sortStatsByCountry(\'' + nextCategory + '\')"><span class="iconify" data-icon="icomoon-free:sort-amount-desc"></span>' + category + '</a>: ';
+	for(var i = 0; i < sortedByCountry.length; i++){
+		var country = sortedByCountry[i].country;
+		var backup = countryLinksEl.innerHTML;
+		var popup =
+			sortedByCountry[i].confirmed.toLocaleString() + ' confirmed, ' +
+			sortedByCountry[i].recovered.toLocaleString() + ' recovered, ' +
+			sortedByCountry[i].deaths.toLocaleString() + ' deaths, ' +
+			sortedByCountry[i].active.toLocaleString() + ' active'
+		countryLinksEl.innerHTML += (i > 0 ? ', ' : '') +
+			'<a onclick="showFeatureStatsByQuery(\'' + country + '\')" title="' + popup + '">' + country + '</a>' +
+			'<sup><a href="?' + country.replace(/ /g, '%20') + '" title="' + popup + '">' +
+			'<span class="iconify" data-icon="fa:link"></span>' +
+			'</a></sup>';
+		if(countryLinksEl.offsetWidth > headerEl.offsetWidth - 10){
+			countryLinksEl.innerHTML = backup;
+			break;
+		}
+	}
+};
+
 var features;
+var sortedByCountry = [];
 var xhr = new XMLHttpRequest();
 xhr.open('GET', dataUrl, true);
 xhr.responseType = 'json';
@@ -1010,6 +1037,7 @@ xhr.onload = function(){
 		if(query)
 			query = query[1].replace(/\+|%20/g, ' ').replace(/%22/g, '"');
 		showGlobalStats(features);
+		sortStatsByCountry('Confirmed');
 		showFeatureStatsByQuery(query);
 	}else
 		console.log(status);
