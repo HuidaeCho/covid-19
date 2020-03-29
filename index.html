@@ -526,7 +526,9 @@ map.on('singleclick', function(evt){
 	if(feature){
 		window.location.hash = 'feature-' + feature.getId();
 		showFeatureStatsAtCoordinates(feature, evt.coordinate);
-	}else{
+	}else if(keepPopupOpen)
+		keepPopupOpen = false;
+	else{
 		highlightProvinceStats([]);
 		popup.hide();
 	}
@@ -556,13 +558,13 @@ var highlightProvinceStats = function(featureIds){
 };
 
 var calculateStats = function(feature, all=false){
-	var featureId = feature.getId ? feature.getId() : feature.id;
-	var country = feature.get ? feature.get('country') : feature.properties.country;
-	var province = feature.get ? feature.get('province') : feature.properties.province;
-	var admin2 = feature.get ? feature.get('admin2') : feature.properties.admin2;
-	var confirmed = feature.get ? feature.get('confirmed') : feature.properties.confirmed;
-	var recovered = feature.get ? feature.get('recovered') : feature.properties.recovered;
-	var deaths = feature.get ? feature.get('deaths') : feature.properties.deaths;
+	var featureId = feature.id;
+	var country = feature.properties.country;
+	var province = feature.properties.province;
+	var admin2 = feature.properties.admin2;
+	var confirmed = feature.properties.confirmed;
+	var recovered = feature.properties.recovered;
+	var deaths = feature.properties.deaths;
 
 	var time = [];
 	var confirmedCounts = [];
@@ -594,7 +596,10 @@ var calculateStats = function(feature, all=false){
 	};
 };
 
+var keepPopupOpen = false;
 var showPopup = function(stats, coor){
+	keepPopupOpen = true;
+
 	var lastUpdated = stats.lastUpdated;
 	var lastIndex = stats.confirmed.length - 1;
 	var lastConfirmed = stats.confirmed[lastIndex];
@@ -667,14 +672,14 @@ var showPopup = function(stats, coor){
 };
 
 var showFeatureStatsAtCoordinates = function(feature, coor){
-	highlightProvinceStats([feature.getId()]);
+	highlightProvinceStats([feature.id]);
 	var stats = calculateStats(feature);
 	showPopup(stats, coor);
 };
 
 var showFeatureStatsById = function(featureId){
-	var feature = layerSource.getFeatureById(featureId);
-	var coor = feature.getGeometry().getCoordinates();
+	var feature = features[featureId];
+	var coor = ol.proj.fromLonLat(feature.geometry.coordinates);
 	view.animate({center: coor});
 	showFeatureStatsAtCoordinates(feature, coor);
 };
@@ -697,9 +702,7 @@ var showFeatureStatsByQuery = function(query){
 
 		var feature = features[featureId];
 		if(feature && document.getElementById('feature-' + featureId)){
-			var latitude = feature.geometry.coordinates[1];
-			var longitude = feature.geometry.coordinates[0];
-			var coor = ol.proj.fromLonLat([longitude, latitude]);
+			var coor = ol.proj.fromLonLat(feature.geometry.coordinates);
 			ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
 			featureIds.push(featureId);
 		}
@@ -709,9 +712,7 @@ var showFeatureStatsByQuery = function(query){
 			var country = feature.properties.country;
 			var province = feature.properties.province;
 			var admin2 = feature.properties.admin2;
-			var latitude = feature.geometry.coordinates[1];
-			var longitude = feature.geometry.coordinates[0];
-			var coor = ol.proj.fromLonLat([longitude, latitude]);
+			var coor = ol.proj.fromLonLat(feature.geometry.coordinates);
 			if(hasDuplicateData.indexOf(query) >= 0){
 				if(query == country){
 					if(!province){
@@ -761,9 +762,7 @@ var showFeatureStatsByQuery = function(query){
 		if(featureIds.length == 1){
 			options.maxZoom = 6;
 			view.fit(extent, options);
-			setTimeout(function(){
-				showFeatureStatsById(featureIds[0]);
-			}, 1000);
+			showFeatureStatsById(featureIds[0]);
 		}else{
 			var geocodeUrl;
 			var country;
@@ -800,7 +799,7 @@ var showFeatureStatsByQuery = function(query){
 	}
 };
 
-var showGlobalStats = function(features, query){
+var showGlobalStats = function(){
 	var time = [];
 	var confirmedCounts = [];
 	var recoveredCounts = [];
@@ -808,8 +807,8 @@ var showGlobalStats = function(features, query){
 	var lastUpdated = 0;
 	var statsByProvince = '';
 	var maxActive = 0;
-	var maxCoor;
 	var statsByCountry = {};
+	var maxConfirmedCoor;
 	features.forEach(feature => {
 		var featureId = feature.id;
 		var country = feature.properties.country;
@@ -880,7 +879,7 @@ var showGlobalStats = function(features, query){
 
 		if(lastConfirmed - lastRecovered - lastDeaths > maxActive){
 			maxActive = lastConfirmed - lastRecovered - lastDeaths;
-			maxCoor = [longitude, latitude];
+			maxConfirmedCoor = [longitude, latitude];
 		}
 	});
 	Object.entries(statsByCountry).forEach(([country, stats]) => {
@@ -894,7 +893,6 @@ var showGlobalStats = function(features, query){
 	});
 
 	statsByProvinceEl.innerHTML = statsByProvince;
-	view.animate({center: ol.proj.fromLonLat(maxCoor)});
 
 	var averageDaysFromConfirmedToDeath = 14; // median days from first symptom to death
 	var cfrs1 = [];
@@ -983,6 +981,8 @@ var showGlobalStats = function(features, query){
 	};
 	Plotly.newPlot('cfr-plot', trends, layout, {displayModeBar: false});
 	statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
+
+	return maxConfirmedCoor;
 };
 
 var sortStatsByCountry = function(category){
@@ -1041,14 +1041,16 @@ xhr.responseType = 'json';
 xhr.onload = function(){
 	var status = xhr.status;
 	if(status == 200){
-		var data = xhr.response;
-		features = data.features;
-		var query = window.location.search.match(/^\?(.+)$/);
-		if(query)
-			query = query[1].replace(/\+|%20/g, ' ').replace(/%22/g, '"');
-		showGlobalStats(features);
+		features = xhr.response.features;
+		var maxConfirmedCoor = showGlobalStats();
 		sortStatsByCountry('Confirmed');
-		showFeatureStatsByQuery(query);
+
+		var query = window.location.search.match(/^\?(.+)$/);
+		if(query){
+			query = query[1].replace(/\+|%20/g, ' ').replace(/%22/g, '"');
+			showFeatureStatsByQuery(query);
+		}else
+			view.animate({center: ol.proj.fromLonLat(maxConfirmedCoor)});
 	}else
 		console.log(status);
 };
