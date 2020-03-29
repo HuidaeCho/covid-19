@@ -304,4 +304,8 @@ latlong = {
     'Diamond Princess Cruise Ship': {'latitude': 35.4437, 'longitude': 139.6380},
     'Congo Republic': {'latitude': -0.2280, 'longitude': 15.8277},
     'Congo Democratic Republic': {'latitude': -4.0383, 'longitude': 21.7587},
+    # MS Zaandam travels through the Panama Canal as of 3/28/2020 at 4:42pm EST
+    # https://www.usatoday.com/story/travel/cruises/2020/03/28/covid-19-holland-america-splitting-up-its-healthy-sick-passengers/2933381001/
+    # https://www.latlong.net/place/panama-canal-panama-27609.html
+    'MS Zaandam': {'latitude': 9.080000, 'longitude': -79.680000},
 }
