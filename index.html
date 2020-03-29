@@ -519,6 +519,7 @@ map.on('pointermove', function(evt){
 	map.getTargetElement().style.cursor = map.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
 });
 map.on('singleclick', function(evt){
+	console.log('SINGLECLICK', keepPopupOpen);
 	var feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer){
 		return features[feature.getId()];
 	});
@@ -533,13 +534,13 @@ map.on('singleclick', function(evt){
 	}
 });
 
-var createLinks = function(country, province, admin2, featureId){
+var createLinks = function(country, province, admin2, featureId, isPopup){
 	var admin2Query = admin2 ? admin2 + ', ' + province + ', ' + country : null;
 	var provinceQuery = province ? province + ', ' + country : null;
 	var links = featureId != null ?
 		(admin2 ? '<a onclick="showFeatureStatsById(' + featureId + ')">' + admin2 + '</a>, ' : '') +
-		(province ? '<a onclick="' + (admin2 ? 'showFeatureStatsByQuery(\'' + provinceQuery + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + province + '</a>, ' : '') +
-		'<a onclick="' + (province ? 'showFeatureStatsByQuery(\'' + country + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + country + '</a>' :
+		(province ? '<a onclick="' + (admin2 ? (isPopup ? 'keepPopupOpen=true;' : '') + 'showFeatureStatsByQuery(\'' + provinceQuery + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + province + '</a>, ' : '') +
+		'<a onclick="' + (province ? (isPopup ? 'keepPopupOpen=true;' : '') + 'showFeatureStatsByQuery(\'' + country + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + country + '</a>' :
 		(province ? '<a onclick="showFeatureStatsByQuery(\'' + provinceQuery + '\')">' + province + '</a>, ' : '') +
 		'<a onclick="showFeatureStatsByQuery(\'' + country + '\')">' + country + '</a>';
 	return links;
@@ -608,7 +609,7 @@ var showPopup = function(stats, coor){
 	if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
 
 	var content =
-		'<div id="popup"><h3>' + createLinks(stats.country, stats.province, stats.admin2, stats.featureId) + '</h3>' +
+		'<div id="popup"><h3>' + createLinks(stats.country, stats.province, stats.admin2, stats.featureId, true) + '</h3>' +
 		'<div id="popup-last-updated">' + new Date(lastUpdated).toLocaleString() + '</div>' +
 		'<table id="popup-stats">' +
 		(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="right">' + lastConfirmed + '</td></tr>' : '') +
@@ -620,11 +621,9 @@ var showPopup = function(stats, coor){
 	// XXX: why does popup.show() trigger a singleclick event when an
 	// aggregating query link is clicked from the popup? this extra event
 	// closes the popup window later that is shown by this function;
-	// this is a workaround; again, this problem only occurs with
+	// keepPopupOpen is a workaround; again, this problem only occurs with
 	// aggregating links such as provinces for countries with duplicate
 	// data; these stats have undefined featureId
-	if(stats.featureId == undefined)
-		keepPopupOpen = true;
 	popup.show(coor, content);
 
 	var start = stats.confirmed.length;
@@ -837,7 +836,7 @@ var showGlobalStats = function(){
 			// country statistics
 			statsByProvince +=
 				'<div id="feature-' + featureId + '" class="stats-by-province">' +
-				'<div>' + createLinks(country, province, admin2, featureId) + '</div>' +
+				'<div>' + createLinks(country, province, admin2, featureId, false) + '</div>' +
 				'<div onclick="showFeatureStatsById(' + featureId + ')">';
 			if(lastConfirmed)
 				statsByProvince += '<div class="confirmed">' + lastConfirmed.toLocaleString() + ' confirmed</div>';
