@@ -41,7 +41,7 @@ Data from the REST API is supposed to be current because their web map directly 
 * China: [DXY](https://ncov.dxy.cn/ncovh5/view/pneumonia)
 * South Korea: [KCDC](http://ncov.mohw.go.kr/bdBoardList_Real.do)
 * Italy: [StatisticheCoronavirus](https://statistichecoronavirus.it/regioni-coronavirus-italia/)
-* Chile: [Dr. Javier Concha](https://sites.google.com/view/javierconcha)'s [COVID-19 Chile repository](https://github.com/javierconcha/covid-19-Chile/tree/master/data)
+* Chile: [Minsal](https://www.minsal.cl/nuevo-coronavirus-2019-ncov/casos-confirmados-en-chile-covid-19/)
 
 I found [CSSE](https://systems.jhu.edu)'s data unreliable because they keep changing country names and adding duplicate entries with incomplete records. I am trying to clean up their data as much as possible to avoid double counting (e.g., as of March 17, Guam vs. Guam, US and French Guiana vs. French Guiana, France), so there can be some discrepancy between my cleaned up data and their original data.
 
@@ -73,6 +73,7 @@ along with this program.  If not, see <<https://www.gnu.org/licenses/>>.
 
 ## Other Resources
 
+* [Casos de COVID-19 en Chile](http://www.sci-solve.com/covid-19-Chile/index.html)
 * [Corona Data Scraper](https://coronadatascraper.com/)
 * [Novel Coronavirus COVID-19 (2019-nCoV): Global Cases over time](https://covid19visualiser.com/)
 * [Pandemic Estimator](https://pandemic-estimator.net/)
