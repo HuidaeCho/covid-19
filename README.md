@@ -73,7 +73,7 @@ along with this program.  If not, see <<https://www.gnu.org/licenses/>>.
 
 ## Other Resources
 
-* [Casos de COVID-19 en Chile](http://www.sci-solve.com/covid-19-Chile/index.html)
+* [Casos de COVID-19 en Chile](http://www.sci-solve.com/covid-19-Chile/index.html) (a derived work)
 * [Corona Data Scraper](https://coronadatascraper.com/)
 * [Novel Coronavirus COVID-19 (2019-nCoV): Global Cases over time](https://covid19visualiser.com/)
 * [Pandemic Estimator](https://pandemic-estimator.net/)
