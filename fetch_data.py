@@ -32,10 +32,11 @@ import re
 import os
 import glob
 import copy
-import dic
-import config
+import unicodedata
 import traceback
 import sys
+import dic
+import config
 
 ts_confirmed_url = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_time_series/time_series_covid19_confirmed_global.csv'
 daily_url_format = 'https://raw.githubusercontent.com/CSSEGISandData/COVID-19/master/csse_covid_19_data/csse_covid_19_daily_reports/{date}.csv'
@@ -53,6 +54,10 @@ dxy_re = 'window\.getListByCountryTypeService2true.*?"createTime":([0-9]+),.*win
 
 statistichecoronavirus_url = 'https://statistichecoronavirus.it/regioni-coronavirus-italia/'
 statistichecoronavirus_re = '<tr[^>]*>.*?<td[^>]*>(?:<[^>]*>)?(.*?)(?:<[^>]*>)?</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>'
+
+minsal_url = 'https://www.minsal.cl/nuevo-coronavirus-2019-ncov/casos-confirmados-en-chile-covid-19/'
+minsal_re = '<tr[^>]*>.*?<td[^>]*>([^<>]+)</td>.*?<td[^>]*>[0-9.]+</td>.*?<td[^>]*>([0-9.]+)</td>.*?<td[^>]*>[0-9]+ %</td>.*?<td[^>]*>([0-9.]+)</td>.*?</tr>'
+minsal_total_re = '<tr[^>]*>.*?<td[^>]*><strong>Total</strong></td>.*?<td[^>]*><strong>[0-9.]+</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?<td[^>]*><strong>[0-9]+%</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>.*?<tr[^>]*>.*?<td[^>]*><strong>Casos recuperados a nivel nacional</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>'
 
 geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
@@ -607,8 +612,7 @@ def fetch_kcdc_country():
     res = requests.get(kcdc_country_url).content.decode()
     m = re.search(kcdc_country_re, res, re.DOTALL)
     if not m:
-        print('Fetching KCDC country failed')
-        return
+        raise Exception('Fetching KCDC country failed')
 
     print('Fetching KCDC country matched')
 
@@ -652,8 +656,7 @@ def fetch_kcdc_provinces():
     res = requests.get(kcdc_provinces_url).content.decode()
     m = re.search(kcdc_provinces_re, res, re.DOTALL)
     if not m:
-        print('Fetching KCDC provinces 1/2 failed')
-        return
+        raise Exception('Fetching KCDC provinces 1/2 failed')
 
     print('Fetching KCDC provinces 1/2 matched')
 
@@ -665,7 +668,7 @@ def fetch_kcdc_provinces():
     last_updated_iso = f'{year}-{month:02}-{day:02} {hour:02}:00:00+09:00'
     matches = re.findall(kcdc_provinces_subre, m[4])
     if not matches:
-        print('Fetching KCDC provinces 2/2 failed')
+        raise Exception('Fetching KCDC provinces 2/2 failed')
 
     print('Fetching KCDC provinces 2/2 matched')
 
@@ -703,8 +706,7 @@ def fetch_dxy():
     res = requests.get(dxy_url).content.decode()
     m = re.search(dxy_re, res, re.DOTALL)
     if not m:
-        print('Fetching DXY failed')
-        return
+        raise Exception('Fetching DXY failed')
 
     print('Fetching DXY matched')
 
@@ -731,7 +733,6 @@ def fetch_dxy():
             add_header = False
             with open(filename) as f:
                 reader = csv.reader(f)
-                reader = csv.reader(f)
                 for row in reader:
                     pass
                 time = datetime.datetime.fromisoformat(row[0]).astimezone(
@@ -746,54 +747,93 @@ def fetch_dxy():
 
     print('Fetching DXY completed')
 
+def update_fetched_data(country, province, confirmed, recovered, deaths):
+    now_iso = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S+00:00')
+    today = now_iso.split()[0]
+
+    filename = get_data_filename(country, province)
+    add_header = True
+    overwrite_row = 0
+    if os.path.exists(filename):
+        add_header = False
+        with open(filename) as f:
+            reader = csv.reader(f)
+            for row in reader:
+                overwrite_row += 1
+            time_iso = row[0]
+            time_date = time_iso.split()[0]
+            if time_date != today:
+                overwrite_row = 0
+
+    if overwrite_row:
+        with open(filename, 'r+') as f:
+            for i in range(0, overwrite_row - 1):
+                f.readline()
+                seek = f.tell()
+            f.seek(seek)
+            f.write(f'{now_iso},{confirmed},{recovered},{deaths}\n')
+    else:
+        with open(filename, 'a') as f:
+            if add_header:
+                f.write('time,confirmed,recovered,deaths\n')
+            f.write(f'{now_iso},{confirmed},{recovered},{deaths}\n')
+
 def fetch_statistichecoronavirus():
     print('Fetching StatisticheCoronavirus...')
 
     res = requests.get(statistichecoronavirus_url).content.decode()
     matches = re.findall(statistichecoronavirus_re, res, re.DOTALL)
     if not matches:
-        print('Fetching StatisticheCoronavirus failed')
-        return
+        raise Exception('Fetching StatisticheCoronavirus failed')
 
     print('Fetching StatisticheCoronavirus matched')
 
     country = 'Italy'
-    now_iso = datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S+00:00')
-    now_date = now_iso.split()[0]
     for m in matches:
         province = m[0]
         confirmed = int(m[1].replace('.', ''))
         recovered = int(m[3].replace('.', ''))
         deaths = int(m[2].replace('.', ''))
-
-        filename = get_data_filename(country, province)
-        add_header = True
-        overwrite_row = 0
-        if os.path.exists(filename):
-            add_header = False
-            with open(filename) as f:
-                reader = csv.reader(f)
-                for row in reader:
-                    overwrite_row += 1
-                time_iso = row[0]
-                time_date = time_iso.split()[0]
-                if time_date != now_date:
-                    overwrite_row = 0
-
-        if overwrite_row:
-            with open(filename, 'r+') as f:
-                for i in range(0, overwrite_row - 1):
-                    f.readline()
-                    seek = f.tell()
-                f.seek(seek)
-                f.write(f'{now_iso},{confirmed},{recovered},{deaths}\n')
-        else:
-            with open(filename, 'a') as f:
-                if add_header:
-                    f.write('time,confirmed,recovered,deaths\n')
-                f.write(f'{now_iso},{confirmed},{recovered},{deaths}\n')
+        update_fetched_data(country, province, confirmed, recovered, deaths)
 
     print('Fetching StatisticheCoronavirus completed')
+
+# https://stackoverflow.com/a/518232
+def strip_accents(s):
+    return ''.join(c for c in unicodedata.normalize('NFD', s)
+                   if unicodedata.category(c) != 'Mn')
+
+def fetch_minsal():
+    print('Fetching Minsal...')
+
+    res = requests.get(minsal_url).content.decode()
+    matches = re.findall(minsal_re, res, re.DOTALL)
+    if not matches:
+        raise Exception('Fetching Minsal 1/2 failed')
+
+    print('Fetching Minsal 1/2 matched')
+
+    country = 'Chile'
+    for m in matches:
+        province = strip_accents(m[0].replace('&#8217;', ''))
+        confirmed = int(m[1].replace('.', ''))
+        recovered = 0
+        deaths = int(m[2].replace('.', ''))
+        update_fetched_data(country, province, confirmed, recovered, deaths)
+
+    m = re.search(minsal_total_re, res, re.DOTALL)
+    if not m:
+        raise Exception('Fetching Minsal 2/2 failed')
+
+    print('Fetching Minsal 2/2 matched')
+
+    province = None
+    confirmed = int(m[1].replace('.', ''))
+    recovered = int(m[3].replace('.', ''))
+    deaths = int(m[2].replace('.', ''))
+    update_fetched_data(country, province, confirmed, recovered, deaths)
+
+    print('Fetching Minsal completed')
 
 def merge_local_data():
     global total_days
@@ -1133,6 +1173,7 @@ if __name__ == '__main__':
             fetch_kcdc_provinces()
             fetch_dxy()
             fetch_statistichecoronavirus()
+            fetch_minsal()
         except:
             traceback.print_exc(file=sys.stdout)
 
