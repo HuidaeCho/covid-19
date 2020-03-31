@@ -59,8 +59,9 @@ minsal_url = 'https://www.minsal.cl/nuevo-coronavirus-2019-ncov/casos-confirmado
 minsal_re = '<tr[^>]*>.*?<td[^>]*>([^<>]+)</td>.*?<td[^>]*>[0-9.]+</td>.*?<td[^>]*>([0-9.]+)</td>.*?<td[^>]*>[0-9]+ %</td>.*?<td[^>]*>([0-9.]+)</td>.*?</tr>'
 minsal_total_re = '<tr[^>]*>.*?<td[^>]*><strong>Total</strong></td>.*?<td[^>]*><strong>[0-9.]+</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?<td[^>]*><strong>[0-9]+%</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>.*?<tr[^>]*>.*?<td[^>]*><strong>Casos recuperados a nivel nacional</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>'
 
-geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
+geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
+geocode_admin2_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{admin2}},{{province}}&key={config.bing_maps_key}'
 
 geodata_json = 'geodata.json'
 data_csv = 'data.csv'
@@ -75,10 +76,10 @@ has_countries_to_display = True if len(config.countries_to_display) else False
 has_duplicate_data = []
 total_days = 0
 
-def geocode(country, province='', latitude=None, longitude=None):
-    # TODO: admin2
+def geocode(country, province='', admin2='', latitude=None, longitude=None):
     # https://docs.microsoft.com/en-us/bingmaps/rest-services/common-parameters-and-types/location-and-area-types
-    # adminDistrict2 doesn't work?
+    # XXX: adminDistrict2 doesn't work?
+    # adminDistrict=County,State works!
 
     # read existing data
     if os.path.exists(coors_json):
@@ -87,13 +88,18 @@ def geocode(country, province='', latitude=None, longitude=None):
     else:
         coors = {}
 
-    if province == '':
-        location = country
-        geocode_url = geocode_country_url.format(country=country)
-    else:
+    if admin2:
+        location = f'{admin2}, {province}, {country}'
+        geocode_url = geocode_admin2_url.format(country=country,
+                province=province, admin2=admin2)
+    elif province:
         location = f'{province}, {country}'
         geocode_url = geocode_province_url.format(country=country,
                 province=province)
+    else:
+        location = country
+        geocode_url = geocode_country_url.format(country=country)
+
     if location not in coors:
         res = requests.get(geocode_url, headers={
             'referer': config.bing_maps_referer
@@ -288,7 +294,7 @@ def fetch_csse_daily_csv(year, month, day):
                 latitude = latlong['latitude']
                 longitude = latlong['longitude']
             if not latitude or not longitude:
-                latitude, longitude = geocode(country, province)
+                latitude, longitude = geocode(country, province, admin2)
                 if not latitude or not longitude:
                     raise Exception(f'Latitude or longitude is not defined for {key} in {date_csv}')
             if key not in key2data:
@@ -398,8 +404,9 @@ def fetch_csse_rest():
         # case, let's use today's date at 00:00:00
         if today_str > last_updated_str:
             last_updated_str = today_str
-        latitude = feature['geometry']['y']
-        longitude = feature['geometry']['x']
+        if 'geometry' in feature:
+            latitude = feature['geometry']['y']
+            longitude = feature['geometry']['x']
 
         key = generate_key(country, province, admin2)
         if key in dic.keymap:
@@ -410,7 +417,7 @@ def fetch_csse_rest():
             latitude = latlong['latitude']
             longitude = latlong['longitude']
         if not latitude or not longitude:
-            latitude, longitude = geocode(country, province)
+            latitude, longitude = geocode(country, province, admin2)
             if not latitude or not longitude:
                 raise Exception(f'Latitude or longitude is not defined for {key} in {date_csv}')
         if key not in key2data:
@@ -893,7 +900,7 @@ def merge_local_data():
             if province and country not in has_duplicate_data:
                 has_duplicate_data.append(country)
 
-            latitude, longitude = geocode(country, province)
+            latitude, longitude = geocode(country, province, admin2)
 
             confirmed = []
             recovered = []
