@@ -159,7 +159,7 @@ h3 {
 	font-size: 1.5em;
 	border-collapse: collapse;
 }
-.cfr {
+#summary .cfr {
 	font-weight: bold;
 }
 .right {
@@ -265,7 +265,7 @@ h3 {
 	#last-updated {
 		width: 65%;
 	}
-	.cfr {
+	#summary .cfr {
 		font-size: 1.2em;
 	}
 	.cfr sup {
@@ -367,6 +367,7 @@ dataSourcesEl.innerHTML = '<span class="iconify" data-icon="mdi:database-sync"><
 mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) + 'px';
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
 var hasDuplicateData = ['South Korea', 'Italy', 'Chile'];
+var averageDaysFromConfirmedToDeath = 14; // median days from first symptom to death
 
 var getColor = function(category, opacity=null){
 	var color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
@@ -616,6 +617,15 @@ var showPopup = function(stats, coor){
 	var lastRecovered = stats.recovered[lastIndex];
 	var lastDeaths = stats.deaths[lastIndex];
 
+	var start = stats.confirmed.length;
+	while(stats.confirmed[--start]);
+	start++;
+
+	var cfrT = null;
+	if(stats.confirmed.length - averageDaysFromConfirmedToDeath >= start)
+		cfrT = Math.round(lastDeaths / stats.confirmed[stats.confirmed.length - 1 - averageDaysFromConfirmedToDeath] * 1000) / 10;
+	var cfrDDR = Math.round(lastDeaths / (lastDeaths + lastRecovered) * 1000) / 10;
+
 	if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
 	if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
 	if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
@@ -628,6 +638,9 @@ var showPopup = function(stats, coor){
 		(lastRecovered ? '<tr class="recovered"><td>Recovered:</td><td class="right">' + lastRecovered + '</td></tr>' : '') +
 		(lastDeaths ? '<tr class="deaths"><td>Deaths:</td><td class="right">' + lastDeaths + '</td></tr>' : '') +
 		'</table>' +
+		'<div class="cfr">CFR<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>: ' +
+		(cfrT ? '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrT + '%' + (isMobile ? '' : ', ') : '') +
+		'<sup>d/(d+r)</sup>' + cfrDDR + '%</div>' +
 		'<div id="popup-plot"></div></div>';
 
 	// XXX: why does popup.show() trigger a singleclick event when an
@@ -637,10 +650,6 @@ var showPopup = function(stats, coor){
 	// aggregating links such as provinces for countries with duplicate
 	// data; these stats have undefined featureId
 	popup.show(coor, content);
-
-	var start = stats.confirmed.length;
-	while(stats.confirmed[--start]);
-	start++;
 
 	var trends = [];
 	trends.push({
@@ -728,6 +737,8 @@ var showFeatureStatsByQuery = function(query){
 			var country = feature.properties.country;
 			var province = feature.properties.province;
 			var admin2 = feature.properties.admin2;
+			var admin2Query = admin2 + ', ' + province + ', ' + country;
+			var provinceQuery = province + ', ' + country;
 			var coor = ol.proj.fromLonLat(feature.geometry.coordinates);
 			if(hasDuplicateData.indexOf(query) >= 0){
 				if(query == country){
@@ -741,18 +752,25 @@ var showFeatureStatsByQuery = function(query){
 					}else
 						featureIds.push(featureId);
 				}
-			}else if(admin2 + ', ' + province + ', ' + country == query ||
-				 province + ', ' + country == query ||
-				 (admin2 + ', ' + province + ', ' + country).indexOf(query) >= 0 ||
-				 (province + ', ' + country).indexOf(query) >= 0 ||
+			}else if(admin2Query == query || admin2Query.indexOf(query) >= 0 ||
+				 provinceQuery == query || provinceQuery.indexOf(query) >= 0 ||
 				 (query != 'Others' && province.indexOf(query) >= 0) ||
 				 country.indexOf(query) >= 0){
-				if(country == 'United States' && !admin2)
-					return;
 				var s = calculateStats(feature, true);
 				if(s.confirmed[s.confirmed.length - 1] + s.recovered[s.recovered.length - 1] + s.deaths[s.deaths.length - 1] == 0)
 					return;
-				featureIds.push(featureId);
+				if(country == 'United States'){
+					var admin2Matched = admin2Query == query || admin2 == query.split(', ')[0];
+					// if province or country matches, only highlight admin2 and skip it because it has less information
+					if(!admin2Matched && admin2){
+						featureIds.push(featureId);
+						return;
+					}
+					// either admin2 match with items in the UI or province/country match with no items in the UI
+					if(admin2)
+						featureIds.push(featureId);
+				}else
+					featureIds.push(featureId);
 				if(stats.time.length == 0){
 					stats.lastUpdated = s.lastUpdated;
 					stats.time = s.time;
@@ -910,23 +928,22 @@ var showGlobalStats = function(){
 
 	statsByProvinceEl.innerHTML = statsByProvince;
 
-	var averageDaysFromConfirmedToDeath = 14; // median days from first symptom to death
-	var cfrs1 = [];
-	var cfrs2 = [];
+	var cfrsT = [];
+	var cfrsDDR = [];
 	for(var i = 0; i < time.length; i++){
 		if(i < averageDaysFromConfirmedToDeath)
-			cfrs1.push(null);
+			cfrsT.push(null);
 		else
-			cfrs1.push(Math.round(deathsCounts[i] / confirmedCounts[i - averageDaysFromConfirmedToDeath] * 1000) / 10);
+			cfrsT.push(Math.round(deathsCounts[i] / confirmedCounts[i - averageDaysFromConfirmedToDeath] * 1000) / 10);
 	}
 	for(var i = 0; i < time.length; i++)
-		cfrs2.push(Math.round(deathsCounts[i] / (recoveredCounts[i] + deathsCounts[i]) * 1000) / 10);
+		cfrsDDR.push(Math.round(deathsCounts[i] / (recoveredCounts[i] + deathsCounts[i]) * 1000) / 10);
 	var lastIndex = time.length - 1;
 	lastUpdatedEl.innerHTML = new Date(lastUpdated).toLocaleString();
 	totalConfirmedEl.innerHTML = confirmedCounts[lastIndex].toLocaleString();
 	totalRecoveredEl.innerHTML = recoveredCounts[lastIndex].toLocaleString();
 	totalDeathsEl.innerHTML = deathsCounts[lastIndex].toLocaleString();
-	cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrs1[cfrs1.length - 1] + '%' + (isMobile ? '' : ', ') + '<sup>d/(d+r)</sup>' + cfrs2[cfrs2.length - 1] + '%';
+	cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrsT[cfrsT.length - 1] + '%' + (isMobile ? '' : ', ') + '<sup>d/(d+r)</sup>' + cfrsDDR[cfrsDDR.length - 1] + '%';
 	var trends = [];
 	trends.push({
 		name: 'Confirmed',
@@ -972,12 +989,12 @@ var showGlobalStats = function(){
 	trends.push({
 		name: 'T=' + averageDaysFromConfirmedToDeath,
 		x: time,
-		y: cfrs1
+		y: cfrsT
 	});
 	trends.push({
 		name: 'd/(d+r)',
 		x: time,
-		y: cfrs2
+		y: cfrsDDR
 	});
 	layout = {
 		height: isMobile ? 50 : 100,
