@@ -341,7 +341,7 @@ Local times except for plots in UTC.
 <div id="stats-by-province"></div>
 </div>
 <script>
-var dataUrl = 'geodata.json'
+var dataUrl = 'test-geodata.json'
 var dataSources = '<a href="https://arcg.is/0fHmTX">CSSE</a><sup><a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports">1</a>' +
 	',<a href="https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">2</a></sup>' +
 	', <a href="https://ncov.dxy.cn/ncovh5/view/pneumonia">DXY</a>' +
@@ -772,15 +772,31 @@ var showFeatureStatsByQuery = function(query){
 				if(s.confirmed[s.confirmed.length - 1] + s.recovered[s.recovered.length - 1] + s.deaths[s.deaths.length - 1] == 0)
 					return;
 				if(country == 'United States'){
-					var admin2Matched = admin2Query == query || admin2 == query.split(', ')[0];
-					// if province or country matches, only highlight admin2 and skip it because it has less information
-					if(!admin2Matched && admin2){
-						featureIds.push(featureId);
-						return;
-					}
-					// either admin2 match with items in the UI or province/country match with no items in the UI
+					// country match
+					var matchLevel = 0;
+					if(admin2Query == query || admin2 == query.split(', ')[0])
+						// admin2 match
+						matchLevel = 2;
+					else if(provinceQuery == query || province == query.split(', ')[0])
+						// province match
+						matchLevel = 1;
+					// only admin2 records are displayed
 					if(admin2)
 						featureIds.push(featureId);
+					switch(matchLevel){
+					case 0: // country level
+						if(province || admin2)
+							return;
+						break;
+					case 1: // province level
+						if(admin2)
+							return;
+						break;
+					case 2: // admin2 level
+						if(province)
+							return;
+						break;
+					}
 				}else
 					featureIds.push(featureId);
 				if(stats.time.length == 0){
@@ -897,7 +913,9 @@ var showGlobalStats = function(){
 			// don't double count for global statistics
 			if(country == 'United States' || hasDuplicateData.indexOf(country) >= 0)
 				return;
-		}
+		}else if(country == 'United States' && province)
+			return;
+
 		// global statistics
 		if(updated > lastUpdated)
 			lastUpdated = updated;

@@ -568,6 +568,8 @@ def clean_us_data():
                 print(f'US   deaths   : {province}, {country}, {deaths[j]["count"]} => {d}')
                 deaths[j]['count'] = d
 
+    latitude, longitude = geocode(country)
+
     if len(others_indices):
         confirmed = []
         recovered = []
@@ -592,7 +594,6 @@ def clean_us_data():
                 'time': time_str,
                 'count': d
             })
-        latitude, longitude = geocode(country)
         province = 'Others'
 
         print(f'US   confirmed: {province}, {country}, {c}')
@@ -609,6 +610,45 @@ def clean_us_data():
             'recovered': recovered,
             'deaths': deaths
         })
+
+    confirmed = []
+    recovered = []
+    deaths = []
+    for i in range(0, total_days):
+        c = r = d = 0
+        for rec in data:
+            if rec['country'] == country and not rec['admin2']:
+                c += rec['confirmed'][i]['count']
+                r += rec['recovered'][i]['count']
+                d += rec['deaths'][i]['count']
+        time_str = f'{dates[i]} 23:59:59 UTC'
+        confirmed.append({
+            'time': time_str,
+            'count': c
+        })
+        recovered.append({
+            'time': time_str,
+            'count': r
+        })
+        deaths.append({
+            'time': time_str,
+            'count': d
+        })
+
+    print(f'US   confirmed: {country}, {c}')
+    print(f'US   recovered: {country}, {r}')
+    print(f'US   deaths   : {country}, {d}')
+
+    data.append({
+        'country': country,
+        'province': '',
+        'admin2': '',
+        'latitude': latitude,
+        'longitude': longitude,
+        'confirmed': confirmed,
+        'recovered': recovered,
+        'deaths': deaths
+    })
 
 def get_data_filename(country, province=None):
     return 'data/' + (province + ', ' if province else '') + country + '.csv'
