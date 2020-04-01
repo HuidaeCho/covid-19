@@ -163,7 +163,7 @@ h3 {
 	font-weight: bold;
 }
 #popup .cfr {
-	font-size: 0.9em;
+	font-size: 0.75em;
 }
 .right {
 	text-align: right;
@@ -270,6 +270,9 @@ h3 {
 	}
 	#summary .cfr {
 		font-size: 1.2em;
+	}
+	#popup .cfr {
+		font-size: 0.9em;
 	}
 	.cfr sup {
 		font-size: 0.7em;
@@ -625,9 +628,15 @@ var showPopup = function(stats, coor){
 	start++;
 
 	var cfrT = null;
-	if(stats.confirmed.length - averageDaysFromConfirmedToDeath >= start)
-		cfrT = Math.round(lastDeaths / stats.confirmed[stats.confirmed.length - 1 - averageDaysFromConfirmedToDeath] * 1000) / 10;
-	var cfrDDR = Math.round(lastDeaths / (lastDeaths + lastRecovered) * 1000) / 10;
+	var T = averageDaysFromConfirmedToDeath;
+	if(stats.confirmed.length - 1 - T < start)
+		T = stats.confirmed.length - 1 - start;
+	cfrT = Math.round(lastDeaths / stats.confirmed[stats.confirmed.length - 1 - T] * 1000) / 10;
+
+	var cfrDDR = null;
+	// United States doesn't have recovered at a province or admin2 level
+	if(stats.country != 'United States' || (!stats.province && !stats.admin2))
+		cfrDDR = Math.round(lastDeaths / (lastDeaths + lastRecovered) * 1000) / 10;
 
 	if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
 	if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
@@ -642,8 +651,8 @@ var showPopup = function(stats, coor){
 		(lastDeaths ? '<tr class="deaths"><td>Deaths:</td><td class="right">' + lastDeaths + '</td></tr>' : '') +
 		'</table>' +
 		'<div class="cfr">CFR<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>: ' +
-		(cfrT ? '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrT + '%' + (isMobile ? '' : ', ') : '') +
-		'<sup>d/(d+r)</sup>' + cfrDDR + '%</div>' +
+		(cfrT ? '<sup>T=' + T + '</sup>' + cfrT + '%' + (isMobile || !cfrDDR ? '' : ', ') : '') +
+		(cfrDDR ? '<sup>d/(d+r)</sup>' + cfrDDR + '%</div>' : '') +
 		'<div id="popup-plot"></div></div>';
 
 	// XXX: why does popup.show() trigger a singleclick event when an
