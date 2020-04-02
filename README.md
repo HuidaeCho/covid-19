@@ -27,7 +27,7 @@ As of March 27, 2020 at 6pm EDT, `fetch_data.py`'s count of the United States ca
 | Walker               | Texas         |   3 |   2 |
 | Unassigned           | Vermont       |   8 |   6 |
 | Norfolk              | Virginia      |   9 |   8 |
-| Fairfax City         | virginia      |   1 |   0 |
+| Fairfax City         | Virginia      |   1 |   0 |
 | Unassigned           | Washington    |  69 |  67 |
 | Preston              | West Virginia |   2 |   1 |
 | Ohio                 | West Virginia |   2 |   1 |
