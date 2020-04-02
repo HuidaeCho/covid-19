@@ -191,7 +191,7 @@ h2 {
 #plots {
 	margin-bottom: 0;
 }
-#plots-menu a {
+.plots-menu a {
 	display: inline-block;
 	cursor: pointer;
 	color: black;
@@ -204,11 +204,14 @@ h2 {
 	border-bottom: none;
 }
 /* XXX: hover doesn't register a finger release from the touch screen? let's use white here */
-#plots-menu a:hover {
+.plots-menu a:hover {
 	background: white;
 }
-#plots-menu .active {
+.plots-menu .active {
 	background: white;
+}
+#popup-plots-menu {
+	font-size: 0.9em;
 }
 #stats-by-province {
 	overflow: auto;
@@ -334,7 +337,7 @@ h2 {
 	#plots {
 		margin-bottom: 10px;
 	}
-	#plots-menu a:hover {
+	.plots-menu a:hover {
 		background: #dddddd;
 	}
 	#stats-by-province {
@@ -389,7 +392,7 @@ Local times except for plots in UTC.
 <div class="cfr">CFR<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>: <span id="cfr"></span></div>
 </div>
 <div id="plots">
-<div id="plots-menu"></div>
+<div id="plots-menu" class="plots-menu"></div>
 <div id="plot"></div>
 </div>
 <div id="stats-by-province"></div>
@@ -673,25 +676,33 @@ var calculateStats = function(feature, all=false){
 };
 
 var showPopup = function(stats, coor){
+	var featureId = stats.featureId;
+	var country = stats.country;
+	var province = stats.province;
+	var admin2 = stats.admins2;
+	var time = stats.time;
+	var confirmedCount = stats.confirmed;
+	var recoveredCount = stats.recovered;
+	var deathsCount = stats.deaths;
 	var lastUpdated = stats.lastUpdated;
-	var lastIndex = stats.confirmed.length - 1;
-	var lastConfirmed = stats.confirmed[lastIndex];
-	var lastRecovered = stats.recovered[lastIndex];
-	var lastDeaths = stats.deaths[lastIndex];
+	var lastIndex = confirmedCount.length - 1;
+	var lastConfirmed = confirmedCount[lastIndex];
+	var lastRecovered = recoveredCount[lastIndex];
+	var lastDeaths = deathsCount[lastIndex];
 
-	var start = stats.confirmed.length;
-	while(stats.confirmed[--start]);
+	var start = confirmedCount.length;
+	while(confirmedCount[--start]);
 	start++;
 
 	var cfrT = null;
 	var T = averageDaysFromConfirmedToDeath;
-	if(stats.confirmed.length - 1 - T < start)
-		T = stats.confirmed.length - 1 - start;
-	cfrT = Math.round(lastDeaths / stats.confirmed[stats.confirmed.length - 1 - T] * 1000) / 10;
+	if(lastIndex - T < start)
+		T = lastIndex - start;
+	cfrT = Math.round(lastDeaths / confirmedCount[lastIndex - T] * 1000) / 10;
 
 	var cfrDDR = null;
 	// United States doesn't have recovered at a province or admin2 level
-	if(stats.country != 'United States' || (!stats.province && !stats.admin2))
+	if(country != 'United States' || (!province && !admin2))
 		cfrDDR = Math.round(lastDeaths / (lastDeaths + lastRecovered) * 1000) / 10;
 
 	if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
@@ -699,7 +710,7 @@ var showPopup = function(stats, coor){
 	if(lastDeaths) lastDeaths = lastDeaths.toLocaleString();
 
 	var content =
-		'<div id="popup"><h3>' + createLinks(stats.country, stats.province, stats.admin2, stats.featureId, true) + '</h3>' +
+		'<div id="popup"><h3>' + createLinks(country, province, admin2, featureId, true) + '</h3>' +
 		'<div id="popup-last-updated">' + new Date(lastUpdated).toLocaleString() + '</div>' +
 		'<table id="popup-stats">' +
 		(lastConfirmed ? '<tr class="confirmed"><td>Confirmed:</td><td class="right">' + lastConfirmed + '</td></tr>' : '') +
@@ -709,7 +720,10 @@ var showPopup = function(stats, coor){
 		'<div class="cfr">CFR<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>: ' +
 		(cfrT ? '<sup>T=' + T + '</sup>' + cfrT + '%' + (isMobile || !cfrDDR ? '' : ', ') : '') +
 		(cfrDDR ? '<sup>d/(d+r)</sup>' + cfrDDR + '%</div>' : '') +
-		'<div id="popup-plot"></div></div>';
+		'<div id="popup-plots"></div>' +
+		'<div id="popup-plots-menu" class="plots-menu"></div>' +
+		'<div id="popup-plot"></div></div>' +
+		'</div>';
 
 	// XXX: why does popup.show() trigger a singleclick event when an
 	// aggregating query link is clicked from the popup? this extra event
@@ -719,49 +733,145 @@ var showPopup = function(stats, coor){
 	// data; these stats have undefined featureId
 	popup.show(coor, content);
 
-	var trends = [];
-	trends.push({
-		name: 'Confirmed',
-		x: stats.time.slice(start),
-		y: stats.confirmed.slice(start),
-		marker: {
-			color: getColor('confirmed')
-		}
-	});
-	if(stats.recovered[stats.recovered.length - 1] > 0)
+	var confirmedIncrease = [];
+	var recoveredIncrease = [];
+	var deathsIncrease = [];
+	var cfrT = [];
+	var cfrDDR = [];
+
+	for(var i = start; i < time.length; i++){
+		confirmedIncrease.push(confirmedCount[i] - (i > start ? confirmedCount[i - 1] : null));
+		recoveredIncrease.push(recoveredCount[i] - (i > start ? recoveredCount[i - 1] : null));
+		deathsIncrease.push(deathsCount[i] - (i > start ? deathsCount[i - 1] : null));
+		cfrT.push(i >= start + T ? Math.round(deathsCount[i] / confirmedCount[i - T] * 1000) / 10 : null);
+		cfrDDR.push(Math.round(deathsCount[i] / (recoveredCount[i] + deathsCount[i]) * 1000) / 10);
+	}
+
+	var popupStatsEl = document.getElementById('popup-stats');
+
+	var plotCumulative = function(){
+		var trends = [];
+		trends.push({
+			name: 'Confirmed',
+			x: time.slice(start),
+			y: confirmedCount.slice(start),
+			marker: {
+				color: getColor('confirmed')
+			}
+		});
+		if(recoveredCount[lastIndex] > 0)
+			trends.push({
+				name: 'Recovered',
+				x: time.slice(start),
+				y: recoveredCount.slice(start),
+				marker: {
+					color: getColor('recovered')
+				}
+			});
+		if(deathsCount[lastIndex] > 0)
+			trends.push({
+				name: 'Deaths',
+				x: time.slice(start),
+				y: deathsCount.slice(start),
+				marker: {
+					color: getColor('deaths')
+				}
+			});
+		var layout = {
+			width: popupStatsEl.offsetWidth + 5,
+			height: isMobile ? 50 : 100,
+			margin: {
+				l: isMobile ? 20 : 30,
+				r: isMobile ? 6 : 15,
+				b: isMobile ? 20 : 30,
+				t: 5
+			},
+			font: {
+				size: isMobile ? 6 : 10
+			},
+			showlegend: false
+		};
+		Plotly.newPlot('popup-plot', trends, layout, {displayModeBar: false});
+	};
+
+	var plotIncrease = function(){
+		var trends = [];
+		trends.push({
+			name: 'Confirmed',
+			x: time,
+			y: confirmedIncrease,
+			marker: {
+				color: getColor('confirmed')
+			}
+		});
 		trends.push({
 			name: 'Recovered',
-			x: stats.time.slice(start),
-			y: stats.recovered.slice(start),
+			x: time,
+			y: recoveredIncrease,
 			marker: {
 				color: getColor('recovered')
 			}
 		});
-	if(stats.deaths[stats.deaths.length - 1] > 0)
 		trends.push({
 			name: 'Deaths',
-			x: stats.time.slice(start),
-			y: stats.deaths.slice(start),
+			x: time,
+			y: deathsIncrease,
 			marker: {
 				color: getColor('deaths')
 			}
 		});
-	var fontSize = isMobile ? 6 : 10;
-	var layout = {
-		width: document.getElementById('popup-stats').offsetWidth + 5,
-		height: isMobile ? 50 : 100,
-		margin: {
-			l: isMobile ? 20 : 30,
-			r: isMobile ? 6 : 15,
-			b: isMobile ? 20 : 30,
-			t: 5
-		},
-		font: {
-			size: fontSize
-		},
-		showlegend: false
+		var layout = {
+			width: popupStatsEl.offsetWidth + 5,
+			height: isMobile ? 50 : 100,
+			margin: {
+				l: isMobile ? 20 : 30,
+				r: isMobile ? 6 : 15,
+				b: isMobile ? 20 : 30,
+				t: 5
+			},
+			font: {
+				size: isMobile ? 6 : 10
+			},
+			showlegend: false
+		};
+		Plotly.newPlot('popup-plot', trends, layout, {displayModeBar: false});
 	};
-	Plotly.newPlot('popup-plot', trends, layout, {displayModeBar: false});
+
+	var plotCFR = function(){
+		var trends = [];
+		trends.push({
+			name: 'T=' + T,
+			x: time,
+			y: cfrT
+		});
+		trends.push({
+			name: 'd/(d+r)',
+			x: time,
+			y: cfrDDR
+		});
+		layout = {
+			width: popupStatsEl.offsetWidth + 5,
+			height: isMobile ? 50 : 100,
+			margin: {
+				l: isMobile ? 20 : 30,
+				r: isMobile ? 6 : 15,
+				b: isMobile ? 20 : 30,
+				t: 5
+			},
+			font: {
+				size: isMobile ? 6 : 10
+			},
+			showlegend: false
+		};
+		Plotly.newPlot('popup-plot', trends, layout, {displayModeBar: false});
+	};
+
+	var popupPlotsMenuEl = document.getElementById('popup-plots-menu');
+	var plotsMenuConfig = {};
+	plotsMenuItems.forEach(item => {
+		plotsMenuConfig[item] = eval('plot' + item.replace(' ', ''));
+	});
+	generatePlotsMenu(popupPlotsMenuEl, plotsMenuConfig);
 };
 
 var showFeatureStatsAtCoordinates = function(feature, coor){
@@ -1021,14 +1131,10 @@ var showGlobalStats = function(){
 	statsByProvinceEl.innerHTML = statsByProvince;
 
 	for(var i = 0; i < time.length; i++){
-		confirmedIncrease.push(confirmedCount[i] - (i > 0 ? confirmedCount[i - 1] : 0));
-		recoveredIncrease.push(recoveredCount[i] - (i > 0 ? recoveredCount[i - 1] : 0));
-		deathsIncrease.push(deathsCount[i] - (i > 0 ? deathsCount[i - 1] : 0));
-
-		if(i < averageDaysFromConfirmedToDeath)
-			cfrT.push(null);
-		else
-			cfrT.push(Math.round(deathsCount[i] / confirmedCount[i - averageDaysFromConfirmedToDeath] * 1000) / 10);
+		confirmedIncrease.push(confirmedCount[i] - (i > 0 ? confirmedCount[i - 1] : null));
+		recoveredIncrease.push(recoveredCount[i] - (i > 0 ? recoveredCount[i - 1] : null));
+		deathsIncrease.push(deathsCount[i] - (i > 0 ? deathsCount[i - 1] : null));
+		cfrT.push(i >= averageDaysFromConfirmedToDeath ? Math.round(deathsCount[i] / confirmedCount[i - averageDaysFromConfirmedToDeath] * 1000) / 10 : null);
 		cfrDDR.push(Math.round(deathsCount[i] / (recoveredCount[i] + deathsCount[i]) * 1000) / 10);
 	}
 
@@ -1039,31 +1145,39 @@ var showGlobalStats = function(){
 	totalDeathsEl.innerHTML = deathsCount[lastIndex].toLocaleString();
 	cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrT[cfrT.length - 1] + '%' + (isMobile ? '' : ', ') + '<sup>d/(d+r)</sup>' + cfrDDR[cfrDDR.length - 1] + '%';
 
-	generatePlotsMenu();
-	plotCumulative();
+	var plotsMenuConfig = {};
+	plotsMenuItems.forEach(item => {
+		plotsMenuConfig[item] = eval('plot' + item.replace(' ', ''));
+	});
+	generatePlotsMenu(plotsMenuEl, plotsMenuConfig);
 
 	statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
 
 	return maxConfirmedCoor;
 };
 
-var generatePlotsMenu = function(){
-	plotsMenuEl.innerHTML = '';
-	plotsMenuItems.forEach(item => {
+var generatePlotsMenu = function(menuEl, menuConfig){
+	menuEl.innerHTML = '';
+	var first = true;
+	Object.entries(menuConfig).forEach(([title, callback]) => {
 		var a = document.createElement('a');
-		a.innerHTML = item;
+		a.innerHTML = title;
 		a.onclick = function(){
-			plotsMenuEl.childNodes.forEach(node => {
+			menuEl.childNodes.forEach(node => {
 				if(node.innerHTML == this.innerHTML && !node.classList.contains('active'))
 					node.classList.add('active');
 				else if(node.classList.contains('active'))
 					node.classList.remove('active');
 			});
-			eval('plot' + this.innerHTML.replace(' ', '') + '()');
+			callback();
 		};
-		plotsMenuEl.appendChild(a);
+		menuEl.appendChild(a);
+		if(first){
+			a.classList.add('active');
+			callback();
+			first = false;
+		}
 	});
-	plotsMenuEl.firstChild.classList.add('active');
 };
 
 var plotCumulative = function(){
