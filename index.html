@@ -191,6 +191,25 @@ h2 {
 #plots {
 	margin-bottom: 0;
 }
+#plots-menu a {
+	display: inline-block;
+	cursor: pointer;
+	color: black;
+	text-decoration: none;
+	text-align: center;
+	border-radius: 5px 5px 0 0;
+	padding: 2px 5px;
+	background: #cccccc;
+	border: 1px solid #aaaaaa;
+	border-bottom: none;
+}
+/* XXX: hover doesn't register a finger release from the touch screen? let's use white here */
+#plots-menu a:hover {
+	background: white;
+}
+#plots-menu .active {
+	background: white;
+}
 #stats-by-province {
 	overflow: auto;
 }
@@ -315,6 +334,9 @@ h2 {
 	#plots {
 		margin-bottom: 10px;
 	}
+	#plots-menu a:hover {
+		background: #dddddd;
+	}
 	#stats-by-province {
 		font-size: 0.9em;
 	}
@@ -367,8 +389,8 @@ Local times except for plots in UTC.
 <div class="cfr">CFR<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>: <span id="cfr"></span></div>
 </div>
 <div id="plots">
-<div id="count-plot"></div>
-<div id="cfr-plot"></div>
+<div id="plots-menu"></div>
+<div id="plot"></div>
 </div>
 <div id="stats-by-province"></div>
 </div>
@@ -397,6 +419,7 @@ var totalDeathsEl = document.getElementById('total-deaths');
 var cfrEl = document.getElementById('cfr');
 var summaryEl = document.getElementById('summary');
 var plotsEl = document.getElementById('plots');
+var plotsMenuEl = document.getElementById('plots-menu');
 var statsByProvinceEl = document.getElementById('stats-by-province');
 var bodyStyle = window.getComputedStyle(bodyEl);
 var bodyWidth = Number(bodyStyle.width.replace('px', ''));
@@ -406,6 +429,7 @@ mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) +
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
 var hasDuplicateData = ['South Korea', 'Italy', 'Chile'];
 var averageDaysFromConfirmedToDeath = 14; // median days from first symptom to death
+var plotsMenuItems = ['Cumulative', 'Increase', 'CFR'];
 
 var getColor = function(category, opacity=null){
 	var color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
@@ -619,9 +643,9 @@ var calculateStats = function(feature, all=false){
 	var deaths = feature.properties.deaths;
 
 	var time = [];
-	var confirmedCounts = [];
-	var recoveredCounts = [];
-	var deathsCounts = [];
+	var confirmedCount = [];
+	var recoveredCount = [];
+	var deathsCount = [];
 
 	for(var i = 0; i <= confirmed.length - 1; i++){
 		var c = confirmed[i].count;
@@ -629,9 +653,9 @@ var calculateStats = function(feature, all=false){
 		var d = deaths[i].count;
 		if(all || time.length || c || r || d){
 			time.push(confirmed[i].time.replace(/\//g, '-').replace(/ .*/, ''));
-			confirmedCounts.push(c);
-			recoveredCounts.push(r);
-			deathsCounts.push(d);
+			confirmedCount.push(c);
+			recoveredCount.push(r);
+			deathsCount.push(d);
 		}
 	}
 
@@ -642,9 +666,9 @@ var calculateStats = function(feature, all=false){
 		admin2: admin2,
 		lastUpdated: Date.parse(confirmed[confirmed.length-1].time),
 		time: time,
-		confirmed: confirmedCounts,
-		recovered: recoveredCounts,
-		deaths: deathsCounts
+		confirmed: confirmedCount,
+		recovered: recoveredCount,
+		deaths: deathsCount
 	};
 };
 
@@ -893,11 +917,17 @@ var showFeatureStatsByQuery = function(query){
 	}
 };
 
+var time = [];
+var confirmedCount = [];
+var recoveredCount = [];
+var deathsCount = [];
+var confirmedIncrease = [];
+var recoveredIncrease = [];
+var deathsIncrease = [];
+var cfrT = [];
+var cfrDDR = [];
+
 var showGlobalStats = function(){
-	var time = [];
-	var confirmedCounts = [];
-	var recoveredCounts = [];
-	var deathsCounts = [];
 	var lastUpdated = 0;
 	var statsByProvince = '';
 	var maxActive = 0;
@@ -957,19 +987,19 @@ var showGlobalStats = function(){
 			var d = deaths[i].count;
 			if(i + 1 > time.length){
 				time.push(confirmed[i].time.replace(/\//g, '-').replace(/ .*/, ''));
-				confirmedCounts.push(c);
-				recoveredCounts.push(r);
-				deathsCounts.push(d);
+				confirmedCount.push(c);
+				recoveredCount.push(r);
+				deathsCount.push(d);
 			}else{
-				confirmedCounts[i] += c;
-				recoveredCounts[i] += r;
-				deathsCounts[i] += d;
+				confirmedCount[i] += c;
+				recoveredCount[i] += r;
+				deathsCount[i] += d;
 			}
-			if(i == confirmed.length - 1 && confirmedCounts.length > confirmed.length){
-				var k = confirmedCounts.length - 1;
-				confirmedCounts[k] += c;
-				recoveredCounts[k] += r;
-				deathsCounts[k] += d;
+			if(i == confirmed.length - 1 && confirmedCount.length > confirmed.length){
+				var k = confirmedCount.length - 1;
+				confirmedCount[k] += c;
+				recoveredCount[k] += r;
+				deathsCount[k] += d;
 			}
 		}
 
@@ -990,27 +1020,58 @@ var showGlobalStats = function(){
 
 	statsByProvinceEl.innerHTML = statsByProvince;
 
-	var cfrsT = [];
-	var cfrsDDR = [];
 	for(var i = 0; i < time.length; i++){
+		confirmedIncrease.push(confirmedCount[i] - (i > 0 ? confirmedCount[i - 1] : 0));
+		recoveredIncrease.push(recoveredCount[i] - (i > 0 ? recoveredCount[i - 1] : 0));
+		deathsIncrease.push(deathsCount[i] - (i > 0 ? deathsCount[i - 1] : 0));
+
 		if(i < averageDaysFromConfirmedToDeath)
-			cfrsT.push(null);
+			cfrT.push(null);
 		else
-			cfrsT.push(Math.round(deathsCounts[i] / confirmedCounts[i - averageDaysFromConfirmedToDeath] * 1000) / 10);
+			cfrT.push(Math.round(deathsCount[i] / confirmedCount[i - averageDaysFromConfirmedToDeath] * 1000) / 10);
+		cfrDDR.push(Math.round(deathsCount[i] / (recoveredCount[i] + deathsCount[i]) * 1000) / 10);
 	}
-	for(var i = 0; i < time.length; i++)
-		cfrsDDR.push(Math.round(deathsCounts[i] / (recoveredCounts[i] + deathsCounts[i]) * 1000) / 10);
+
 	var lastIndex = time.length - 1;
 	lastUpdatedEl.innerHTML = new Date(lastUpdated).toLocaleString();
-	totalConfirmedEl.innerHTML = confirmedCounts[lastIndex].toLocaleString();
-	totalRecoveredEl.innerHTML = recoveredCounts[lastIndex].toLocaleString();
-	totalDeathsEl.innerHTML = deathsCounts[lastIndex].toLocaleString();
-	cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrsT[cfrsT.length - 1] + '%' + (isMobile ? '' : ', ') + '<sup>d/(d+r)</sup>' + cfrsDDR[cfrsDDR.length - 1] + '%';
+	totalConfirmedEl.innerHTML = confirmedCount[lastIndex].toLocaleString();
+	totalRecoveredEl.innerHTML = recoveredCount[lastIndex].toLocaleString();
+	totalDeathsEl.innerHTML = deathsCount[lastIndex].toLocaleString();
+	cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrT[cfrT.length - 1] + '%' + (isMobile ? '' : ', ') + '<sup>d/(d+r)</sup>' + cfrDDR[cfrDDR.length - 1] + '%';
+
+	generatePlotsMenu();
+	plotCumulative();
+
+	statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
+
+	return maxConfirmedCoor;
+};
+
+var generatePlotsMenu = function(){
+	plotsMenuEl.innerHTML = '';
+	plotsMenuItems.forEach(item => {
+		var a = document.createElement('a');
+		a.innerHTML = item;
+		a.onclick = function(){
+			plotsMenuEl.childNodes.forEach(node => {
+				if(node.innerHTML == this.innerHTML && !node.classList.contains('active'))
+					node.classList.add('active');
+				else if(node.classList.contains('active'))
+					node.classList.remove('active');
+			});
+			eval('plot' + this.innerHTML.replace(' ', '') + '()');
+		};
+		plotsMenuEl.appendChild(a);
+	});
+	plotsMenuEl.firstChild.classList.add('active');
+};
+
+var plotCumulative = function(){
 	var trends = [];
 	trends.push({
 		name: 'Confirmed',
 		x: time,
-		y: confirmedCounts,
+		y: confirmedCount,
 		marker: {
 			color: getColor('confirmed')
 		}
@@ -1018,7 +1079,7 @@ var showGlobalStats = function(){
 	trends.push({
 		name: 'Recovered',
 		x: time,
-		y: recoveredCounts,
+		y: recoveredCount,
 		marker: {
 			color: getColor('recovered')
 		}
@@ -1026,12 +1087,11 @@ var showGlobalStats = function(){
 	trends.push({
 		name: 'Deaths',
 		x: time,
-		y: deathsCounts,
+		y: deathsCount,
 		marker: {
 			color: getColor('deaths')
 		}
 	});
-	var fontSize = isMobile ? 6 : 12;
 	var layout = {
 		height: isMobile ? 50 : 150,
 		margin: {
@@ -1041,43 +1101,81 @@ var showGlobalStats = function(){
 			t: isMobile ? 3 : 10
 		},
 		font: {
-			size: fontSize
+			size: isMobile ? 6 : 12
 		},
 		showlegend: false
 	};
-	Plotly.newPlot('count-plot', trends, layout, {displayModeBar: false});
+	Plotly.newPlot('plot', trends, layout, {displayModeBar: false});
+};
 
-	trends = [];
+var plotIncrease = function(){
+	var trends = [];
+	trends.push({
+		name: 'Confirmed',
+		x: time,
+		y: confirmedIncrease,
+		marker: {
+			color: getColor('confirmed')
+		}
+	});
+	trends.push({
+		name: 'Recovered',
+		x: time,
+		y: recoveredIncrease,
+		marker: {
+			color: getColor('recovered')
+		}
+	});
+	trends.push({
+		name: 'Deaths',
+		x: time,
+		y: deathsIncrease,
+		marker: {
+			color: getColor('deaths')
+		}
+	});
+	var layout = {
+		height: isMobile ? 50 : 150,
+		margin: {
+			l: isMobile ? 15 : 30,
+			r: isMobile ? 6 : 10,
+			b: isMobile ? 20 : 30,
+			t: isMobile ? 3 : 10
+		},
+		font: {
+			size: isMobile ? 6 : 12
+		},
+		showlegend: false
+	};
+	Plotly.newPlot('plot', trends, layout, {displayModeBar: false});
+};
+
+var plotCFR = function(){
+	var trends = [];
 	trends.push({
 		name: 'T=' + averageDaysFromConfirmedToDeath,
 		x: time,
-		y: cfrsT
+		y: cfrT
 	});
 	trends.push({
 		name: 'd/(d+r)',
 		x: time,
-		y: cfrsDDR
+		y: cfrDDR
 	});
 	layout = {
-		height: isMobile ? 50 : 100,
+		height: isMobile ? 50 : 150,
 		margin: {
-			l: isMobile ? 17 : 35,
+			l: isMobile ? 10 : 25,
 			r: isMobile ? 6 : 10,
 			b: isMobile ? 20 : 30,
 			t: isMobile ? 0 : 10
 		},
-		yaxis: {
-			title: 'CFR'
-		},
 		font: {
-			size: fontSize
+			size: isMobile ? 6 : 12
 		},
 		showlegend: false
 	};
-	Plotly.newPlot('cfr-plot', trends, layout, {displayModeBar: false});
-	statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
-
-	return maxConfirmedCoor;
+	Plotly.newPlot('plot', trends, layout, {displayModeBar: false});
 };
 
 var sortDescending = true;
