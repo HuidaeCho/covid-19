@@ -745,7 +745,7 @@ var showPopup = function(stats, coor){
 		deathsIncrease.push(deathsCount[i] - (i > start ? deathsCount[i - 1] : null));
 		cfrT.push(i >= start + T ? Math.round(deathsCount[i] / confirmedCount[i - T] * 1000) / 10 : null);
 		if(cfrDDR)
-			cfrDDR.push(Math.round(deathsCount[i] / (recoveredCount[i] + deathsCount[i]) * 1000) / 10);
+			cfrDDR.push(Math.round(deathsCount[i] / (deathsCount[i] + recoveredCount[i]) * 1000) / 10);
 	}
 
 	var popupStatsEl = document.getElementById('popup-stats');
@@ -1126,7 +1126,8 @@ var showGlobalStats = function(){
 			confirmed: stats.confirmed,
 			recovered: stats.recovered,
 			deaths: stats.deaths,
-			active: stats.confirmed - stats.recovered - stats.deaths
+			active: stats.confirmed - stats.recovered - stats.deaths,
+			cfrDDR: Math.round(stats.deaths / (stats.deaths + stats.recovered) * 1000) / 10
 		});
 	});
 
@@ -1137,7 +1138,7 @@ var showGlobalStats = function(){
 		recoveredIncrease.push(recoveredCount[i] - (i > 0 ? recoveredCount[i - 1] : null));
 		deathsIncrease.push(deathsCount[i] - (i > 0 ? deathsCount[i - 1] : null));
 		cfrT.push(i >= averageDaysFromConfirmedToDeath ? Math.round(deathsCount[i] / confirmedCount[i - averageDaysFromConfirmedToDeath] * 1000) / 10 : null);
-		cfrDDR.push(Math.round(deathsCount[i] / (recoveredCount[i] + deathsCount[i]) * 1000) / 10);
+		cfrDDR.push(Math.round(deathsCount[i] / (deathsCount[i] + recoveredCount[i]) * 1000) / 10);
 	}
 
 	var lastIndex = time.length - 1;
@@ -1315,9 +1316,14 @@ var sortStatsByCountry = function(category){
 			b = b.deaths;
 			break;
 		case 'Active':
-			nextCategory = 'Confirmed';
+			nextCategory = 'CFR d/(d+r)';
 			a = a.active;
 			b = b.active;
+			break;
+		case 'CFR d/(d+r)':
+			nextCategory = 'Recovered';
+			a = a.cfrDDR;
+			b = b.cfrDDR;
 			break;
 		}
 		return sortDescending ? b - a : a - b;
@@ -1332,7 +1338,8 @@ var sortStatsByCountry = function(category){
 			sortedByCountry[i].confirmed.toLocaleString() + ' confirmed, ' +
 			sortedByCountry[i].recovered.toLocaleString() + ' recovered, ' +
 			sortedByCountry[i].deaths.toLocaleString() + ' deaths, ' +
-			sortedByCountry[i].active.toLocaleString() + ' active'
+			sortedByCountry[i].active.toLocaleString() + ' active, ' +
+			'CFR d/(d+r) ' + sortedByCountry[i].cfrDDR.toLocaleString() + '%';
 		countryLinksEl.innerHTML += (i > 0 ? ', ' : '') +
 			'<a onclick="showFeatureStatsByQuery(\'' + country + '\')" title="' + popup + '">' + country + '</a>' +
 			'<sup><a href="?' + country.replace(/ /g, '%20') + '" title="' + popup + '">' +
