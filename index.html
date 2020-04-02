@@ -700,10 +700,9 @@ var showPopup = function(stats, coor){
 		T = lastIndex - start;
 	cfrT = Math.round(lastDeaths / confirmedCount[lastIndex - T] * 1000) / 10;
 
-	var cfrDDR = null;
 	// United States doesn't have recovered at a province or admin2 level
-	if(country != 'United States' || (!province && !admin2))
-		cfrDDR = Math.round(lastDeaths / (lastDeaths + lastRecovered) * 1000) / 10;
+	var cfrDDR = country != 'United States' || (!province && !admin2) ?
+		Math.round(lastDeaths / (lastDeaths + lastRecovered) * 1000) / 10 : null;
 
 	if(lastConfirmed) lastConfirmed = lastConfirmed.toLocaleString();
 	if(lastRecovered) lastRecovered = lastRecovered.toLocaleString();
@@ -736,15 +735,17 @@ var showPopup = function(stats, coor){
 	var confirmedIncrease = [];
 	var recoveredIncrease = [];
 	var deathsIncrease = [];
-	var cfrT = [];
-	var cfrDDR = [];
+	cfrT = [];
+	// United States doesn't have recovered at a province or admin2 level
+	cfrDDR = cfrDDR == null ? null : [];
 
 	for(var i = start; i < time.length; i++){
 		confirmedIncrease.push(confirmedCount[i] - (i > start ? confirmedCount[i - 1] : null));
 		recoveredIncrease.push(recoveredCount[i] - (i > start ? recoveredCount[i - 1] : null));
 		deathsIncrease.push(deathsCount[i] - (i > start ? deathsCount[i - 1] : null));
 		cfrT.push(i >= start + T ? Math.round(deathsCount[i] / confirmedCount[i - T] * 1000) / 10 : null);
-		cfrDDR.push(Math.round(deathsCount[i] / (recoveredCount[i] + deathsCount[i]) * 1000) / 10);
+		if(cfrDDR)
+			cfrDDR.push(Math.round(deathsCount[i] / (recoveredCount[i] + deathsCount[i]) * 1000) / 10);
 	}
 
 	var popupStatsEl = document.getElementById('popup-stats');
@@ -844,11 +845,12 @@ var showPopup = function(stats, coor){
 			x: time,
 			y: cfrT
 		});
-		trends.push({
-			name: 'd/(d+r)',
-			x: time,
-			y: cfrDDR
-		});
+		if(cfrDDR)
+			trends.push({
+				name: 'd/(d+r)',
+				x: time,
+				y: cfrDDR
+			});
 		layout = {
 			width: popupStatsEl.offsetWidth + 5,
 			height: isMobile ? 50 : 100,
