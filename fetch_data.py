@@ -1150,7 +1150,10 @@ def write_geojson():
             'type': 'Feature',
             'geometry': {
                 'type': 'Point',
-                'coordinates': [rec['longitude'], rec['latitude']]
+                'coordinates': [
+                    round(rec['longitude'], 4),
+                    round(rec['latitude'], 4)
+                ]
             },
             'properties': {
                 'country': country,
@@ -1199,8 +1202,8 @@ def write_csv():
                 province = f'"{province}"'
             if ',' in country:
                 country = f'"{country}"'
-            latitude = rec['latitude']
-            longitude = rec['longitude']
+            latitude = round(rec['latitude'], 4)
+            longitude = round(rec['longitude'], 4)
             for category in ('confirmed', 'recovered', 'deaths'):
                 f.write(f'{admin2},{province},{country},{latitude},{longitude},{category}')
                 i = 0
