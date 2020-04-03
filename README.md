@@ -35,6 +35,15 @@ As of March 27, 2020 at 6pm EDT, `fetch_data.py`'s count of the United States ca
 
 Data from the REST API is supposed to be current because their web map directly uses this data for visualization, but some of those numbers are decreasing for some counties in the United States. I have no idea which version to trust more between their daily reports vs. REST data.
 
+## Configuration
+
+1. Create and secure your Bing Maps key at https://www.bingmapsportal.com/
+2. Copy `config-example.py` to `config.py`
+3. Set `bing_maps_key` and `bing_maps_referer` (your secured URL from step 1)
+4. Set `app_url` to your covid-19 web map URL
+5. Set `use_local_data_only` to `True` if you don't want to fetch remote data and just want to use files in the data folder
+6. Add country names to `countries_to_display` to save data only for those countries
+
 ## Data Sources
 
 * Main data source: [CSSE](https://systems.jhu.edu)'s [time series data](https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_time_series) and [REST API](https://services1.arcgis.com/0MSEUqKaxRlEPj5g/ArcGIS/rest/services/ncov_cases/FeatureServer/1/query?where=1%3D1&outFields=*&f=json)
