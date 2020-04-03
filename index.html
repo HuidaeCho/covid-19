@@ -1183,21 +1183,41 @@ var generatePlotsMenu = function(menuEl, menuConfig){
 	menuEl.innerHTML = '';
 	var first = true;
 	Object.entries(menuConfig).forEach(([title, callback]) => {
-		var a = document.createElement('a');
-		a.innerHTML = title;
-		a.onclick = function(){
-			menuEl.childNodes.forEach(node => {
-				if(node.innerHTML == this.innerHTML)
-					node.classList.add('active');
-				else
-					node.classList.remove('active');
-			});
+		var myCallback = function(a, wasActive){
+			if(callback.plotType){
+				if(wasActive){
+					if(callback.plotType == 1)
+						callback.plotType = 2;
+					else
+						callback.plotType = 1;
+				}
+				a.innerHTML = title + '<sup>' + callback.plotType + '</sup>';
+			}
 			callback();
 		};
+
+		var a = document.createElement('a');
+		a.innerHTML = title;
+		if(['Confirmed', 'Recovered', 'Deaths'].indexOf(title) >= 0){
+			callback.plotType = 1;
+			a.innerHTML += '<sup>' + callback.plotType + '</sup>';
+		}
+		a.onclick = function(){
+			var wasActive = false;
+			menuEl.childNodes.forEach(node => {
+				if(node.innerHTML == this.innerHTML){
+					wasActive = node.classList.contains('active');
+					node.classList.add('active');
+				}else
+					node.classList.remove('active');
+			});
+			myCallback(this, wasActive);
+		};
 		menuEl.appendChild(a);
+
 		if(first){
 			a.classList.add('active');
-			callback();
+			myCallback(a, false);
 			first = false;
 		}
 	});
@@ -1319,20 +1339,28 @@ var plotConfirmed = function(){
 	var trends = [];
 	Object.entries(statsByCountry).forEach(([country, stats]) => {
 		var confirmed = stats.confirmed;
-		var start = confirmed.length;
-		while(confirmed[--start]);
-		start++;
-		trends.push({
-			name: country,
-			y: confirmed.slice(start)
-		});
+		if(plotConfirmed.plotType == 1){
+			trends.push({
+				name: country,
+				x: time,
+				y: confirmed
+			});
+		}else{
+			var start = confirmed.length;
+			while(confirmed[--start]);
+			start++;
+			trends.push({
+				name: country,
+				y: confirmed.slice(start)
+			});
+		}
 	});
 	var layout = {
 		height: isMobile ? 50 : 150,
 		margin: {
 			l: isMobile ? 15 : 30,
 			r: isMobile ? 6 : 10,
-			b: isMobile ? 10 : 15,
+			b: plotConfirmed.plotType == 1 ? (isMobile ? 20 : 30) : (isMobile ? 10 : 15),
 			t: isMobile ? 3 : 10
 		},
 		font: {
@@ -1347,20 +1375,28 @@ var plotRecovered = function(){
 	var trends = [];
 	Object.entries(statsByCountry).forEach(([country, stats]) => {
 		var recovered = stats.recovered;
-		var start = recovered.length;
-		while(recovered[--start]);
-		start++;
-		trends.push({
-			name: country,
-			y: recovered.slice(start)
-		});
+		if(plotRecovered.plotType == 1){
+			trends.push({
+				name: country,
+				x: time,
+				y: recovered
+			});
+		}else{
+			var start = recovered.length;
+			while(recovered[--start]);
+			start++;
+			trends.push({
+				name: country,
+				y: recovered.slice(start)
+			});
+		}
 	});
 	var layout = {
 		height: isMobile ? 50 : 150,
 		margin: {
 			l: isMobile ? 15 : 30,
 			r: isMobile ? 6 : 10,
-			b: isMobile ? 10 : 15,
+			b: plotConfirmed.plotType == 1 ? (isMobile ? 20 : 30) : (isMobile ? 10 : 15),
 			t: isMobile ? 3 : 10
 		},
 		font: {
@@ -1375,20 +1411,28 @@ var plotDeaths = function(){
 	var trends = [];
 	Object.entries(statsByCountry).forEach(([country, stats]) => {
 		var deaths = stats.deaths;
-		var start = deaths.length;
-		while(deaths[--start]);
-		start++;
-		trends.push({
-			name: country,
-			y: deaths.slice(start)
-		});
+		if(plotDeaths.plotType == 1){
+			trends.push({
+				name: country,
+				x: time,
+				y: deaths
+			});
+		}else{
+			var start = deaths.length;
+			while(deaths[--start]);
+			start++;
+			trends.push({
+				name: country,
+				y: deaths.slice(start)
+			});
+		}
 	});
 	var layout = {
 		height: isMobile ? 50 : 150,
 		margin: {
 			l: isMobile ? 15 : 30,
 			r: isMobile ? 6 : 10,
-			b: isMobile ? 10 : 15,
+			b: plotConfirmed.plotType == 1 ? (isMobile ? 20 : 30) : (isMobile ? 10 : 15),
 			t: isMobile ? 3 : 10
 		},
 		font: {
