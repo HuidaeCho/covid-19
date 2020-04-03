@@ -1187,9 +1187,9 @@ var generatePlotsMenu = function(menuEl, menuConfig){
 		a.innerHTML = title;
 		a.onclick = function(){
 			menuEl.childNodes.forEach(node => {
-				if(node.innerHTML == this.innerHTML && !node.classList.contains('active'))
+				if(node.innerHTML == this.innerHTML)
 					node.classList.add('active');
-				else if(node.classList.contains('active'))
+				else
 					node.classList.remove('active');
 			});
 			callback();
