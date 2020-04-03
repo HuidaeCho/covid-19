@@ -146,7 +146,7 @@ h3 {
 #info {
 	display: inline-block;
 	vertical-align: top;
-	width: 32%;
+	width: 35%;
 	max-width: 300px;
 	font-size: 0.95em;
 }
@@ -174,6 +174,7 @@ h2 {
 	border-collapse: collapse;
 }
 #summary .cfr {
+	font-size: 1.1em;
 	font-weight: bold;
 }
 .right {
@@ -195,10 +196,11 @@ h2 {
 	display: inline-block;
 	cursor: pointer;
 	color: black;
+	font-size: 0.9em;
 	text-decoration: none;
 	text-align: center;
 	border-radius: 5px 5px 0 0;
-	padding: 2px 5px;
+	padding: 2px 2px;
 	background: #cccccc;
 	border: 1px solid #aaaaaa;
 	border-bottom: none;
@@ -337,6 +339,9 @@ h2 {
 	#plots {
 		margin-bottom: 10px;
 	}
+	#plots-menu a {
+		padding: 2px 5px;
+	}
 	.plots-menu a:hover {
 		background: #dddddd;
 	}
@@ -432,7 +437,7 @@ mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) +
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
 var hasDuplicateData = ['South Korea', 'Italy', 'Chile'];
 var averageDaysFromConfirmedToDeath = 14; // median days from first symptom to death
-var plotsMenuItems = ['Cumulative', 'Increase', 'CFR'];
+var plotsMenuItems = ['Cumulative', 'Increase', 'CFR', 'Confirmed', 'Recovered', 'Deaths'];
 
 var getColor = function(category, opacity=null){
 	var color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
@@ -871,7 +876,8 @@ var showPopup = function(stats, coor){
 	var popupPlotsMenuEl = document.getElementById('popup-plots-menu');
 	var plotsMenuConfig = {};
 	plotsMenuItems.forEach(item => {
-		plotsMenuConfig[item] = eval('plot' + item.replace(' ', ''));
+		if(['Cumulative', 'Increase', 'CFR'].indexOf(item) >= 0)
+			plotsMenuConfig[item] = eval('plot' + item.replace(' ', ''));
 	});
 	generatePlotsMenu(popupPlotsMenuEl, plotsMenuConfig);
 };
@@ -1029,6 +1035,7 @@ var showFeatureStatsByQuery = function(query){
 	}
 };
 
+var statsByCountry = {};
 var time = [];
 var confirmedCount = [];
 var recoveredCount = [];
@@ -1043,7 +1050,6 @@ var showGlobalStats = function(){
 	var lastUpdated = 0;
 	var statsByProvince = '';
 	var maxActive = 0;
-	var statsByCountry = {};
 	var maxConfirmedCoor;
 	features.forEach(feature => {
 		var featureId = feature.id;
@@ -1078,17 +1084,14 @@ var showGlobalStats = function(){
 				statsByProvince += '<div class="deaths">' + lastDeaths.toLocaleString() + ' death' + (lastDeaths > 1 ? 's' : '') + '</div>';
 			statsByProvince += '</div></div>';
 
-			if(!statsByCountry[country])
-				statsByCountry[country] = {confirmed: 0, recovered: 0, deaths: 0};
-			statsByCountry[country].confirmed += lastConfirmed;
-			statsByCountry[country].recovered += lastRecovered;
-			statsByCountry[country].deaths += lastDeaths;
-
 			// don't double count for global statistics
 			if(country == 'United States' || hasDuplicateData.indexOf(country) >= 0)
 				return;
 		}else if(country == 'United States' && province)
 			return;
+
+		if(!statsByCountry[country])
+			statsByCountry[country] = {confirmed: [], recovered: [], deaths: []};
 
 		// global statistics
 		if(updated > lastUpdated)
@@ -1097,6 +1100,19 @@ var showGlobalStats = function(){
 			var c = confirmed[i].count;
 			var r = recovered[i].count;
 			var d = deaths[i].count;
+
+			// country statistics
+			if(statsByCountry[country].confirmed.length < confirmed.length){
+				statsByCountry[country].confirmed.push(c);
+				statsByCountry[country].recovered.push(r);
+				statsByCountry[country].deaths.push(d);
+			}else{
+				statsByCountry[country].confirmed[i] += c;
+				statsByCountry[country].recovered[i] += r;
+				statsByCountry[country].deaths[i] += d;
+			}
+
+			// global statistics
 			if(i + 1 > time.length){
 				time.push(confirmed[i].time.replace(/\//g, '-').replace(/ .*/, ''));
 				confirmedCount.push(c);
@@ -1120,14 +1136,18 @@ var showGlobalStats = function(){
 			maxConfirmedCoor = [longitude, latitude];
 		}
 	});
+	var lastIndex = time.length - 1;
 	Object.entries(statsByCountry).forEach(([country, stats]) => {
+		var confirmed = stats.confirmed[lastIndex];
+		var recovered = stats.recovered[lastIndex];
+		var deaths = stats.deaths[lastIndex];
 		sortedByCountry.push({
 			country: country,
-			confirmed: stats.confirmed,
-			recovered: stats.recovered,
-			deaths: stats.deaths,
-			active: stats.confirmed - stats.recovered - stats.deaths,
-			cfrDDR: Math.round(stats.deaths / (stats.deaths + stats.recovered) * 1000) / 10
+			confirmed: confirmed,
+			recovered: recovered,
+			deaths: deaths,
+			active: confirmed - recovered - deaths,
+			cfrDDR: Math.round(deaths / (deaths + recovered) * 1000) / 10
 		});
 	});
 
@@ -1286,6 +1306,90 @@ var plotCFR = function(){
 			r: isMobile ? 6 : 10,
 			b: isMobile ? 20 : 30,
 			t: isMobile ? 0 : 10
+		},
+		font: {
+			size: isMobile ? 6 : 12
+		},
+		showlegend: false
+	};
+	Plotly.newPlot('plot', trends, layout, {displayModeBar: false});
+};
+
+var plotConfirmed = function(){
+	var trends = [];
+	Object.entries(statsByCountry).forEach(([country, stats]) => {
+		var confirmed = stats.confirmed;
+		var start = confirmed.length;
+		while(confirmed[--start]);
+		start++;
+		trends.push({
+			name: country,
+			y: confirmed.slice(start)
+		});
+	});
+	var layout = {
+		height: isMobile ? 50 : 150,
+		margin: {
+			l: isMobile ? 15 : 30,
+			r: isMobile ? 6 : 10,
+			b: isMobile ? 10 : 15,
+			t: isMobile ? 3 : 10
+		},
+		font: {
+			size: isMobile ? 6 : 12
+		},
+		showlegend: false
+	};
+	Plotly.newPlot('plot', trends, layout, {displayModeBar: false});
+};
+
+var plotRecovered = function(){
+	var trends = [];
+	Object.entries(statsByCountry).forEach(([country, stats]) => {
+		var recovered = stats.recovered;
+		var start = recovered.length;
+		while(recovered[--start]);
+		start++;
+		trends.push({
+			name: country,
+			y: recovered.slice(start)
+		});
+	});
+	var layout = {
+		height: isMobile ? 50 : 150,
+		margin: {
+			l: isMobile ? 15 : 30,
+			r: isMobile ? 6 : 10,
+			b: isMobile ? 10 : 15,
+			t: isMobile ? 3 : 10
+		},
+		font: {
+			size: isMobile ? 6 : 12
+		},
+		showlegend: false
+	};
+	Plotly.newPlot('plot', trends, layout, {displayModeBar: false});
+};
+
+var plotDeaths = function(){
+	var trends = [];
+	Object.entries(statsByCountry).forEach(([country, stats]) => {
+		var deaths = stats.deaths;
+		var start = deaths.length;
+		while(deaths[--start]);
+		start++;
+		trends.push({
+			name: country,
+			y: deaths.slice(start)
+		});
+	});
+	var layout = {
+		height: isMobile ? 50 : 150,
+		margin: {
+			l: isMobile ? 15 : 30,
+			r: isMobile ? 6 : 10,
+			b: isMobile ? 10 : 15,
+			t: isMobile ? 3 : 10
 		},
 		font: {
 			size: isMobile ? 6 : 12
