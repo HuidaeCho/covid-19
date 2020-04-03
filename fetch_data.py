@@ -143,7 +143,7 @@ def fetch_csse_csv():
             month = int(date[0])
             day = int(date[1])
 
-            date = f'{year}/{month:02}/{day:02}'
+            date = f'{year}-{month:02}-{day:02}'
             dates.insert(0, date)
 
             print(f'{date}...', end='', flush=True)
@@ -161,10 +161,10 @@ def fetch_csse_csv():
             i = 0
             insert = {}
             for x in rec[category]:
-                date = x['time'].split()[0]
+                date = x['time'].strftime('%Y-%m-%d')
                 while i < total_days - 1 and dates[i] < date:
                     insert[i] = {
-                        'time': f'{dates[i]} 23:59:59 UTC',
+                        'time': datetime.datetime.fromisoformat(f'{dates[i]} 23:59:59+00:00'),
                         'count': 0,
                     }
                     i += 1
@@ -175,7 +175,7 @@ def fetch_csse_csv():
             while i < total_days:
                 # TODO: aggregate
                 rec[category].append({
-                    'time': f'{dates[i]} 23:59:59 UTC',
+                    'time': datetime.datetime.fromisoformat(f'{dates[i]} 23:59:59+00:00'),
                     'count': rec[category][index]['count']
                 })
                 i += 1
@@ -289,7 +289,6 @@ def fetch_csse_daily_csv(year, month, day):
             if ',' in country:
                 raise Exception(f'Commas are not allowed in country names: {country} in {date_csv}')
             last_updated = datetime.datetime.fromisoformat(f'{date_iso}T23:59:59+00:00')
-            time_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
             key = generate_key(country, province, admin2)
             if key in dic.keymap:
                 key = dic.keymap[key]
@@ -334,7 +333,7 @@ def fetch_csse_daily_csv(year, month, day):
                 deaths = rec['deaths']
                 found = False
                 for i in range(0, len(confirmed)):
-                    if rec['confirmed'][i]['time'] == time_str:
+                    if rec['confirmed'][i]['time'] == last_updated:
                         if c > rec['confirmed'][i]['count']:
                             rec['confirmed'][i]['count'] = c
                         if c > rec['recovered'][i]['count']:
@@ -347,15 +346,15 @@ def fetch_csse_daily_csv(year, month, day):
                     continue
 
             confirmed.insert(0, {
-                'time': time_str,
+                'time': last_updated,
                 'count': c
             })
             recovered.insert(0, {
-                'time': time_str,
+                'time': last_updated,
                 'count': r
             })
             deaths.insert(0, {
-                'time': time_str,
+                'time': last_updated,
                 'count': d
             })
 
@@ -388,7 +387,8 @@ def fetch_csse_rest():
     with open('data/csse_rest.json', 'w') as f:
         f.write(json.dumps(features))
 
-    today_str = datetime.datetime.utcnow().strftime('%Y/%m/%d 00:00:00 UTC')
+    today_iso = datetime.datetime.utcnow().strftime('%Y-%m-%d 00:00:00+00:00')
+    today = datetime.datetime.fromisoformat(today_iso)
 
     # try to find most up-to-date info from the REST server
     for feature in features:
@@ -407,11 +407,10 @@ def fetch_csse_rest():
         admin2 = attr['Admin2'].strip() if attr['Admin2'] else ''
         last_updated = datetime.datetime.fromtimestamp(
                 attr['Last_Update']/1000, tz=datetime.timezone.utc)
-        last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
         # sometimes, the last date in the CSV file is later than REST; in this
         # case, let's use today's date at 00:00:00
-        if today_str > last_updated_str:
-            last_updated_str = today_str
+        if today > last_updated:
+            last_updated = today
         if 'geometry' in feature:
             latitude = feature['geometry']['y']
             longitude = feature['geometry']['x']
@@ -468,11 +467,11 @@ def fetch_csse_rest():
             confirmed = rec['confirmed']
             recovered = rec['recovered']
             deaths = rec['deaths']
-            time_str = confirmed[len(confirmed) - 1]['time']
+            time = confirmed[len(confirmed) - 1]['time']
             # I found this case where a time from the spreadsheet is more
             # recent than the last updated time from the REST server
-            if time_str > last_updated_str:
-                last_updated_str = time_str
+            if time > last_updated:
+                last_updated = time
 
             index = len(confirmed) - 1
             c = max(confirmed[index]['count'], c)
@@ -489,19 +488,19 @@ def fetch_csse_rest():
             continue
 
         confirmed.append({
-            'time': last_updated_str,
+            'time': last_updated,
             'count': c
         }),
         recovered.append({
-            'time': last_updated_str,
+            'time': last_updated,
             'count': r
         }),
         deaths.append({
-            'time': last_updated_str,
+            'time': last_updated,
             'count': d
         })
 
-    dates.append(today_str.split()[0])
+    dates.append(today_iso.split()[0])
     total_days += 1
 
     # oops! some provinces are missing from the REST data?
@@ -589,17 +588,17 @@ def clean_us_data():
                 c += rec['confirmed'][i]['count']
                 r += rec['recovered'][i]['count']
                 d += rec['deaths'][i]['count']
-            time_str = f'{dates[i]} 23:59:59 UTC'
+            time = datetime.datetime.fromisoformat(f'{dates[i]} 23:59:59+00:00')
             confirmed.append({
-                'time': time_str,
+                'time': time,
                 'count': c
             })
             recovered.append({
-                'time': time_str,
+                'time': time,
                 'count': r
             })
             deaths.append({
-                'time': time_str,
+                'time': time,
                 'count': d
             })
         province = 'Others'
@@ -629,17 +628,17 @@ def clean_us_data():
                 c += rec['confirmed'][i]['count']
                 r += rec['recovered'][i]['count']
                 d += rec['deaths'][i]['count']
-        time_str = f'{dates[i]} 23:59:59 UTC'
+        time = datetime.datetime.fromisoformat(f'{dates[i]} 23:59:59+00:00')
         confirmed.append({
-            'time': time_str,
+            'time': time,
             'count': c
         })
         recovered.append({
-            'time': time_str,
+            'time': time,
             'count': r
         })
         deaths.append({
-            'time': time_str,
+            'time': time,
             'count': d
         })
 
@@ -767,7 +766,7 @@ def fetch_dxy():
 
     last_updated = datetime.datetime.fromtimestamp(int(m[1])/1000,
             tz=datetime.timezone.utc)
-    last_updated_iso = f'{last_updated.strftime("%Y-%m-%d %H:%M:%S+00:00")}'
+    last_updated_iso = last_updated.strftime('%Y-%m-%d %H:%M:%S+00:00')
     for rec in json.loads(m[2]):
         province = rec['provinceShortName']
         if province not in dic.en:
@@ -912,7 +911,7 @@ def merge_local_data():
             recovered = rec['recovered']
             deaths = rec['deaths']
             index = len(confirmed) - 1
-            time_str = confirmed[index]['time']
+            time = confirmed[index]['time']
 
             with open(filename) as f:
                 reader = csv.reader(f)
@@ -920,28 +919,27 @@ def merge_local_data():
                     pass
                 last_updated = datetime.datetime.fromisoformat(row[0]).\
                         astimezone(datetime.timezone.utc)
-                last_updated_str = f'{last_updated.strftime("%Y/%m/%d %H:%M:%S UTC")}'
-                if time_str > last_updated_str:
-                    last_updated_str = time_str
+                if time > last_updated:
+                    last_updated = time
                 c = int(row[1])
                 r = int(row[2])
                 d = int(row[3])
                 if c > confirmed[index]['count']:
                     print(f'data confirmed: {province}, {country}, {confirmed[index]["count"]} => {c}')
                     confirmed[index] = {
-                        'time': last_updated_str,
+                        'time': last_updated,
                         'count': c
                     }
                 if r > recovered[index]['count']:
                     print(f'data recovered: {province}, {country}, {recovered[index]["count"]} => {r}')
                     recovered[index] = {
-                        'time': last_updated_str,
+                        'time': last_updated,
                         'count': r
                     }
                 if d > deaths[index]['count']:
                     print(f'data deaths   : {province}, {country}, {deaths[index]["count"]} => {d}')
                     deaths[index] = {
-                        'time': last_updated_str,
+                        'time': last_updated,
                         'count': d
                     }
         else:
@@ -960,9 +958,8 @@ def merge_local_data():
                 for row in reader:
                     time = datetime.datetime.fromisoformat(row[0]).\
                             astimezone(datetime.timezone.utc)
-                    time_str = f'{time.strftime("%Y/%m/%d %H:%M:%S UTC")}'
                     if config.use_local_data_only:
-                        date = time_str.split()[0]
+                        date = time.strftime('%Y-%m-%d')
                         if date not in dates:
                             dates.append(date)
 
@@ -970,15 +967,15 @@ def merge_local_data():
                     r = int(row[2])
                     d = int(row[3])
                     confirmed.append({
-                        'time': time_str,
+                        'time': time,
                         'count': c
                     })
                     recovered.append({
-                        'time': time_str,
+                        'time': time,
                         'count': r
                     })
                     deaths.append({
-                        'time': time_str,
+                        'time': time,
                         'count': d
                     })
 
@@ -1005,7 +1002,7 @@ def merge_local_data():
         total_confirmed = total_recovered = total_deaths = 0
         co_confirmed = co_recovered = co_deaths = 0
         co_rec = None
-        last_updated_str = None
+        last_updated = None
         for rec in data:
             co = rec['country']
             if co != country:
@@ -1015,19 +1012,19 @@ def merge_local_data():
             recovered = rec['recovered']
             deaths = rec['deaths']
             index = len(confirmed) - 1
-            time_str = confirmed[index]['time']
+            time = confirmed[index]['time']
             c = confirmed[index]['count']
             r = recovered[index]['count']
             d = deaths[index]['count']
             if province:
-                if not last_updated_str or time_str > last_updated_str:
-                    last_updated_str = time_str
+                if not last_updated or time > last_updated:
+                    last_updated = time
                 total_confirmed += c
                 total_recovered += r
                 total_deaths += d
             else:
                 co_rec = rec
-                co_last_updated_str = time_str
+                co_last_updated = time
                 co_confirmed = c
                 co_recovered = r
                 co_deaths = d
@@ -1040,14 +1037,14 @@ def merge_local_data():
 
         index = len(co_rec['confirmed']) - 1
         c = r = d = 0
-        if last_updated_str > co_last_updated_str:
+        if last_updated > co_last_updated:
             # local data is newer
             co_rec['confirmed'][index]['time'] = \
             co_rec['recovered'][index]['time'] = \
-            co_rec['deaths'][index]['time'] = last_updated_str
+            co_rec['deaths'][index]['time'] = last_updated
         else:
             # remote data is newer
-            last_updated_str = co_last_updated_str
+            last_updated = co_last_updated
 
         # be conservative!
         if co_confirmed > total_confirmed:
@@ -1078,15 +1075,15 @@ def merge_local_data():
         print(f'data deaths   : {province}, {country}, {d}')
 
         confirmed = [{
-            'time': last_updated_str,
+            'time': last_updated,
             'count': c
         }]
         recovered = [{
-            'time': last_updated_str,
+            'time': last_updated,
             'count': r
         }]
         deaths = [{
-            'time': last_updated_str,
+            'time': last_updated,
             'count': d
         }]
         data.append({
@@ -1171,14 +1168,18 @@ def write_geojson():
         'features': features
     }
 
+    def convert_time(x):
+        if isinstance(x, datetime.datetime):
+            return int(x.timestamp())
+
     with open(geodata_json, 'w') as f:
-        f.write(json.dumps(geodata))
+        f.write(json.dumps(geodata, default=convert_time))
 
 def write_csv():
     with open(data_csv, 'w') as f:
         f.write('admin2,province,country,latitude,longitude,category')
         for date in dates:
-            date = date.replace('/', '')
+            date = date.replace('-', '')
             f.write(f',utc_{date}')
         f.write('\n')
         for rec in data:
@@ -1205,7 +1206,7 @@ def write_csv():
                 i = 0
                 count = 0
                 for x in rec[category]:
-                    date = x['time'].split()[0]
+                    date = x['time'].strftime('%Y-%m-%d')
                     while i < total_days - 1 and dates[i] < date:
                         f.write(f',{count}')
                         i += 1

@@ -371,13 +371,11 @@ h2 {
 <div class="desktop-block">
 This open source web map was motivated by <a href="https://arcg.is/0fHmTX">the COVID-19 global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
 Data is fetched every 30 minutes.
-All times are local except for plots in UTC.
-I am not responsible for any damages caused by using this website.
+The author is not responsible for any damages caused by using this website.
 <a href="/covid-19.html">Suggestions?</a>
 </div>
 <div class="mobile-block">
 Motivated by <a href="https://arcg.is/1DPOWm0">the JHU CSSE website</a>.
-Local times except for plots in UTC.
 <a href="/covid-19.html">Suggestions?</a>
 </div>
 <div id="data-sources"></div>
@@ -641,6 +639,7 @@ var highlightProvinceStats = function(featureIds){
 	});
 };
 
+var timezoneOffset = new Date().getTimezoneOffset();
 var calculateStats = function(feature, all=false){
 	var featureId = feature.id;
 	var country = feature.properties.country;
@@ -660,7 +659,8 @@ var calculateStats = function(feature, all=false){
 		var r = recovered[i].count;
 		var d = deaths[i].count;
 		if(all || time.length || c || r || d){
-			time.push(confirmed[i].time.replace(/\//g, '-').replace(/ .*/, ''));
+			// https://stackoverflow.com/a/50130338
+			time.push(new Date(confirmed[i].time * 1000 - timezoneOffset * 60000).toISOString().split('T')[0]);
 			confirmedCount.push(c);
 			recoveredCount.push(r);
 			deathsCount.push(d);
@@ -672,7 +672,7 @@ var calculateStats = function(feature, all=false){
 		country: country,
 		province: province,
 		admin2: admin2,
-		lastUpdated: Date.parse(confirmed[confirmed.length-1].time),
+		lastUpdated: confirmed[confirmed.length-1].time * 1000,
 		time: time,
 		confirmed: confirmedCount,
 		recovered: recoveredCount,
@@ -1061,7 +1061,7 @@ var showGlobalStats = function(){
 		var confirmed = feature.properties.confirmed;
 		var recovered = feature.properties.recovered;
 		var deaths = feature.properties.deaths;
-		var updated = Date.parse(confirmed[confirmed.length-1].time);
+		var updated = confirmed[confirmed.length-1].time * 1000;
 		var lastIndex = confirmed.length - 1;
 		var lastConfirmed = confirmed[lastIndex].count;
 		var lastRecovered = recovered[lastIndex].count;
@@ -1114,7 +1114,8 @@ var showGlobalStats = function(){
 
 			// global statistics
 			if(i + 1 > time.length){
-				time.push(confirmed[i].time.replace(/\//g, '-').replace(/ .*/, ''));
+				// https://stackoverflow.com/a/50130338
+				time.push(new Date(confirmed[i].time * 1000 - timezoneOffset * 60000).toISOString().split('T')[0]);
 				confirmedCount.push(c);
 				recoveredCount.push(r);
 				deathsCount.push(d);
