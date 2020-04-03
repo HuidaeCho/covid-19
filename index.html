@@ -750,7 +750,7 @@ var showPopup = function(stats, coor){
 		deathsIncrease.push(deathsCount[i] - (i > start ? deathsCount[i - 1] : null));
 		cfrT.push(i >= start + T ? Math.round(deathsCount[i] / confirmedCount[i - T] * 1000) / 10 : null);
 		if(cfrDDR)
-			cfrDDR.push(Math.round(deathsCount[i] / (deathsCount[i] + recoveredCount[i]) * 1000) / 10);
+			cfrDDR.push(deathsCount[i] + recoveredCount[i] ? Math.round(deathsCount[i] / (deathsCount[i] + recoveredCount[i]) * 1000) / 10 : null);
 	}
 
 	var popupStatsEl = document.getElementById('popup-stats');
@@ -1158,7 +1158,7 @@ var showGlobalStats = function(){
 		recoveredIncrease.push(recoveredCount[i] - (i > 0 ? recoveredCount[i - 1] : null));
 		deathsIncrease.push(deathsCount[i] - (i > 0 ? deathsCount[i - 1] : null));
 		cfrT.push(i >= averageDaysFromConfirmedToDeath ? Math.round(deathsCount[i] / confirmedCount[i - averageDaysFromConfirmedToDeath] * 1000) / 10 : null);
-		cfrDDR.push(Math.round(deathsCount[i] / (deathsCount[i] + recoveredCount[i]) * 1000) / 10);
+		cfrDDR.push(deathsCount[i] + recoveredCount[i] ? Math.round(deathsCount[i] / (deathsCount[i] + recoveredCount[i]) * 1000) / 10 : null);
 	}
 
 	var lastIndex = time.length - 1;
