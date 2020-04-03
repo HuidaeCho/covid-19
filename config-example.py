@@ -1,5 +1,5 @@
-bing_maps_key = 'YOUR_BING_MAPS_KEY'
-bing_maps_referer = 'YOUR_SECURE_REFERER'
-app_url = 'YOUR_APP_URL'
+bing_maps_key = 'BING_MAPS_KEY'
+bing_maps_referer = 'BING_MAPS_REFERER'
+app_url = 'APP_URL'
 use_local_data_only = False
 countries_to_display = ()

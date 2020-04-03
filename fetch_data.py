@@ -101,6 +101,11 @@ def geocode(country, province='', admin2='', latitude=None, longitude=None):
         geocode_url = geocode_country_url.format(country=country)
 
     if location not in coors:
+        if config.bing_maps_key == 'BING_MAPS_KEY':
+            raise Exception('Please set up bing_maps_key in config.py')
+        if config.bing_maps_referer == 'BING_MAPS_REFERER':
+            raise Exception('Please set up bing_maps_referer in config.py')
+
         res = requests.get(geocode_url, headers={
             'referer': config.bing_maps_referer
         })
@@ -361,6 +366,9 @@ def fetch_all_features(features_url):
     features = []
     while True:
         url = f'{features_url}&resultRecordCount={count}&resultOffset={offset}'
+        if config.app_url == 'APP_URL':
+            raise Exception('Please set up app_url in config.py')
+
         res = requests.get(url, headers={
             'referer': config.app_url
         })
