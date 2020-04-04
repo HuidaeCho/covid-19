@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<title>Coronavirus Disease 2019 (COVID-19 or 2019-nCoV) Cases</title>
+<title>Coronavirus Disease 2019 (COVID-19) Cases</title>
 <meta charset="utf-8" />
 <!--
 Name:    index.html
@@ -79,7 +79,8 @@ h1 {
 #virus {
 	position: absolute;
 	color: #00000011;
-	right: 70px;
+	top: 0;
+	right: 60px;
 	font-size: 85px;
 	z-index: -1;
 }
@@ -98,11 +99,11 @@ h1 {
 	line-height: 0;
 	margin: 0;
 }
-#data-sources, #legend {
+#legend {
 	text-align: right;
 	font-size: 0.8em;
 }
-#data-sources > .iconify, #legend > .iconify {
+#legend > .iconify {
 	font-size: 1.5em;
 	margin-bottom: -2px;
 }
@@ -122,7 +123,7 @@ h1 {
  * POPUP (MAP)
  ******************************************************************************/
 #popup {
-	width: 100px;
+	width: 105px;
 }
 h3 {
 	font-size: 1em;
@@ -138,7 +139,7 @@ h3 {
 	font-weight: bold;
 }
 #popup .cfr {
-	font-size: 0.75em;
+	font-size: 0.8em;
 }
 /*******************************************************************************
  * INFO (RIGHT)
@@ -200,7 +201,7 @@ h2 {
 	text-decoration: none;
 	text-align: center;
 	border-radius: 5px 5px 0 0;
-	padding: 2px 2px;
+	padding: 0;
 	background: #cccccc;
 	border: 1px solid #aaaaaa;
 	border-bottom: none;
@@ -277,6 +278,7 @@ h2 {
 		font-size: 1.7em;
 	}
 	#virus {
+		top: 0;
 		right: 150px;
 		font-size: 200px;
 	}
@@ -286,7 +288,7 @@ h2 {
 	.follow-me .author {
 		display: inline;
 	}
-	#data-sources > .iconify, #legend > .iconify {
+	#legend > .iconify {
 		margin-bottom: -3px;
 	}
 	#country-links-wrap {
@@ -339,7 +341,7 @@ h2 {
 	#plots {
 		margin-bottom: 10px;
 	}
-	#plots-menu a {
+	#plots-menu a, #popup-plots-menu a {
 		padding: 2px 5px;
 	}
 	.plots-menu a:hover {
@@ -356,7 +358,7 @@ h2 {
 </head>
 <body>
 <div id="header">
-<h1>Coronavirus Disease 2019 <span class="desktop-inline">(COVID-19 or 2019-nCoV)</span> Cases</h1>
+<h1>Coronavirus Disease 2019 <span class="desktop-inline">(COVID-19)</span> Cases</h1>
 <span id="virus" class="iconify" data-icon="mdi:virus"></span>
 <div class="follow-me">
 <div class="icons">
@@ -376,9 +378,9 @@ The author is not responsible for any damages caused by using this website.
 </div>
 <div class="mobile-block">
 Motivated by <a href="https://arcg.is/1DPOWm0">the JHU CSSE website</a>.
-<a href="/covid-19.html">Suggestions?</a>
+<a href="https://github.com/HuidaeCho/covid-19/blob/master/README.md#disclaimer">Disclaimer!</a>
+<a href="https://github.com/HuidaeCho/covid-19/issues">Suggestions?</a>
 </div>
-<div id="data-sources"></div>
 <div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Confirmed: logarithmic, Others: area proportional to confirmed, Active rate: opacity</div>
 <div id="country-links-wrap"><span id="country-links">&nbsp;</span></div>
 </div>
@@ -414,7 +416,6 @@ var bingMapsKey = 'AhuHr9JixtsyKu9uSOQ8W0lIr7_gC2KiFxOlmshvRDb_BSWDkhnGX7oeS5zJz
 var isMobile = window.getComputedStyle(document.getElementsByClassName('mobile-block')[0]).display == 'block';
 var bodyEl = document.body;
 var headerEl = document.getElementById('header');
-var dataSourcesEl = document.getElementById('data-sources');
 var countryLinksEl = document.getElementById('country-links');
 var mapEl = document.getElementById('map');
 var infoEl = document.getElementById('info');
@@ -430,7 +431,6 @@ var statsByProvinceEl = document.getElementById('stats-by-province');
 var bodyStyle = window.getComputedStyle(bodyEl);
 var bodyWidth = Number(bodyStyle.width.replace('px', ''));
 var bodyHeight = Number(bodyStyle.height.replace('px', ''));
-dataSourcesEl.innerHTML = '<span class="iconify" data-icon="mdi:database-sync"></span> Data sources: ' + dataSources;
 mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) + 'px';
 mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
 var hasDuplicateData = ['South Korea', 'Italy', 'Chile'];
@@ -1183,6 +1183,8 @@ var showGlobalStats = function(){
 
 	var plotsMenuConfig = {};
 	plotsMenuItems.forEach(item => {
+		if(isMobile && ['Confirmed', 'Recovered', 'Deaths'].indexOf(item) >= 0)
+			return;
 		plotsMenuConfig[item] = eval('plot' + item.replace(' ', ''));
 	});
 	generatePlotsMenu(plotsMenuEl, plotsMenuConfig);
