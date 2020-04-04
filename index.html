@@ -1185,24 +1185,19 @@ var generatePlotsMenu = function(menuEl, menuConfig){
 	var first = true;
 	Object.entries(menuConfig).forEach(([title, callback]) => {
 		var myCallback = function(a, wasActive){
-			if(callback.plotType){
-				if(wasActive){
-					if(callback.plotType == 1)
-						callback.plotType = 2;
-					else
-						callback.plotType = 1;
-				}
-				a.innerHTML = title + '<sup>' + callback.plotType + '</sup>';
+			if(wasActive){
+				callback.plotType++;
+				if(callback.plotType > callback.plotTypes)
+					callback.plotType = 1;
 			}
+			a.innerHTML = title + '<sup>' + callback.plotType + '</sup>';
 			callback();
 		};
 
 		var a = document.createElement('a');
-		a.innerHTML = title;
-		if(['Confirmed', 'Recovered', 'Deaths'].indexOf(title) >= 0){
-			callback.plotType = 1;
-			a.innerHTML += '<sup>' + callback.plotType + '</sup>';
-		}
+		callback.plotType = 1;
+		callback.plotTypes = ['Confirmed', 'Recovered', 'Deaths'].indexOf(title) >= 0 ? 4 : 2;
+		a.innerHTML = title + '<sup>' + callback.plotType + '</sup>';
 		a.onclick = function(){
 			var wasActive = false;
 			menuEl.childNodes.forEach(node => {
@@ -1251,6 +1246,9 @@ var plotCumulative = function(){
 		}
 	});
 	var layout = {
+		yaxis: {
+			type: plotCumulative.plotType == 1 ? 'linear' : 'log'
+		},
 		height: isMobile ? 50 : 150,
 		margin: {
 			l: isMobile ? 15 : 30,
@@ -1293,6 +1291,9 @@ var plotIncrease = function(){
 		}
 	});
 	var layout = {
+		yaxis: {
+			type: plotIncrease.plotType == 1 ? 'linear' : 'log'
+		},
 		height: isMobile ? 50 : 150,
 		margin: {
 			l: isMobile ? 15 : 30,
@@ -1321,6 +1322,9 @@ var plotCFR = function(){
 		y: cfrDDR
 	});
 	layout = {
+		yaxis: {
+			type: plotCFR.plotType == 1 ? 'linear' : 'log'
+		},
 		height: isMobile ? 50 : 150,
 		margin: {
 			l: isMobile ? 10 : 25,
@@ -1340,7 +1344,7 @@ var plotConfirmed = function(){
 	var trends = [];
 	Object.entries(statsByCountry).forEach(([country, stats]) => {
 		var confirmed = stats.confirmed;
-		if(plotConfirmed.plotType == 1){
+		if(plotConfirmed.plotType % 2){
 			trends.push({
 				name: country,
 				x: time,
@@ -1357,6 +1361,9 @@ var plotConfirmed = function(){
 		}
 	});
 	var layout = {
+		yaxis: {
+			type: plotConfirmed.plotType <= 2 ? 'linear' : 'log'
+		},
 		height: isMobile ? 50 : 150,
 		margin: {
 			l: isMobile ? 15 : 30,
@@ -1376,7 +1383,7 @@ var plotRecovered = function(){
 	var trends = [];
 	Object.entries(statsByCountry).forEach(([country, stats]) => {
 		var recovered = stats.recovered;
-		if(plotRecovered.plotType == 1){
+		if(plotRecovered.plotType % 2){
 			trends.push({
 				name: country,
 				x: time,
@@ -1393,6 +1400,9 @@ var plotRecovered = function(){
 		}
 	});
 	var layout = {
+		yaxis: {
+			type: plotRecovered.plotType <= 2 ? 'linear' : 'log'
+		},
 		height: isMobile ? 50 : 150,
 		margin: {
 			l: isMobile ? 15 : 30,
@@ -1412,7 +1422,7 @@ var plotDeaths = function(){
 	var trends = [];
 	Object.entries(statsByCountry).forEach(([country, stats]) => {
 		var deaths = stats.deaths;
-		if(plotDeaths.plotType == 1){
+		if(plotDeaths.plotType % 2){
 			trends.push({
 				name: country,
 				x: time,
@@ -1429,6 +1439,9 @@ var plotDeaths = function(){
 		}
 	});
 	var layout = {
+		yaxis: {
+			type: plotDeaths.plotType <= 2 ? 'linear' : 'log'
+		},
 		height: isMobile ? 50 : 150,
 		margin: {
 			l: isMobile ? 15 : 30,
