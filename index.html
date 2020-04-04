@@ -812,30 +812,33 @@ var showPopup = function(stats, coor){
 	var plotIncrease = function(){
 		var plotType = plotIncrease.plotType;
 		var trends = [];
-		trends.push({
-			name: 'Confirmed',
-			x: time.slice(start),
-			y: confirmedIncrease,
-			marker: {
-				color: getColor('confirmed')
-			}
-		});
-		trends.push({
-			name: 'Recovered',
-			x: time.slice(start),
-			y: recoveredIncrease,
-			marker: {
-				color: getColor('recovered')
-			}
-		});
-		trends.push({
-			name: 'Deaths',
-			x: time.slice(start),
-			y: deathsIncrease,
-			marker: {
-				color: getColor('deaths')
-			}
-		});
+		if(confirmedCount[lastIndex])
+			trends.push({
+				name: 'Confirmed',
+				x: time.slice(start),
+				y: confirmedIncrease,
+				marker: {
+					color: getColor('confirmed')
+				}
+			});
+		if(recoveredCount[lastIndex])
+			trends.push({
+				name: 'Recovered',
+				x: time.slice(start),
+				y: recoveredIncrease,
+				marker: {
+					color: getColor('recovered')
+				}
+			});
+		if(deathsCount[lastIndex])
+			trends.push({
+				name: 'Deaths',
+				x: time.slice(start),
+				y: deathsIncrease,
+				marker: {
+					color: getColor('deaths')
+				}
+			});
 		var layout = {
 			yaxis: {
 				type: plotType == 1 ? 'linear' : 'log'
