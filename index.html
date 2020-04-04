@@ -756,6 +756,7 @@ var showPopup = function(stats, coor){
 	var popupStatsEl = document.getElementById('popup-stats');
 
 	var plotCumulative = function(){
+		var plotType = plotCumulative.plotType;
 		var trends = [];
 		trends.push({
 			name: 'Confirmed',
@@ -785,7 +786,7 @@ var showPopup = function(stats, coor){
 			});
 		var layout = {
 			yaxis: {
-				type: plotCumulative.plotType == 1 ? 'linear' : 'log'
+				type: plotType == 1 ? 'linear' : 'log'
 			},
 			width: popupStatsEl.offsetWidth + 5,
 			height: isMobile ? 50 : 100,
@@ -804,6 +805,7 @@ var showPopup = function(stats, coor){
 	};
 
 	var plotIncrease = function(){
+		var plotType = plotIncrease.plotType;
 		var trends = [];
 		trends.push({
 			name: 'Confirmed',
@@ -831,7 +833,7 @@ var showPopup = function(stats, coor){
 		});
 		var layout = {
 			yaxis: {
-				type: plotIncrease.plotType == 1 ? 'linear' : 'log'
+				type: plotType == 1 ? 'linear' : 'log'
 			},
 			width: popupStatsEl.offsetWidth + 5,
 			height: isMobile ? 50 : 100,
@@ -850,6 +852,7 @@ var showPopup = function(stats, coor){
 	};
 
 	var plotCFR = function(){
+		var plotType = plotCFR.plotType;
 		var trends = [];
 		trends.push({
 			name: 'T=' + T,
@@ -864,7 +867,7 @@ var showPopup = function(stats, coor){
 			});
 		layout = {
 			yaxis: {
-				type: plotCFR.plotType == 1 ? 'linear' : 'log'
+				type: plotType == 1 ? 'linear' : 'log'
 			},
 			width: popupStatsEl.offsetWidth + 5,
 			height: isMobile ? 50 : 100,
