@@ -53,7 +53,7 @@ dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
 dxy_re = 'window\.getListByCountryTypeService2true.*?"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
 
 statistichecoronavirus_url = 'https://statistichecoronavirus.it/regioni-coronavirus-italia/'
-statistichecoronavirus_re = '<tr[^>]*>.*?<td[^>]*>(?:<[^>]*>)?(.*?)(?:<[^>]*>)?</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>'
+statistichecoronavirus_re = '<tr[^>]*>.*?<td[^>]*>(?:<[^>]*>)?(.*?)(?:<[^>]*>)?</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>'
 
 minsal_url = 'https://www.minsal.cl/nuevo-coronavirus-2019-ncov/casos-confirmados-en-chile-covid-19/'
 minsal_re = '<tr[^>]*>.*?<td[^>]*>([^<>]+)</td>.*?<td[^>]*>[0-9.]+</td>.*?<td[^>]*>([0-9.]+)</td>.*?<td[^>]*>[0-9]+ %</td>.*?<td[^>]*>([0-9.]+)</td>.*?</tr>'
@@ -1230,9 +1230,21 @@ if __name__ == '__main__':
 
         try:
             fetch_kcdc_country()
+        except:
+            traceback.print_exc(file=sys.stdout)
+        try:
             fetch_kcdc_provinces()
+        except:
+            traceback.print_exc(file=sys.stdout)
+        try:
             fetch_dxy()
+        except:
+            traceback.print_exc(file=sys.stdout)
+        try:
             fetch_statistichecoronavirus()
+        except:
+            traceback.print_exc(file=sys.stdout)
+        try:
             fetch_minsal()
         except:
             traceback.print_exc(file=sys.stdout)
