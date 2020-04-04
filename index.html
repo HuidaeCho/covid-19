@@ -684,7 +684,7 @@ var showPopup = function(stats, coor){
 	var featureId = stats.featureId;
 	var country = stats.country;
 	var province = stats.province;
-	var admin2 = stats.admins2;
+	var admin2 = stats.admin2;
 	var time = stats.time;
 	var confirmedCount = stats.confirmed;
 	var recoveredCount = stats.recovered;
@@ -695,9 +695,13 @@ var showPopup = function(stats, coor){
 	var lastRecovered = recoveredCount[lastIndex];
 	var lastDeaths = deathsCount[lastIndex];
 
-	var start = confirmedCount.length;
-	while(confirmedCount[--start]);
-	start++;
+	var start = -1;
+	if(confirmedCount[lastIndex])
+		while(start < confirmedCount.length - 1 && !confirmedCount[++start]);
+	else if(recoveredCount[lastIndex])
+		while(start < recoveredCount.length - 1 && !recoveredCount[++start]);
+	else if(deathsCount[lastIndex])
+		while(start < deathsCount.length - 1 && !deathsCount[++start]);
 
 	var cfrT = null;
 	var T = averageDaysFromConfirmedToDeath;
@@ -758,15 +762,16 @@ var showPopup = function(stats, coor){
 	var plotCumulative = function(){
 		var plotType = plotCumulative.plotType;
 		var trends = [];
-		trends.push({
-			name: 'Confirmed',
-			x: time.slice(start),
-			y: confirmedCount.slice(start),
-			marker: {
-				color: getColor('confirmed')
-			}
-		});
-		if(recoveredCount[lastIndex] > 0)
+		if(confirmedCount[lastIndex])
+			trends.push({
+				name: 'Confirmed',
+				x: time.slice(start),
+				y: confirmedCount.slice(start),
+				marker: {
+					color: getColor('confirmed')
+				}
+			});
+		if(recoveredCount[lastIndex])
 			trends.push({
 				name: 'Recovered',
 				x: time.slice(start),
@@ -775,7 +780,7 @@ var showPopup = function(stats, coor){
 					color: getColor('recovered')
 				}
 			});
-		if(deathsCount[lastIndex] > 0)
+		if(deathsCount[lastIndex])
 			trends.push({
 				name: 'Deaths',
 				x: time.slice(start),
@@ -809,7 +814,7 @@ var showPopup = function(stats, coor){
 		var trends = [];
 		trends.push({
 			name: 'Confirmed',
-			x: time,
+			x: time.slice(start),
 			y: confirmedIncrease,
 			marker: {
 				color: getColor('confirmed')
@@ -817,7 +822,7 @@ var showPopup = function(stats, coor){
 		});
 		trends.push({
 			name: 'Recovered',
-			x: time,
+			x: time.slice(start),
 			y: recoveredIncrease,
 			marker: {
 				color: getColor('recovered')
@@ -825,7 +830,7 @@ var showPopup = function(stats, coor){
 		});
 		trends.push({
 			name: 'Deaths',
-			x: time,
+			x: time.slice(start),
 			y: deathsIncrease,
 			marker: {
 				color: getColor('deaths')
@@ -856,13 +861,13 @@ var showPopup = function(stats, coor){
 		var trends = [];
 		trends.push({
 			name: 'T=' + T,
-			x: time,
+			x: time.slice(start),
 			y: cfrT
 		});
 		if(cfrDDR)
 			trends.push({
 				name: 'd/(d+r)',
-				x: time,
+				x: time.slice(start),
 				y: cfrDDR
 			});
 		layout = {
@@ -1369,9 +1374,8 @@ var plotConfirmed = function(){
 				y: confirmed
 			});
 		}else{
-			var start = confirmed.length;
-			while(confirmed[--start]);
-			start++;
+			var start = -1;
+			while(start < confirmed.length - 1 && confirmed[++start]);
 			trends.push({
 				name: country,
 				y: confirmed.slice(start)
@@ -1409,9 +1413,8 @@ var plotRecovered = function(){
 				y: recovered
 			});
 		}else{
-			var start = recovered.length;
-			while(recovered[--start]);
-			start++;
+			var start = -1;
+			while(start < recovered.length - 1 && recovered[++start]);
 			trends.push({
 				name: country,
 				y: recovered.slice(start)
@@ -1449,9 +1452,8 @@ var plotDeaths = function(){
 				y: deaths
 			});
 		}else{
-			var start = deaths.length;
-			while(deaths[--start]);
-			start++;
+			var start = -1;
+			while(start < deaths.length - 1 && deaths[++start]);
 			trends.push({
 				name: country,
 				y: deaths.slice(start)
