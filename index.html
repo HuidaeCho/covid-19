@@ -784,6 +784,9 @@ var showPopup = function(stats, coor){
 				}
 			});
 		var layout = {
+			yaxis: {
+				type: plotCumulative.plotType == 1 ? 'linear' : 'log'
+			},
 			width: popupStatsEl.offsetWidth + 5,
 			height: isMobile ? 50 : 100,
 			margin: {
@@ -827,6 +830,9 @@ var showPopup = function(stats, coor){
 			}
 		});
 		var layout = {
+			yaxis: {
+				type: plotIncrease.plotType == 1 ? 'linear' : 'log'
+			},
 			width: popupStatsEl.offsetWidth + 5,
 			height: isMobile ? 50 : 100,
 			margin: {
@@ -857,6 +863,9 @@ var showPopup = function(stats, coor){
 				y: cfrDDR
 			});
 		layout = {
+			yaxis: {
+				type: plotCFR.plotType == 1 ? 'linear' : 'log'
+			},
 			width: popupStatsEl.offsetWidth + 5,
 			height: isMobile ? 50 : 100,
 			margin: {
