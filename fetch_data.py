@@ -1133,8 +1133,8 @@ def write_geojson():
     # create a new list to store all the features
     features = []
     # create a feature collection
-    for i in range(0, len(data)):
-        rec = data[i]
+    feature_id = 0
+    for rec in data:
         country = rec['country']
         province = rec['province']
         admin2 = rec['admin2']
@@ -1146,7 +1146,7 @@ def write_geojson():
             country not in config.countries_to_display):
             continue
         features.append({
-            'id': i,
+            'id': feature_id,
             'type': 'Feature',
             'geometry': {
                 'type': 'Point',
@@ -1164,6 +1164,7 @@ def write_geojson():
                 'deaths': rec['deaths']
             }
         })
+        feature_id += 1
 
     # finally, build the output GeoJSON object and save it
     geodata = {
