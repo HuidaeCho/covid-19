@@ -968,10 +968,11 @@ var showFeatureStatsByQuery = function(query){
 				if(country == 'United States'){
 					// country match
 					var matchLevel = 0;
-					if(admin2Query == query || admin2 == query.split(', ')[0])
+					var x = query.split(', ');
+					if(admin2Query == query || (x.length == 3 && admin2 == x[0]))
 						// admin2 match
 						matchLevel = 2;
-					else if(provinceQuery == query || province == query.split(', ')[0])
+					else if(provinceQuery == query || (x.length == 2 && province == x[0]))
 						// province match
 						matchLevel = 1;
 					// only admin2 records are displayed
@@ -983,11 +984,7 @@ var showFeatureStatsByQuery = function(query){
 							return;
 						break;
 					case 1: // province level
-						if(admin2)
-							return;
-						break;
-					case 2: // admin2 level
-						if(province)
+						if(province != admin2 && admin2)
 							return;
 						break;
 					}
