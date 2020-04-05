@@ -780,7 +780,6 @@ function plotConfirmed(){
 		}else{
 			let start = -1;
 			while(start < confirmed.length - 1 && !confirmed[++start]);
-			console.log(confirmed, start);
 			trends.push({
 				name: country,
 				y: confirmed.slice(start)
