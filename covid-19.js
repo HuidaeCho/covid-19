@@ -261,7 +261,7 @@ function showPopup(stats, coor){
 
 	// United States and Chile don't have recovered at a province or admin2
 	// level
-	const lastCFRddr = (country == 'United States' && (province || admins2)) ||
+	const lastCFRddr = (country == 'United States' && (province || admin2)) ||
 		(country == 'Chile' && province) ? null :
 		roundCFR(lastDeaths / (lastDeaths + lastRecovered));
 
