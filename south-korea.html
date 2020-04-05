@@ -90,10 +90,10 @@ const words = {
 	'Quarantine': '검역',
 };
 const getTextFunctions = {
-	count: function(x){return x.toLocaleString() + ' 명';},
-	confirmed: function(x){return '확진 ' + getTextFunctions['count'](x);},
-	recovered: function(x){return '격리해제 ' + getTextFunctions['count'](x);},
-	deaths: function(x){return '사망 ' + getTextFunctions['count'](x);},
+	'count': function(x){return x.toLocaleString() + ' 명';},
+	'confirmed': function(x){return '확진 ' + getTextFunctions['count'](x);},
+	'recovered': function(x){return '격리해제 ' + getTextFunctions['count'](x);},
+	'deaths': function(x){return '사망 ' + getTextFunctions['count'](x);},
 };
 /*******************************************************************************
  * END OF CONFIGURATION

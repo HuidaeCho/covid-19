@@ -25,20 +25,24 @@ function getWord(word){
 	return words[word] || word;
 }
 
+let getCountText = getTextFunctions['count'] || function(count){
+	return count.toLocaleString();
+}
+
 let getConfirmedText = getTextFunctions['confirmed'] || function(confirmed){
-	return confirmed.toLocaleString() + ' ' + getWord('confirmed');
+	return getCountText(confirmed) + ' ' + getWord('confirmed');
 };
 
 let getRecoveredText = getTextFunctions['recovered'] || function(recovered){
-	return recovered.toLocaleString() + ' ' + getWord('recovered');
+	return getCountText(recovered) + ' ' + getWord('recovered');
 };
 
 let getDeathsText = getTextFunctions['deaths'] || function(deaths){
-	return deaths.toLocaleString() + ' ' + getWord('death' + (deaths > 1 ? 's' : ''));
+	return getCountText(deaths) + ' ' + getWord('death' + (deaths > 1 ? 's' : ''));
 };
 
 let getActiveText = getTextFunctions['active'] || function(active){
-	return active.toLocaleString() + ' ' + getWord('active');
+	return getCountText(active) + ' ' + getWord('active');
 };
 
 function getColor(category, opacity=null){
@@ -990,9 +994,9 @@ function showGlobalStats(panToMaxConfirmed){
 
 	const lastIndex = time.length - 1;
 	lastUpdatedEl.innerHTML = new Date(lastUpdated).toLocaleString();
-	totalConfirmedEl.innerHTML = confirmedCount[lastIndex].toLocaleString();
-	totalRecoveredEl.innerHTML = recoveredCount[lastIndex].toLocaleString();
-	totalDeathsEl.innerHTML = deathsCount[lastIndex].toLocaleString();
+	totalConfirmedEl.innerHTML = getCountText(confirmedCount[lastIndex]);
+	totalRecoveredEl.innerHTML = getCountText(recoveredCount[lastIndex]);
+	totalDeathsEl.innerHTML = getCountText(deathsCount[lastIndex]);
 	cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrT[cfrT.length - 1] + '%' + (isMobile ? '' : ', ') + '<sup>d/(d+r)</sup>' + cfrDDR[cfrDDR.length - 1] + '%';
 
 	const plotsMenuConfig = {};
