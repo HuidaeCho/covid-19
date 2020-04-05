@@ -22,30 +22,26 @@
  ******************************************************************************/
 
 function getWord(word){
-	return word in words ? words[word] : word;
+	return words[word] || word;
 }
 
 function getConfirmedText(confirmed){
-	return 'confirmed' in getTextFunctions ?
-		getTextFunctions['confirmed'](confirmed) :
+	return getTextFunctions['confirmed'] ? getTextFunctions['confirmed'](confirmed) :
 		confirmed.toLocaleString() + ' ' + getWord('confirmed');
 }
 
 function getRecoveredText(recovered){
-	return 'recovered' in getTextFunctions ?
-		getTextFunctions['recovered'](recovered) :
+	return getTextFunctions['recovered'] ? getTextFunctions['recovered'](recovered) :
 		recovered.toLocaleString() + ' ' + getWord('recovered');
 }
 
 function getDeathsText(deaths){
-	return 'deaths' in getTextFunctions ?
-		getTextFunctions['deaths'](deaths) :
+	return getTextFunctions['deaths'] ? getTextFunctions['deaths'](deaths) :
 		deaths.toLocaleString() + ' ' + getWord('death' + (deaths > 1 ? 's' : ''));
 }
 
 function getActiveText(active){
-	return 'active' in getTextFunctions ?
-		getTextFunctions['active'](active) :
+	return getTextFunctions['active'] ? getTextFunctions['active'](active) :
 		active.toLocaleString() + ' ' + getWord('active');
 }
 
