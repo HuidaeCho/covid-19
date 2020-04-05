@@ -25,25 +25,21 @@ function getWord(word){
 	return words[word] || word;
 }
 
-function getConfirmedText(confirmed){
-	return getTextFunctions['confirmed'] ? getTextFunctions['confirmed'](confirmed) :
-		confirmed.toLocaleString() + ' ' + getWord('confirmed');
-}
+var getConfirmedText = getTextFunctions['confirmed'] || function(confirmed){
+	return confirmed.toLocaleString() + ' ' + getWord('confirmed');
+};
 
-function getRecoveredText(recovered){
-	return getTextFunctions['recovered'] ? getTextFunctions['recovered'](recovered) :
-		recovered.toLocaleString() + ' ' + getWord('recovered');
-}
+var getRecoveredText = getTextFunctions['recovered'] || function(recovered){
+	return recovered.toLocaleString() + ' ' + getWord('recovered');
+};
 
-function getDeathsText(deaths){
-	return getTextFunctions['deaths'] ? getTextFunctions['deaths'](deaths) :
-		deaths.toLocaleString() + ' ' + getWord('death' + (deaths > 1 ? 's' : ''));
-}
+var getDeathsText = getTextFunctions['deaths'] || function(deaths){
+	return deaths.toLocaleString() + ' ' + getWord('death' + (deaths > 1 ? 's' : ''));
+};
 
-function getActiveText(active){
-	return getTextFunctions['active'] ? getTextFunctions['active'](active) :
-		active.toLocaleString() + ' ' + getWord('active');
-}
+var getActiveText = getTextFunctions['active'] || function(active){
+	return active.toLocaleString() + ' ' + getWord('active');
+};
 
 function getColor(category, opacity=null){
 	let color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
