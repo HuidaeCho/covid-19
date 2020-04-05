@@ -1232,7 +1232,7 @@ const popup = new ol.Overlay.Popup();
 const map = new ol.Map({
 	target: 'map',
 	controls: ol.control.defaults().extend([
-		new ol.control.ScaleLine({units:'us'})]),
+		new ol.control.ScaleLine({units: mapUnits})]),
 	layers: [
 		new ol.layer.Group({
 			title: getWord('Base maps'),
