@@ -776,7 +776,8 @@ function plotConfirmed(){
 			});
 		}else{
 			let start = -1;
-			while(start < confirmed.length - 1 && confirmed[++start]);
+			while(start < confirmed.length - 1 && !confirmed[++start]);
+			console.log(confirmed, start);
 			trends.push({
 				name: country,
 				y: confirmed.slice(start)
@@ -815,7 +816,7 @@ function plotRecovered(){
 			});
 		}else{
 			let start = -1;
-			while(start < recovered.length - 1 && recovered[++start]);
+			while(start < recovered.length - 1 && !recovered[++start]);
 			trends.push({
 				name: country,
 				y: recovered.slice(start)
@@ -854,7 +855,7 @@ function plotDeaths(){
 			});
 		}else{
 			let start = -1;
-			while(start < deaths.length - 1 && deaths[++start]);
+			while(start < deaths.length - 1 && !deaths[++start]);
 			trends.push({
 				name: country,
 				y: deaths.slice(start)
