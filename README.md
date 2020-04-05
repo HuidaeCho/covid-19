@@ -1,4 +1,4 @@
-# Coronavirus Disease 2019 (COVID-19 or 2019-nCoV) Cases Tracker
+# Coronavirus Disease 2019 (COVID-19) Cases Tracker
 
 [This web map](https://app.isnew.info/covid-19) is an open source version of [the COVID-19 global cases website](https://arcg.is/0fHmTX) by [Johns Hopkins CSSE](https://systems.jhu.edu). It uses [OpenLayers](https://openlayers.org) for mapping, [Plotly.js](https://github.com/plotly/plotly.js) for plotting, and [Iconify](https://iconify.design/) for icons.
 
