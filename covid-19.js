@@ -412,6 +412,14 @@ function showPopup(stats, coor){
 	generatePlotsMenu(popupPlotsMenuEl, plotsMenuConfig);
 }
 
+function panToCoordinates(coor){
+	view.animate({center: coor});
+}
+
+function zoomToExtent(extent){
+	view.fit(ol.extent.buffer(extent, 100000), {duration: 1000});
+}
+
 function showFeatureStatsAtCoordinates(feature, coor){
 	highlightProvinceStats([feature.id]);
 	const stats = calculateStats(feature);
@@ -421,7 +429,7 @@ function showFeatureStatsAtCoordinates(feature, coor){
 function showFeatureStatsById(featureId){
 	const feature = features[featureId];
 	const coor = ol.proj.fromLonLat(feature.geometry.coordinates);
-	view.animate({center: coor});
+	panToCoordinates(coor);
 	showFeatureStatsAtCoordinates(feature, coor);
 }
 
@@ -479,10 +487,10 @@ function showFeatureStatsByQuery(query){
 					// country match
 					let matchLevel = 0;
 					const x = query.split(', ');
-					if(admin2Query == query || (x.length == 3 && admin2 == x[0]))
+					if(admin2Query == query || admin2 == query || (x.length == 3 && admin2 == x[0]))
 						// admin2 match
 						matchLevel = 2;
-					else if(provinceQuery == query || (x.length == 2 && province == x[0]))
+					else if(provinceQuery == query || province == query || (x.length == 2 && province == x[0]))
 						// province match
 						matchLevel = 1;
 					// only admin2 records are displayed
@@ -521,10 +529,8 @@ function showFeatureStatsByQuery(query){
 	if(featureIds.length){
 		window.location.hash = 'feature-' + featureIds[0];
 		highlightProvinceStats(featureIds);
-		const options = {duration: 1000};
 		if(featureIds.length == 1){
-			options.maxZoom = 6;
-			view.fit(extent, options);
+			zoomToExtent(extent);
 			showFeatureStatsById(featureIds[0]);
 		}else{
 			let geocodeUrl;
@@ -555,7 +561,7 @@ function showFeatureStatsByQuery(query){
 					showPopup(stats, coor);
 				}else
 					console.log(status);
-				view.fit(extent, options);
+				zoomToExtent(extent);
 			};
 			geocodeXhr.send();
 		}
@@ -1011,9 +1017,9 @@ function showGlobalStats(panToMaxConfirmed){
 
 	if(panToMaxConfirmed){
 		if(extent)
-			view.fit(extent, {duration: 1000});
+			zoomToExtent(extent);
 		else
-			view.animate({center: ol.proj.fromLonLat(maxConfirmedCoor)});
+			panToCoordinates(ol.proj.fromLonLat(maxConfirmedCoor));
 	}
 }
 
@@ -1206,13 +1212,13 @@ xhr.onload = function(){
 	const status = xhr.status;
 	if(status == 200){
 		features = xhr.response.features;
-		const query = window.location.search.match(/^\?(.+)$/);
+		const queryMatches = window.location.search.match(/^\?(.+)$/);
 
-		showGlobalStats(!query);
+		showGlobalStats(!queryMatches);
 		sortStatsByCountry('Confirmed');
 
-		if(query){
-			query = query[1].replace(/\+|%20/g, ' ').replace(/%22/g, '"');
+		if(queryMatches){
+			const query = queryMatches[1].replace(/\+|%20/g, ' ').replace(/%22/g, '"');
 			showFeatureStatsByQuery(query);
 		}
 	}else
