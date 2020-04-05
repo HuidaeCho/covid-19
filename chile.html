@@ -68,10 +68,16 @@ const words = {
 	'confirmed': 'confirmados',
 	'recovered': 'recuperados',
 	'deaths': 'fallecidos',
+	'active': 'activo',
 
 	'Confirmed': 'Confirmados',
 	'Recovered': 'Recuperados',
 	'Deaths': 'Fallecidos',
+	'Active': 'Activo',
+	'Cumulative': 'Acumulativo',
+	'Increase': 'Incrementar',
+
+	'Others': 'Otros',
 };
 const getTextFunctions = {
 };
@@ -92,12 +98,12 @@ const getTextFunctions = {
 <a href="https://researchgate.net/profile/Huidae_Cho"><span class="iconify" data-icon="fa-brands:researchgate"></span></a>
 <a href="https://linkedin.com/in/HuidaeCho"><span class="iconify" data-icon="fa-brands:linkedin"></span></a>
 </div>
-<div class="author">Since February 2, 2020 by <a href="https://idea.isnew.info">Huidae Cho</a></div>
+<div class="author">Desde el 2 de febrero de 2020 por <a href="https://idea.isnew.info">Huidae Cho</a></div>
 </div>
 <div class="desktop-block">
-This open source web map was motivated by <a href="https://arcg.is/0fHmTX">the COVID-19 global cases website</a> by <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
-Data is fetched every 30 minutes.
-The author is not responsible for any damages caused by using this website.
+Este mapa web de código abierto fue motivado por <a href="https://arcg.is/0fHmTX">el sitio web de casos globales COVID-19</a> por <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
+Los datos se obtienen cada 30 minutos.
+El autor no se hace responsable de los daños causados por el uso de este sitio web.
 <a href="https://github.com/HuidaeCho/covid-19/issues">¿Sugerencias?</a>
 </div>
 <div class="mobile-block">
@@ -111,8 +117,8 @@ Motivated by <a href="https://arcg.is/1DPOWm0">the JHU CSSE website</a>.
 <div id="map"></div>
 <div id="info">
 <div id="summary">
-<h2>Total Chile</h2>
-<div id="last-updated-label">Last Updated:</div><div id="last-updated"></div>
+<h2>Chile Total</h2>
+<div id="last-updated-label">Actualización:</div><div id="last-updated"></div>
 <table id="global-stats">
 <tr class="confirmed"><td>Confirmados:</td><td id="total-confirmed" class="right"></td></tr>
 <tr class="recovered"><td>Recuperados:</td><td id="total-recovered" class="right"></td></tr>
