@@ -43,9 +43,9 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 const bingMapsKey = 'AhuHr9JixtsyKu9uSOQ8W0lIr7_gC2KiFxOlmshvRDb_BSWDkhnGX7oeS5zJzHo0';
 const dataUrl = 'geodata.json'
 const dataSources = '<a href="https://arcg.is/0fHmTX">CSSE</a><sup><a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports">1</a>' +
-    ',<a href="https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">2</a></sup>' +
-    ', <a href="http://ncov.mohw.go.kr/bdBoardList_Real.do">질병관리본부</a>' +
-    '';
+	',<a href="https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">2</a></sup>' +
+	', <a href="http://ncov.mohw.go.kr/bdBoardList_Real.do">질병관리본부</a>' +
+	'';
 const averageDaysFromConfirmedToDeath = 14; // median days from first symptom to death
 const plotsMenuItems = ['Cumulative', 'Increase', 'CFR', 'Confirmed', 'Recovered', 'Deaths'];
 const hasDuplicateData = ['South Korea', 'Italy', 'Chile'];
@@ -53,47 +53,47 @@ const countryToDisplay = 'South Korea';
 
 // OPTIONAL TRANSLATION
 const words = {
-    'COVID-19 cases': '코로나19 현황',
-    'Base maps': '바탕 지도',
-    'Open Street': '오픈 스트리트',
-    'Bing aerial': '빙 위성지도',
-    'Water color': '수채화',
-    'Data sources': '자료 출처',
+	'COVID-19 cases': '코로나19 현황',
+	'Base maps': '바탕 지도',
+	'Open Street': '오픈 스트리트',
+	'Bing aerial': '빙 위성지도',
+	'Water color': '수채화',
+	'Data sources': '자료 출처',
 
-    'Confirmed': '확진',
-    'Recovered': '격리해제',
-    'Deaths': '사망',
-    'Active': '격리중',
-    'CFR d/(d+r)': '치명률 d/(d+r)',
+	'Confirmed': '확진',
+	'Recovered': '격리해제',
+	'Deaths': '사망',
+	'Active': '격리중',
+	'CFR d/(d+r)': '치명률 d/(d+r)',
 
-    'Cumulative': '누적',
-    'Increase': '증가',
-    'CFR': '치명률',
+	'Cumulative': '누적',
+	'Increase': '증가',
+	'CFR': '치명률',
 
-    'Seoul': '서울',
-    'Busan': '부산',
-    'Daegu': '대구',
-    'Incheon': '인천',
-    'Gwangju': '광주',
-    'Daejeon': '대전',
-    'Ulsan': '울산',
-    'Sejong': '세종',
-    'Gyeonggi': '경기',
-    'Gangwon': '강원',
-    'Chungbuk': '충북',
-    'Chungnam': '충남',
-    'Jeonbuk': '전북',
-    'Jeonnam': '전남',
-    'Gyeongbuk': '경북',
-    'Gyeongnam': '경남',
-    'Jeju': '제주',
-    'Quarantine': '검역',
+	'Seoul': '서울',
+	'Busan': '부산',
+	'Daegu': '대구',
+	'Incheon': '인천',
+	'Gwangju': '광주',
+	'Daejeon': '대전',
+	'Ulsan': '울산',
+	'Sejong': '세종',
+	'Gyeonggi': '경기',
+	'Gangwon': '강원',
+	'Chungbuk': '충북',
+	'Chungnam': '충남',
+	'Jeonbuk': '전북',
+	'Jeonnam': '전남',
+	'Gyeongbuk': '경북',
+	'Gyeongnam': '경남',
+	'Jeju': '제주',
+	'Quarantine': '검역',
 };
 const getTextFunctions = {
-    'count': function(x){return x.toLocaleString() + ' 명';},
-    'confirmed': function(x){return '확진 ' + getTextFunctions['count'](x);},
-    'recovered': function(x){return '격리해제 ' + getTextFunctions['count'](x);},
-    'deaths': function(x){return '사망 ' + getTextFunctions['count'](x);},
+	'count': function(x){return x.toLocaleString() + ' 명';},
+	'confirmed': function(x){return '확진 ' + getTextFunctions['count'](x);},
+	'recovered': function(x){return '격리해제 ' + getTextFunctions['count'](x);},
+	'deaths': function(x){return '사망 ' + getTextFunctions['count'](x);},
 };
 /*******************************************************************************
  * END OF CONFIGURATION
