@@ -545,7 +545,7 @@ function showFeatureStatsByQuery(query){
 					const coor = ol.proj.fromLonLat(resource.geocodePoints[0].coordinates.reverse());
 					const c1 = ol.proj.fromLonLat([resource.bbox[1], resource.bbox[0]]);
 					const c2 = ol.proj.fromLonLat([resource.bbox[3], resource.bbox[2]]);
-					extent = [c1[0], c1[1], c2[0], c2[1]];
+					ol.extent.extend(extent, [c1[0], c1[1], c2[0], c2[1]]);
 					stats.country = country;
 					stats.province = province;
 					showPopup(stats, coor);
