@@ -4,6 +4,7 @@
 
 ## UPDATES
 
+Single-country maps are now supported:
 * [코로나바이러스 (코로나19) 국내 발생 현황](https://app.isnew.info/covid-19/south-korea.html)
 * [Casos de COVID-19 en Chile](https://app.isnew.info/covid-19/chile.html)
 
