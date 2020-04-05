@@ -125,6 +125,7 @@ h3 {
 }
 #popup .cfr {
 	font-size: 0.8em;
+	font-weight: bold;
 }
 /*******************************************************************************
  * INFO (RIGHT)
@@ -163,7 +164,7 @@ h2 {
 	font-size: 1.1em;
 	font-weight: bold;
 }
-.right {
+.numeric {
 	text-align: right;
 }
 .confirmed {

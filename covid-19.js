@@ -273,15 +273,15 @@ function showPopup(stats, coor){
 		'<table id="popup-stats">' +
 		(!lastConfirmed ? '' :
 			'<tr class="confirmed"><td>' + getWord('Confirmed') +
-			':</td><td class="right">' + lastConfirmed.toLocaleString() +
+			':</td><td class="numeric">' + getCountText(lastConfirmed) +
 			'</td></tr>') +
 		(!lastRecovered ? '' :
 			'<tr class="recovered"><td>' + getWord('Recovered') +
-			':</td><td class="right">' + lastRecovered.toLocaleString() +
+			':</td><td class="numeric">' + getCountText(lastRecovered) +
 			'</td></tr>') +
 		(!lastDeaths ? '' :
 			'<tr class="deaths"><td>' + getWord('Deaths') +
-			':</td><td class="right">' + lastDeaths.toLocaleString() +
+			':</td><td class="numeric">' + getCountText(lastDeaths) +
 			'</td></tr>') +
 		'</table>' +
 		'<div class="cfr">' + getWord('CFR') +
