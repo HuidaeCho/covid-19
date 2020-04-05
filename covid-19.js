@@ -38,7 +38,8 @@ let getRecoveredText = getTextFunctions['recovered'] || function(recovered){
 };
 
 let getDeathsText = getTextFunctions['deaths'] || function(deaths){
-	return getCountText(deaths) + ' ' + getWord('death' + (deaths > 1 ? 's' : ''));
+	return getCountText(deaths) + ' ' +
+		getWord('death' + (deaths > 1 ? 's' : ''));
 };
 
 let getActiveText = getTextFunctions['active'] || function(active){
@@ -46,7 +47,8 @@ let getActiveText = getTextFunctions['active'] || function(active){
 };
 
 function getColor(category, opacity=null){
-	let color = window.getComputedStyle(document.getElementsByClassName(category)[0]).backgroundColor;
+	let color = window.getComputedStyle(
+		document.getElementsByClassName(category)[0]).backgroundColor;
 	if(opacity != null)
 		color = color.replace(/,[^,]*\)/, ', ' + opacity + ')');
 	return color;
