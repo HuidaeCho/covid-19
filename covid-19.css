@@ -26,6 +26,7 @@
 html {
 	width: 100%;
 	height: 100%;
+	line-height: 1.3;
 }
 body {
 	width: calc(100% - 4px);
@@ -51,7 +52,6 @@ a:hover {
  * HEADER (TOP)
  ******************************************************************************/
 #header {
-	line-height: 1.3;
 }
 h1 {
 	display: inline-block;
@@ -59,7 +59,6 @@ h1 {
 	width: calc(100% - 106px);
 	margin: 0;
 	font-size: 1.3em;
-	line-height: 1;
 }
 #virus {
 	position: absolute;
@@ -81,7 +80,6 @@ h1 {
 }
 .follow-me .icons {
 	font-size: 1.5em;
-	line-height: 0;
 	margin: 0;
 }
 #legend {
@@ -257,7 +255,6 @@ h2 {
 	 * HEADER (TOP)
 	 **********************************************************************/
 	#header {
-		line-height: 1.5;
 	}
 	h1 {
 		width: calc(75% - 6px);
