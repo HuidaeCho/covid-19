@@ -184,6 +184,10 @@ function highlightProvinceStats(featureIds){
 }
 
 const timezoneOffset = new Date().getTimezoneOffset() * 60000;
+function getDate(time){
+	return new Date(time * 1000 - timezoneOffset).toISOString().split('T')[0];
+}
+
 function calculateStats(feature, all=false){
 	const featureId = feature.id;
 	const country = feature.properties.country;
@@ -204,8 +208,7 @@ function calculateStats(feature, all=false){
 		const d = deaths[i].count;
 		if(all || time.length || c || r || d){
 			// https://stackoverflow.com/a/50130338
-			time.push(new Date(confirmed[i].time * 1000 - timezoneOffset).
-				toISOString().split('T')[0]);
+			time.push(getDate(confirmed[i].time));
 			confirmedCount.push(c);
 			recoveredCount.push(r);
 			deathsCount.push(d);
@@ -771,7 +774,7 @@ function plotConfirmed(){
 		if(plotType % 2){
 			trends.push({
 				name: country,
-				x: time,
+				x: stats.time,
 				y: confirmed
 			});
 		}else{
@@ -987,13 +990,15 @@ function showGlobalStats(panToMaxConfirmed){
 				const name = province || country;
 
 				statsByCountry[name] =
-					{confirmed: [], recovered: [], deaths: []};
+					{time: [], confirmed: [], recovered: [], deaths: []};
 				for(let i = 0; i < confirmed.length; i++){
+					const t = confirmed[i].time;
 					const c = confirmed[i].count;
 					const r = recovered[i].count;
 					const d = deaths[i].count;
 
 					// province statistics
+					statsByCountry[name].time.push(getDate(t));
 					statsByCountry[name].confirmed.push(c);
 					statsByCountry[name].recovered.push(r);
 					statsByCountry[name].deaths.push(d);
@@ -1013,9 +1018,10 @@ function showGlobalStats(panToMaxConfirmed){
 
 		if(!countryToDisplay && !statsByCountry[country])
 			statsByCountry[country] =
-				{confirmed: [], recovered: [], deaths: []};
+				{time: [], confirmed: [], recovered: [], deaths: []};
 
 		for(let i = 0; i < confirmed.length; i++){
+			const t = confirmed[i].time;
 			const c = confirmed[i].count;
 			const r = recovered[i].count;
 			const d = deaths[i].count;
@@ -1023,6 +1029,7 @@ function showGlobalStats(panToMaxConfirmed){
 			if(!countryToDisplay){
 				// country statistics
 				if(statsByCountry[country].confirmed.length < confirmed.length){
+					statsByCountry[country].time.push(getDate(t));
 					statsByCountry[country].confirmed.push(c);
 					statsByCountry[country].recovered.push(r);
 					statsByCountry[country].deaths.push(d);
@@ -1036,8 +1043,7 @@ function showGlobalStats(panToMaxConfirmed){
 			// global statistics
 			if(i + 1 > time.length){
 				// https://stackoverflow.com/a/50130338
-				time.push(new Date(confirmed[i].time * 1000 - timezoneOffset).
-					toISOString().split('T')[0]);
+				time.push(getDate(confirmed[i].time));
 				confirmedCount.push(c);
 				recoveredCount.push(r);
 				deathsCount.push(d);
