@@ -66,7 +66,8 @@ function createStyle(feature, resolution){
 
 	if((countryToDisplay && country != countryToDisplay) ||
 	   (country == 'United States' && !admin2) ||
-	   (country != 'United States' && hasDuplicateData.indexOf(country) >= 0 && !province))
+	   (country != 'United States' &&
+	    hasDuplicateData.indexOf(country) >= 0 && !province))
 		return null;
 
 	const lastIndex = feature.get('confirmed').length - 1;
@@ -76,12 +77,16 @@ function createStyle(feature, resolution){
 
 	let style;
 	if(true){
-		const confirmedRadius = calculateConfirmedRadius(confirmed) * radiusFactor;
-		const recoveredRadius = Math.sqrt((recovered + deaths) / confirmed) * confirmedRadius * radiusFactor;
-		const deathsRadius = Math.sqrt(deaths / confirmed) * confirmedRadius * radiusFactor;
+		const confirmedRadius = calculateConfirmedRadius(confirmed) *
+			radiusFactor;
+		const recoveredRadius = Math.sqrt((recovered + deaths) / confirmed) *
+			confirmedRadius * radiusFactor;
+		const deathsRadius = Math.sqrt(deaths / confirmed) * confirmedRadius *
+			radiusFactor;
 		const minOpacity = 0.05;
 		const maxOpacity = 0.4;
-		const opacity = minOpacity + (maxOpacity - minOpacity) * (confirmed - recovered - deaths) / confirmed;
+		const opacity = minOpacity + (maxOpacity - minOpacity) *
+			(confirmed - recovered - deaths) / confirmed;
 		const stroke = resolution > 4000 ? null : new ol.style.Stroke({
 			color: 'rgba(85, 85, 85, ' + 2 * opacity + ')'
 		});
@@ -122,7 +127,8 @@ function createStyle(feature, resolution){
 				type: 'pie',
 				radius: radius,
 				data: data,
-				colors: [getColor('recovered'), getColor('confirmed'), getColor('deaths')],
+				colors: [getColor('recovered'), getColor('confirmed'),
+					     getColor('deaths')],
 				stroke: new ol.style.Stroke({
 					color: '#0000',
 					width: 1
@@ -134,32 +140,50 @@ function createStyle(feature, resolution){
 }
 
 function createLinks(country, province, admin2, featureId, isPopup){
-	const admin2Query = admin2 ? admin2 + ', ' + province + ', ' + country : null;
+	const admin2Query = admin2 ?
+		admin2 + ', ' + province + ', ' + country : null;
 	const provinceQuery = province ? province + ', ' + country : null;
 	const admin2Text = getWord(admin2);
 	const provinceText = getWord(province);
 	const countryText = getWord(country);
 	const links = featureId != null ?
-		(admin2 ? '<a onclick="showFeatureStatsById(' + featureId + ')">' + admin2Text + '</a>, ' : '') +
-		(province ? '<a onclick="' + (admin2 ? (isPopup ? 'keepPopupOpen=true;' : '') + 'showFeatureStatsByQuery(\'' + provinceQuery + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + provinceText + '</a>' + (countryToDisplay ? '' : ', ') : '') +
-		(countryToDisplay ? '' : '<a onclick="' + (province ? (isPopup ? 'keepPopupOpen=true;' : '') + 'showFeatureStatsByQuery(\'' + country + '\')' : 'showFeatureStatsById(' + featureId + ')') + '">' + country + '</a>') :
-		(province ? '<a onclick="showFeatureStatsByQuery(\'' + provinceQuery + '\')">' + provinceText + '</a>, ' : '') +
-		'<a onclick="showFeatureStatsByQuery(\'' + country + '\')">' + countryText + '</a>';
+		(!admin2 ? '' :
+			'<a onclick="showFeatureStatsById(' + featureId + ')">' +
+			admin2Text + '</a>, ') +
+		(!province ? '' :
+			'<a onclick="' +
+			(admin2 ? (isPopup ? 'keepPopupOpen=true;' : '') +
+				'showFeatureStatsByQuery(\'' + provinceQuery + '\')' :
+				'showFeatureStatsById(' + featureId + ')') +
+			'">' + provinceText + '</a>' + (countryToDisplay ? '' : ', ')) +
+		(countryToDisplay ? '' :
+			'<a onclick="' +
+			(province ? (isPopup ? 'keepPopupOpen=true;' : '') +
+				'showFeatureStatsByQuery(\'' + country + '\')' :
+				'showFeatureStatsById(' + featureId + ')') +
+			'">' + country + '</a>') :
+		(!province ? '' :
+			'<a onclick="showFeatureStatsByQuery(\'' +
+			provinceQuery + '\')">' + provinceText + '</a>, ') +
+		'<a onclick="showFeatureStatsByQuery(\'' + country + '\')">' +
+		countryText + '</a>';
 	return links;
 }
 
 let highlightedFeatureIds = [];
 function highlightProvinceStats(featureIds){
 	highlightedFeatureIds.forEach(featureId => {
-		document.getElementById('feature-' + featureId).classList.remove('highlighted');
+		document.getElementById('feature-' + featureId).
+			classList.remove('highlighted');
 	});
 	highlightedFeatureIds = featureIds;
 	highlightedFeatureIds.forEach(featureId => {
-		document.getElementById('feature-' + featureId).classList.add('highlighted');
+		document.getElementById('feature-' + featureId).
+			classList.add('highlighted');
 	});
 }
 
-const timezoneOffset = new Date().getTimezoneOffset();
+const timezoneOffset = new Date().getTimezoneOffset() * 60000;
 function calculateStats(feature, all=false){
 	const featureId = feature.id;
 	const country = feature.properties.country;
@@ -180,7 +204,8 @@ function calculateStats(feature, all=false){
 		const d = deaths[i].count;
 		if(all || time.length || c || r || d){
 			// https://stackoverflow.com/a/50130338
-			time.push(new Date(confirmed[i].time * 1000 - timezoneOffset * 60000).toISOString().split('T')[0]);
+			time.push(new Date(confirmed[i].time * 1000 - timezoneOffset).
+				toISOString().split('T')[0]);
 			confirmedCount.push(c);
 			recoveredCount.push(r);
 			deathsCount.push(d);
@@ -198,6 +223,10 @@ function calculateStats(feature, all=false){
 		recovered: recoveredCount,
 		deaths: deathsCount
 	};
+}
+
+function roundCFR(cfrFraction){
+	return Math.round(cfrFraction * 1000) / 10;
 }
 
 function showPopup(stats, coor){
@@ -225,23 +254,40 @@ function showPopup(stats, coor){
 
 	const T = lastIndex - averageDaysFromConfirmedToDeath < start ?
 		lastIndex - start : averageDaysFromConfirmedToDeath;
-	const lastCFRt = Math.round(lastDeaths / confirmedCount[lastIndex - T] * 1000) / 10;
+	const lastCFRt = roundCFR(lastDeaths / confirmedCount[lastIndex - T]);
 
-	// United States and Chile don't have recovered at a province or admin2 level
+	// United States and Chile don't have recovered at a province or admin2
+	// level
 	const lastCFRddr = (country == 'United States' && (province || admins2)) ||
-			   (country == 'Chile' && province) ? null :
-			   Math.round(lastDeaths / (lastDeaths + lastRecovered) * 1000) / 10;
+		(country == 'Chile' && province) ? null :
+		roundCFR(lastDeaths / (lastDeaths + lastRecovered));
 
 	const content =
-		'<div id="popup"><h3>' + createLinks(country, province, admin2, featureId, true) + '</h3>' +
-		'<div id="popup-last-updated">' + new Date(lastUpdated).toLocaleString() + '</div>' +
+		'<div id="popup"><h3>' +
+			createLinks(country, province, admin2, featureId, true) + '</h3>' +
+		'<div id="popup-last-updated">' +
+			new Date(lastUpdated).toLocaleString() + '</div>' +
 		'<table id="popup-stats">' +
-		(lastConfirmed ? '<tr class="confirmed"><td>' + getWord('Confirmed') + ':</td><td class="right">' + lastConfirmed.toLocaleString() + '</td></tr>' : '') +
-		(lastRecovered ? '<tr class="recovered"><td>' + getWord('Recovered') + ':</td><td class="right">' + lastRecovered.toLocaleString() + '</td></tr>' : '') +
-		(lastDeaths ? '<tr class="deaths"><td>' + getWord('Deaths') + ':</td><td class="right">' + lastDeaths.toLocaleString() + '</td></tr>' : '') +
+		(!lastConfirmed ? '' :
+			'<tr class="confirmed"><td>' + getWord('Confirmed') +
+			':</td><td class="right">' + lastConfirmed.toLocaleString() +
+			'</td></tr>') +
+		(!lastRecovered ? '' :
+			'<tr class="recovered"><td>' + getWord('Recovered') +
+			':</td><td class="right">' + lastRecovered.toLocaleString() +
+			'</td></tr>') +
+		(!lastDeaths ? '' :
+			'<tr class="deaths"><td>' + getWord('Deaths') +
+			':</td><td class="right">' + lastDeaths.toLocaleString() +
+			'</td></tr>') +
 		'</table>' +
-		'<div class="cfr">' + getWord('CFR') + '<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>: ' +
-		(lastCFRt ? '<sup>T=' + T + '</sup>' + lastCFRt + '%' + (isMobile || !lastCFRddr ? '' : ', ') : '') +
+		'<div class="cfr">' + getWord('CFR') +
+			'<sup><a href="https://' +
+			'www.worldometers.info/coronavirus/coronavirus-death-rate/' +
+			'"><span class="iconify" data-icon="fa:external-link"></span></a>' +
+			'</sup>: ' +
+		(lastCFRt ? '<sup>T=' + T + '</sup>' + lastCFRt + '%' +
+			(isMobile || !lastCFRddr ? '' : ', ') : '') +
 		(lastCFRddr ? '<sup>d/(d+r)</sup>' + lastCFRddr + '%</div>' : '') +
 		'<div id="popup-plots"></div>' +
 		'<div id="popup-plots-menu" class="plots-menu"></div>' +
@@ -264,12 +310,18 @@ function showPopup(stats, coor){
 	const cfrDDR = lastCFRddr == null ? null : [];
 
 	for(let i = start; i < time.length; i++){
-		confirmedIncrease.push(confirmedCount[i] - (i > start ? confirmedCount[i - 1] : null));
-		recoveredIncrease.push(recoveredCount[i] - (i > start ? recoveredCount[i - 1] : null));
-		deathsIncrease.push(deathsCount[i] - (i > start ? deathsCount[i - 1] : null));
-		cfrT.push(i >= start + T ? Math.round(deathsCount[i] / confirmedCount[i - T] * 1000) / 10 : null);
+		confirmedIncrease.push(confirmedCount[i] -
+			(i > start ? confirmedCount[i - 1] : null));
+		recoveredIncrease.push(recoveredCount[i] -
+			(i > start ? recoveredCount[i - 1] : null));
+		deathsIncrease.push(deathsCount[i] -
+			(i > start ? deathsCount[i - 1] : null));
+		cfrT.push(i >= start + T ?
+			roundCFR(deathsCount[i] / confirmedCount[i - T]) : null);
 		if(cfrDDR)
-			cfrDDR.push(deathsCount[i] + recoveredCount[i] ? Math.round(deathsCount[i] / (deathsCount[i] + recoveredCount[i]) * 1000) / 10 : null);
+			cfrDDR.push(deathsCount[i] + recoveredCount[i] ?
+				roundCFR(deathsCount[i] / (deathsCount[i] + recoveredCount[i]))
+				: null);
 	}
 
 	const popupStatsEl = document.getElementById('popup-stats');
@@ -529,7 +581,8 @@ function showFeatureStatsByQuery(query){
 				}else{
 					if(s.lastUpdated > stats.lastUpdated)
 						stats.lastUpdated = s.lastUpdated;
-					for(let i = stats.time.length - 1, j = s.time.length - 1; i >= 0 && j >= 0; i--, j--){
+					for(let i = stats.time.length - 1, j = s.time.length - 1;
+						i >= 0 && j >= 0; i--, j--){
 						stats.confirmed[i] += s.confirmed[j];
 						stats.recovered[i] += s.recovered[j];
 						stats.deaths[i] += s.deaths[j];
@@ -545,28 +598,34 @@ function showFeatureStatsByQuery(query){
 			zoomToExtent(extent);
 			showFeatureStatsById(featureIds[0]);
 		}else{
-			let geocodeUrl;
+			let geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?' +
+					'key=' + bingMapsKey + '&countryRegion=';
 			let country;
 			let province;
 			if(query.indexOf(', ') >= 0){
 				const x = query.split(', ');
 				country = x[1];
 				province = x[0];
-				geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + country + '&adminDistrict=' + province + '&key=' + bingMapsKey;
+				geocodeUrl += country + '&adminDistrict=' + province;
 			}else{
 				country = query;
-				geocodeUrl = 'https://dev.virtualearth.net/REST/v1/Locations?countryRegion=' + country + '&key=' + bingMapsKey;
+				geocodeUrl += country;
 			}
 			const geocodeXhr = new XMLHttpRequest();
 			geocodeXhr.open('GET', geocodeUrl, true);
 			geocodeXhr.responseType = 'json';
 			geocodeXhr.onload = function(){
 				const status = geocodeXhr.status;
-				if(status == 200 && geocodeXhr.response.resourceSets[0].estimatedTotal){
-					const resource = geocodeXhr.response.resourceSets[0].resources[0];
-					const coor = ol.proj.fromLonLat(resource.geocodePoints[0].coordinates.reverse());
-					const c1 = ol.proj.fromLonLat([resource.bbox[1], resource.bbox[0]]);
-					const c2 = ol.proj.fromLonLat([resource.bbox[3], resource.bbox[2]]);
+				if(status == 200 &&
+				   geocodeXhr.response.resourceSets[0].estimatedTotal){
+					const resource = geocodeXhr.response.resourceSets[0].
+						resources[0];
+					const coor = ol.proj.fromLonLat(
+						resource.geocodePoints[0].coordinates.reverse());
+					const c1 = ol.proj.fromLonLat(
+						[resource.bbox[1], resource.bbox[0]]);
+					const c2 = ol.proj.fromLonLat(
+						[resource.bbox[3], resource.bbox[2]]);
 					ol.extent.extend(extent, [c1[0], c1[1], c2[0], c2[1]]);
 					stats.country = country;
 					stats.province = province;
@@ -831,13 +890,15 @@ function generatePlotsMenu(menuEl, menuConfig){
 				if(callback.plotType > callback.plotTypes)
 					callback.plotType = 1;
 			}
-			a.innerHTML = getWord(title) + '<sup>' + callback.plotType + '</sup>';
+			a.innerHTML = getWord(title) +
+				'<sup>' + callback.plotType + '</sup>';
 			callback();
 		}
 
 		const a = document.createElement('a');
 		callback.plotType = 1;
-		callback.plotTypes = ['Confirmed', 'Recovered', 'Deaths'].indexOf(title) >= 0 ? 4 : 2;
+		callback.plotTypes = ['Confirmed', 'Recovered', 'Deaths'].
+			indexOf(title) >= 0 ? 4 : 2;
 		a.innerHTML = getWord(title) + '<sup>' + callback.plotType + '</sup>';
 		a.onclick = function(){
 			const wasActive = this.classList.contains('active');
@@ -891,22 +952,29 @@ function showGlobalStats(panToMaxConfirmed){
 		const lastRecovered = recovered[lastIndex].count;
 		const lastDeaths = deaths[lastIndex].count;
 
-		if((countryToDisplay && country != countryToDisplay) || (!lastConfirmed && !lastRecovered && !lastDeaths))
+		if((countryToDisplay && country != countryToDisplay) ||
+		   (!lastConfirmed && !lastRecovered && !lastDeaths))
 			return;
 
 		if((country == 'United States' && admin2) ||
-		   (country != 'United States' && (hasDuplicateData.indexOf(country) < 0 || province))){
+		   (country != 'United States' &&
+		    (hasDuplicateData.indexOf(country) < 0 || province))){
 			// country statistics
 			statsByProvince +=
-				'<div id="feature-' + featureId + '" class="stats-by-province">' +
-				'<div>' + createLinks(country, province, admin2, featureId, false) + '</div>' +
+				'<div id="feature-' + featureId +
+					'" class="stats-by-province">' +
+				'<div>' + createLinks(country, province, admin2, featureId,
+									  false) + '</div>' +
 				'<div onclick="showFeatureStatsById(' + featureId + ')">';
 			if(lastConfirmed)
-				statsByProvince += '<div class="confirmed">' + getConfirmedText(lastConfirmed) + '</div>';
+				statsByProvince += '<div class="confirmed">' +
+					getConfirmedText(lastConfirmed) + '</div>';
 			if(lastRecovered)
-				statsByProvince += '<div class="recovered">' + getRecoveredText(lastRecovered) + '</div>';
+				statsByProvince += '<div class="recovered">' +
+					getRecoveredText(lastRecovered) + '</div>';
 			if(lastDeaths)
-				statsByProvince += '<div class="deaths">' + getDeathsText(lastDeaths) + '</div>';
+				statsByProvince += '<div class="deaths">' +
+					getDeathsText(lastDeaths) + '</div>';
 			statsByProvince += '</div></div>';
 
 			if(updated > lastUpdated)
@@ -917,7 +985,8 @@ function showGlobalStats(panToMaxConfirmed){
 				ol.extent.extend(extent, [coor[0], coor[1], coor[0], coor[1]]);
 				const name = province || country;
 
-				statsByCountry[name] = {confirmed: [], recovered: [], deaths: []};
+				statsByCountry[name] =
+					{confirmed: [], recovered: [], deaths: []};
 				for(let i = 0; i < confirmed.length; i++){
 					const c = confirmed[i].count;
 					const r = recovered[i].count;
@@ -931,7 +1000,8 @@ function showGlobalStats(panToMaxConfirmed){
 			}
 
 			// don't double count for global statistics
-			if(country == 'United States' || hasDuplicateData.indexOf(country) >= 0)
+			if(country == 'United States' ||
+			   hasDuplicateData.indexOf(country) >= 0)
 				return;
 		}else if(country == 'United States' && province)
 			return;
@@ -941,7 +1011,8 @@ function showGlobalStats(panToMaxConfirmed){
 			lastUpdated = updated;
 
 		if(!countryToDisplay && !statsByCountry[country])
-			statsByCountry[country] = {confirmed: [], recovered: [], deaths: []};
+			statsByCountry[country] =
+				{confirmed: [], recovered: [], deaths: []};
 
 		for(let i = 0; i < confirmed.length; i++){
 			const c = confirmed[i].count;
@@ -964,7 +1035,8 @@ function showGlobalStats(panToMaxConfirmed){
 			// global statistics
 			if(i + 1 > time.length){
 				// https://stackoverflow.com/a/50130338
-				time.push(new Date(confirmed[i].time * 1000 - timezoneOffset * 60000).toISOString().split('T')[0]);
+				time.push(new Date(confirmed[i].time * 1000 - timezoneOffset).
+					toISOString().split('T')[0]);
 				confirmedCount.push(c);
 				recoveredCount.push(r);
 				deathsCount.push(d);
@@ -973,7 +1045,8 @@ function showGlobalStats(panToMaxConfirmed){
 				recoveredCount[i] += r;
 				deathsCount[i] += d;
 			}
-			if(i == confirmed.length - 1 && confirmedCount.length > confirmed.length){
+			if(i == confirmed.length - 1 &&
+			   confirmedCount.length > confirmed.length){
 				const k = confirmedCount.length - 1;
 				confirmedCount[k] += c;
 				recoveredCount[k] += r;
@@ -997,18 +1070,25 @@ function showGlobalStats(panToMaxConfirmed){
 			recovered: recovered,
 			deaths: deaths,
 			active: confirmed - recovered - deaths,
-			cfrDDR: Math.round(deaths / (deaths + recovered) * 1000) / 10
+			cfrDDR: roundCFR(deaths / (deaths + recovered))
 		});
 	});
 
 	statsByProvinceEl.innerHTML = statsByProvince;
 
 	for(let i = 0; i < time.length; i++){
-		confirmedIncrease.push(confirmedCount[i] - (i > 0 ? confirmedCount[i - 1] : null));
-		recoveredIncrease.push(recoveredCount[i] - (i > 0 ? recoveredCount[i - 1] : null));
-		deathsIncrease.push(deathsCount[i] - (i > 0 ? deathsCount[i - 1] : null));
-		cfrT.push(i >= averageDaysFromConfirmedToDeath ? Math.round(deathsCount[i] / confirmedCount[i - averageDaysFromConfirmedToDeath] * 1000) / 10 : null);
-		cfrDDR.push(deathsCount[i] + recoveredCount[i] ? Math.round(deathsCount[i] / (deathsCount[i] + recoveredCount[i]) * 1000) / 10 : null);
+		confirmedIncrease.push(confirmedCount[i] -
+			(i > 0 ? confirmedCount[i - 1] : null));
+		recoveredIncrease.push(recoveredCount[i] -
+			(i > 0 ? recoveredCount[i - 1] : null));
+		deathsIncrease.push(deathsCount[i] -
+			(i > 0 ? deathsCount[i - 1] : null));
+		cfrT.push(i >= averageDaysFromConfirmedToDeath ?
+			roundCFR(deathsCount[i] /
+				confirmedCount[i - averageDaysFromConfirmedToDeath]) : null);
+		cfrDDR.push(deathsCount[i] + recoveredCount[i] ?
+			roundCFR(deathsCount[i] /
+				(deathsCount[i] + recoveredCount[i])) : null);
 	}
 
 	const lastIndex = time.length - 1;
@@ -1016,7 +1096,9 @@ function showGlobalStats(panToMaxConfirmed){
 	totalConfirmedEl.innerHTML = getCountText(confirmedCount[lastIndex]);
 	totalRecoveredEl.innerHTML = getCountText(recoveredCount[lastIndex]);
 	totalDeathsEl.innerHTML = getCountText(deathsCount[lastIndex]);
-	cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' + cfrT[cfrT.length - 1] + '%' + (isMobile ? '' : ', ') + '<sup>d/(d+r)</sup>' + cfrDDR[cfrDDR.length - 1] + '%';
+	cfrEl.innerHTML = '<sup>T=' + averageDaysFromConfirmedToDeath + '</sup>' +
+		cfrT[cfrT.length - 1] + '%' + (isMobile ? '' : ', ') +
+		'<sup>d/(d+r)</sup>' + cfrDDR[cfrDDR.length - 1] + '%';
 
 	const plotsMenuConfig = {};
 	plotsMenuItems.forEach(item => {
@@ -1026,7 +1108,8 @@ function showGlobalStats(panToMaxConfirmed){
 	});
 	generatePlotsMenu(plotsMenuEl, plotsMenuConfig);
 
-	statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight - summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
+	statsByProvinceEl.style.height = (bodyHeight - headerEl.offsetHeight -
+		summaryEl.offsetHeight - plotsEl.offsetHeight - 6) + 'px';
 
 	if(panToMaxConfirmed){
 		if(extent)
@@ -1070,8 +1153,12 @@ function sortStatsByCountry(category){
 		return sortDescending ? b - a : a - b;
 	});
 	countryLinksEl.innerHTML =
-		'<a onclick="sortDescending=!sortDescending;sortStatsByCountry(\'' + category + '\')"><span class="iconify" data-icon="icomoon-free:sort-amount-' + (sortDescending ? 'desc' : 'asc') + '"></span></a> ' +
-		'<a onclick="sortStatsByCountry(\'' + nextCategory + '\')">' + getWord(category) + '</a>: ';
+		'<a onclick="sortDescending=!sortDescending;sortStatsByCountry(\'' +
+			category +
+			'\')"><span class="iconify" data-icon="icomoon-free:sort-amount-' +
+			(sortDescending ? 'desc' : 'asc') + '"></span></a> ' +
+		'<a onclick="sortStatsByCountry(\'' + nextCategory + '\')">' +
+			getWord(category) + '</a>: ';
 	for(let i = 0; i < sortedByCountry.length; i++){
 		const country = sortedByCountry[i].country;
 		const backup = countryLinksEl.innerHTML;
@@ -1080,10 +1167,15 @@ function sortStatsByCountry(category){
 			getRecoveredText(sortedByCountry[i].recovered) + ', ' +
 			getDeathsText(sortedByCountry[i].deaths) + ', ' +
 			getActiveText(sortedByCountry[i].active) + ', ' +
-			getWord('CFR') + ' d/(d+r) ' + sortedByCountry[i].cfrDDR.toLocaleString() + '%';
+			getWord('CFR') + ' d/(d+r) ' +
+				sortedByCountry[i].cfrDDR.toLocaleString() + '%';
 		countryLinksEl.innerHTML += (i > 0 ? ', ' : '') +
-			'<a onclick="showFeatureStatsByQuery(\'' + country + (countryToDisplay ? ', ' + countryToDisplay : '') + '\')" title="' + popup + '">' + getWord(country) + '</a>' +
-			'<sup><a href="?' + (country + (countryToDisplay ? ', ' + countryToDisplay : '')).replace(/ /g, '%20') + '" title="' + popup + '">' +
+			'<a onclick="showFeatureStatsByQuery(\'' + country +
+				(countryToDisplay ? ', ' + countryToDisplay : '') +
+				'\')" title="' + popup + '">' + getWord(country) + '</a>' +
+			'<sup><a href="?' +
+				(country + (countryToDisplay ? ', ' + countryToDisplay : '')).
+					replace(/ /g, '%20') + '" title="' + popup + '">' +
 			'<span class="iconify" data-icon="fa:link"></span>' +
 			'</a></sup>';
 		if(countryLinksEl.offsetWidth > headerEl.offsetWidth - 10){
@@ -1097,7 +1189,8 @@ function sortStatsByCountry(category){
  * ELEMENTS
  ******************************************************************************/
 
-const isMobile = window.getComputedStyle(document.getElementsByClassName('mobile-block')[0]).display == 'block';
+const isMobile = window.getComputedStyle(
+	document.getElementsByClassName('mobile-block')[0]).display == 'block';
 const bodyEl = document.body;
 const headerEl = document.getElementById('header');
 const countryLinksEl = document.getElementById('country-links');
@@ -1120,8 +1213,10 @@ const bodyHeight = Number(bodyStyle.height.replace('px', ''));
  * ADJUST MAP SIZE
  ******************************************************************************/
 
-mapEl.style.height = (bodyHeight - headerEl.offsetHeight - (isMobile ? 0 : 8)) + 'px';
-mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px';
+mapEl.style.height = (bodyHeight - headerEl.offsetHeight -
+	(isMobile ? 0 : 8)) + 'px';
+mapEl.style.width = (bodyWidth - infoEl.offsetWidth -
+	(isMobile ? 4 : 6)) + 'px';
 
 /*******************************************************************************
  * CREATE MAP
@@ -1130,7 +1225,8 @@ mapEl.style.width = (bodyWidth - infoEl.offsetWidth - (isMobile ? 4 : 6)) + 'px'
 const popup = new ol.Overlay.Popup();
 const map = new ol.Map({
 	target: 'map',
-	controls: ol.control.defaults().extend([new ol.control.ScaleLine({units:'us'})]),
+	controls: ol.control.defaults().extend([
+		new ol.control.ScaleLine({units:'us'})]),
 	layers: [
 		new ol.layer.Group({
 			title: getWord('Base maps'),
@@ -1177,7 +1273,8 @@ const map = new ol.Map({
 			source: new ol.source.Vector({
 				format: new ol.format.GeoJSON(),
 				url: dataUrl,
-				attributions: '&copy; ' + getWord('Data sources') + ': ' + dataSources
+				attributions: '&copy; ' + getWord('Data sources') + ': ' +
+					dataSources
 			}),
 			style: function(feature, resolution){
 				return createStyle(feature, resolution);
@@ -1192,13 +1289,15 @@ const map = new ol.Map({
 });
 map.addControl(new ol.control.LayerSwitcher());
 map.on('pointermove', function(evt){
-	map.getTargetElement().style.cursor = map.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
+	map.getTargetElement().style.cursor =
+		map.hasFeatureAtPixel(evt.pixel) ? 'pointer' : '';
 });
 let keepPopupOpen = false;
 map.on('singleclick', function(evt){
-	const feature = map.forEachFeatureAtPixel(evt.pixel, function(feature, layer){
-		return features[feature.getId()];
-	});
+	const feature = map.forEachFeatureAtPixel(evt.pixel,
+		function(feature, layer){
+			return features[feature.getId()];
+		});
 	if(feature){
 		window.location.hash = 'feature-' + feature.id;
 		showFeatureStatsAtCoordinates(feature, evt.coordinate);
@@ -1231,7 +1330,8 @@ xhr.onload = function(){
 		sortStatsByCountry('Confirmed');
 
 		if(queryMatches){
-			const query = queryMatches[1].replace(/\+|%20/g, ' ').replace(/%22/g, '"');
+			const query = queryMatches[1].replace(/\+|%20/g, ' ').
+				replace(/%22/g, '"');
 			showFeatureStatsByQuery(query);
 		}
 	}else
