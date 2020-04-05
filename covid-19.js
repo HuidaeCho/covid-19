@@ -62,7 +62,9 @@ function createStyle(feature, resolution){
 	const province = feature.get('province');
 	const admin2 = feature.get('admin2');
 
-	if((countryToDisplay && country != countryToDisplay) || (country == 'United States' && !admin2) || (country != 'United States' && hasDuplicateData.indexOf(country) >= 0 && !province))
+	if((countryToDisplay && country != countryToDisplay) ||
+	   (country == 'United States' && !admin2) ||
+	   (country != 'United States' && hasDuplicateData.indexOf(country) >= 0 && !province))
 		return null;
 
 	const lastIndex = feature.get('confirmed').length - 1;
@@ -223,9 +225,10 @@ function showPopup(stats, coor){
 		lastIndex - start : averageDaysFromConfirmedToDeath;
 	const lastCFRt = Math.round(lastDeaths / confirmedCount[lastIndex - T] * 1000) / 10;
 
-	// United States doesn't have recovered at a province or admin2 level
-	const lastCFRddr = country != 'United States' || (!province && !admin2) ?
-		Math.round(lastDeaths / (lastDeaths + lastRecovered) * 1000) / 10 : null;
+	// United States and Chile don't have recovered at a province or admin2 level
+	const lastCFRddr = (country == 'United States' && (province || admins2)) ||
+			   (country == 'Chile' && province) ? null :
+			   Math.round(lastDeaths / (lastDeaths + lastRecovered) * 1000) / 10;
 
 	const content =
 		'<div id="popup"><h3>' + createLinks(country, province, admin2, featureId, true) + '</h3>' +
@@ -481,16 +484,20 @@ function showFeatureStatsByQuery(query){
 				 (query != 'Others' && province.indexOf(query) >= 0) ||
 				 country.indexOf(query) >= 0){
 				const s = calculateStats(feature, true);
-				if(s.confirmed[s.confirmed.length - 1] + s.recovered[s.recovered.length - 1] + s.deaths[s.deaths.length - 1] == 0)
+				if(s.confirmed[s.confirmed.length - 1] +
+				   s.recovered[s.recovered.length - 1] +
+				   s.deaths[s.deaths.length - 1] == 0)
 					return;
 				if(country == 'United States'){
 					// country match
 					let matchLevel = 0;
 					const x = query.split(', ');
-					if(admin2Query == query || admin2 == query || (x.length == 3 && admin2 == x[0]))
+					if(admin2Query == query || admin2 == query ||
+					   (x.length == 3 && admin2 == x[0]))
 						// admin2 match
 						matchLevel = 2;
-					else if(provinceQuery == query || province == query || (x.length == 2 && province == x[0]))
+					else if(provinceQuery == query || province == query ||
+						(x.length == 2 && province == x[0]))
 						// province match
 						matchLevel = 1;
 					// only admin2 records are displayed
@@ -498,14 +505,17 @@ function showFeatureStatsByQuery(query){
 						featureIds.push(featureId);
 					switch(matchLevel){
 					case 0: // country level
+						// find the country data
 						if(province || admin2)
 							return;
 						break;
 					case 1: // province level
+						// find the province data
 						if(province != admin2 && admin2)
 							return;
 						break;
 					}
+					// otherwise, admin2 match and admin2 data
 				}else
 					featureIds.push(featureId);
 				if(stats.time.length == 0){
@@ -882,7 +892,8 @@ function showGlobalStats(panToMaxConfirmed){
 		if((countryToDisplay && country != countryToDisplay) || (!lastConfirmed && !lastRecovered && !lastDeaths))
 			return;
 
-		if((country == 'United States' && admin2) || (country != 'United States' && (hasDuplicateData.indexOf(country) < 0 || province))){
+		if((country == 'United States' && admin2) ||
+		   (country != 'United States' && (hasDuplicateData.indexOf(country) < 0 || province))){
 			// country statistics
 			statsByProvince +=
 				'<div id="feature-' + featureId + '" class="stats-by-province">' +
