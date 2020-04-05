@@ -25,19 +25,19 @@ function getWord(word){
 	return words[word] || word;
 }
 
-var getConfirmedText = getTextFunctions['confirmed'] || function(confirmed){
+let getConfirmedText = getTextFunctions['confirmed'] || function(confirmed){
 	return confirmed.toLocaleString() + ' ' + getWord('confirmed');
 };
 
-var getRecoveredText = getTextFunctions['recovered'] || function(recovered){
+let getRecoveredText = getTextFunctions['recovered'] || function(recovered){
 	return recovered.toLocaleString() + ' ' + getWord('recovered');
 };
 
-var getDeathsText = getTextFunctions['deaths'] || function(deaths){
+let getDeathsText = getTextFunctions['deaths'] || function(deaths){
 	return deaths.toLocaleString() + ' ' + getWord('death' + (deaths > 1 ? 's' : ''));
 };
 
-var getActiveText = getTextFunctions['active'] || function(active){
+let getActiveText = getTextFunctions['active'] || function(active){
 	return active.toLocaleString() + ' ' + getWord('active');
 };
 
