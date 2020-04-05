@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<title>코로나바이러스 (코로나19) 국내 발생 현황</title>
+<meta charset="utf-8" />
+<!--
+Name:    index.html
+Purpose: This HTML file creates an interactive web map of COVID-19 cases using
+         data from the GitHub repository and REST API of Johns Hopkins CSSE,
+         DXY, KCDC, StatisticheCoronavirus, and Minsal.
+Author:  Huidae Cho
+Since:   February 2, 2020
+
+Copyright (C) 2020, Huidae Cho <https://idea.isnew.info>
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as
+published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta http-equiv="refresh" content="1800" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/css/ol.css" />
+<script src="https://cdn.jsdelivr.net/gh/openlayers/openlayers.github.io@master/en/v6.1.1/build/ol.js"></script>
+<link rel="stylesheet" href="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.css" />
+<script type="text/javascript" src="https://cdn.rawgit.com/Viglino/ol-ext/master/dist/ol-ext.min.js"></script>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://code.iconify.design/1/1.0.4/iconify.min.js"></script>
+<link rel="stylesheet" href="covid-19.css" />
+<script>
+/*******************************************************************************
+ * CONFIGURATION
+ ******************************************************************************/
+// XXX: Add your Bing Maps key here and secure it from the Bing Maps Dev Center at https://www.bingmapsportal.com
+const bingMapsKey = 'AhuHr9JixtsyKu9uSOQ8W0lIr7_gC2KiFxOlmshvRDb_BSWDkhnGX7oeS5zJzHo0';
+const dataUrl = 'geodata.json'
+const dataSources = '<a href="https://arcg.is/0fHmTX">CSSE</a><sup><a href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data/csse_covid_19_daily_reports">1</a>' +
+	',<a href="https://services9.arcgis.com/N9p5hsImWXAccRNI/arcgis/rest/services/Nc2JKvYFoAEOFCG5JSI6/FeatureServer/1/query?where=1%3D1&outFields=*&f=json">2</a></sup>' +
+	', <a href="https://ncov.dxy.cn/ncovh5/view/pneumonia">DXY</a>' +
+	', <a href="http://ncov.mohw.go.kr/bdBoardList_Real.do">KCDC</a>' +
+	', <a href="https://statistichecoronavirus.it/regioni-coronavirus-italia/">StatisticheCoronavirus</a>' +
+	', <a href="https://www.minsal.cl/nuevo-coronavirus-2019-ncov/casos-confirmados-en-chile-covid-19/">Minsal</a>' +
+	'';
+const averageDaysFromConfirmedToDeath = 14; // median days from first symptom to death
+const plotsMenuItems = ['Cumulative', 'Increase', 'CFR', 'Confirmed', 'Recovered', 'Deaths'];
+const hasDuplicateData = ['South Korea', 'Italy', 'Chile'];
+const countryToDisplay = 'South Korea';
+
+// OPTIONAL TRANSLATION
+const words = {
+	'COVID-19 cases': '코로나19 현황',
+	'Base maps': '바탕 지도',
+	'Open Street': '오픈 스트리트',
+	'Bing aerial': '빙 위성지도',
+	'Water color': '수채화',
+	'Data sources': '자료 출처',
+
+	Confirmed: '확진',
+	Recovered: '격리해제',
+	Deaths: '사망',
+
+	Cumulative: '누적',
+	Increase: '증가',
+	CFR: '치명률',
+
+	'Seoul': '서울',
+	'Busan': '부산',
+	'Daegu': '대구',
+	'Incheon': '인천',
+	'Gwangju': '광주',
+	'Daejeon': '대전',
+	'Ulsan': '울산',
+	'Sejong': '세종',
+	'Gyeonggi': '경기',
+	'Gangwon': '강원',
+	'Chungbuk': '충북',
+	'Chungnam': '충남',
+	'Jeonbuk': '전북',
+	'Jeonnam': '전남',
+	'Gyeongbuk': '경북',
+	'Gyeongnam': '경남',
+	'Jeju': '제주',
+	'Quarantine': '검역',
+};
+const getTextFunctions = {
+	count: function(x){return x.toLocaleString() + ' 명';},
+	confirmed: function(x){return '확진 ' + getTextFunctions['count'](x);},
+	recovered: function(x){return '격리해제 ' + getTextFunctions['count'](x);},
+	deaths: function(x){return '사망 ' + getTextFunctions['count'](x);},
+};
+/*******************************************************************************
+ * END OF CONFIGURATION
+ ******************************************************************************/
+</script>
+</head>
+<body>
+<div id="header">
+<h1>코로나바이러스 <span class="desktop-inline">(코로나19)</span> 국내 발생 현황</h1>
+<span id="virus" class="iconify" data-icon="mdi:virus"></span>
+<div class="follow-me">
+<div class="icons">
+<a href="https://github.com/HuidaeCho/covid-19"><span class="iconify" data-icon="fa-solid:code-branch"></span></a>
+<a href="https://github.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:github"></span></a>
+<a href="https://twitter.com/HuidaeCho"><span class="iconify" data-icon="fa-brands:twitter"></span></a>
+<a href="https://researchgate.net/profile/Huidae_Cho"><span class="iconify" data-icon="fa-brands:researchgate"></span></a>
+<a href="https://linkedin.com/in/HuidaeCho"><span class="iconify" data-icon="fa-brands:linkedin"></span></a>
+</div>
+<div class="author"><a href="https://idea.isnew.info">조희대</a>가 2020년 2월 2일 공개</div>
+</div>
+<div class="desktop-block">
+이 웹맵은 존스 홉킨스 대학의 <a href="https://arcg.is/0fHmTX">코로나19 전세계 현황 웹맵</a>을 오픈소스로 구현했습니다.
+자료는 30분마다 갱신됩니다.
+이 웹사이트를 이용함으로써 발생하는 어떠한 손실에 대해서도 개발자는 책임지지 않습니다.
+<a href="https://github.com/HuidaeCho/covid-19/issues">제안</a>
+</div>
+<div class="mobile-block">
+존스 홉킨스 대학의 <a href="https://arcg.is/0fHmTX">웹맵</a>을 오픈소스로 구현했습니다.
+<a href="https://github.com/HuidaeCho/covid-19/blob/master/README.md#disclaimer">주의사항</a>
+<a href="https://github.com/HuidaeCho/covid-19/issues">제안</a>
+</div>
+<div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> 확진: 로그스케일, 기타: 확진과의 비율, 진행중인 비율: 불투명도</div>
+<div id="country-links-wrap"><span id="country-links">&nbsp;</span></div>
+</div>
+<div id="map"></div>
+<div id="info">
+<div id="summary">
+<h2>국내 발생 현황</h2>
+<div id="last-updated-label">마지막 갱신:</div><div id="last-updated"></div>
+<table id="global-stats">
+<tr class="confirmed"><td>확진:</td><td id="total-confirmed" class="right"></td></tr>
+<tr class="recovered"><td>격리해제:</td><td id="total-recovered" class="right"></td></tr>
+<tr class="deaths"><td>사망:</td><td id="total-deaths" class="right"></td></tr>
+</table>
+<div class="cfr">치명률<sup><a href="https://www.worldometers.info/coronavirus/coronavirus-death-rate/"><span class="iconify" data-icon="fa:external-link"></span></a></sup>: <span id="cfr"></span></div>
+</div>
+<div id="plots">
+<div id="plots-menu" class="plots-menu"></div>
+<div id="plot"></div>
+</div>
+<div id="stats-by-province"></div>
+</div>
+<script src="covid-19.js"></script>
+</body>
+</html>
