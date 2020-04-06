@@ -291,7 +291,8 @@ function showPopup(stats, coor){
 			'</sup>: ' +
 		(lastCFRt ? '<sup>T=' + T + '</sup>' + lastCFRt + '%' +
 			(isMobile || !lastCFRddr ? '' : ', ') : '') +
-		(lastCFRddr ? '<sup>d/(d+r)</sup>' + lastCFRddr + '%</div>' : '') +
+		(lastCFRddr ? '<sup>d/(d+r)</sup>' + lastCFRddr + '%' : '') +
+		'</div>' +
 		'<div id="popup-plots"></div>' +
 		'<div id="popup-plots-menu" class="plots-menu"></div>' +
 		'<div id="popup-plot"></div></div>' +
