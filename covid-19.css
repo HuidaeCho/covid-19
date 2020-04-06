@@ -258,7 +258,7 @@ h2 {
 	 * HEADER (TOP)
 	 **********************************************************************/
 	h1 {
-		width: calc(75% - 6px);
+		width: calc(70% - 6px);
 		font-size: 1.7em;
 	}
 	#virus {
@@ -267,7 +267,7 @@ h2 {
 		font-size: 200px;
 	}
 	.follow-me {
-		width: 25%;
+		width: 30%;
 	}
 	.follow-me .author {
 		display: inline;
