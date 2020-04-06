@@ -72,6 +72,7 @@ const words = {
 	'confirmed': 'confirmados',
 	'recovered': 'recuperados',
 	'deaths': 'fallecidos',
+	'death': 'fallecido', // singular
 	'active': 'activo',
 
 	'Confirmed': 'Confirmados',
@@ -79,7 +80,7 @@ const words = {
 	'Deaths': 'Fallecidos',
 	'Active': 'Activo',
 	'Cumulative': 'Acumulativo',
-	'Increase': 'Incrementar',
+	'Increase': 'Incremento',
 
 	'Others': 'Otros',
 };
@@ -105,9 +106,9 @@ const getTextFunctions = {
 <div class="author">Desde el 2 de febrero de 2020 por <a href="https://idea.isnew.info">Huidae Cho</a></div>
 </div>
 <div class="desktop-block">
-Este mapa web de código abierto fue motivado por <a href="https://arcg.is/0fHmTX">el sitio web de casos globales COVID-19</a> por <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
+Este mapa web de código abierto fue motivado por <a href="https://arcg.is/0fHmTX">el sitio web de casos globales de COVID-19</a> de <a href="https://systems.jhu.edu">Johns Hopkins CSSE</a>.
 Los datos se obtienen cada 30 minutos.
-El autor no se hace responsable de los daños causados por el uso de este sitio web.
+El autor no se hace responsable por los daños causados por el uso de este sitio web.
 <a href="https://github.com/HuidaeCho/covid-19/issues">¿Sugerencias?</a>
 </div>
 <div class="mobile-block">
@@ -115,7 +116,7 @@ Motivado por <a href="https://arcg.is/1DPOWm0">el sitio web de JHU CSSE</a>.
 <a href="https://github.com/HuidaeCho/covid-19/blob/master/README.md#disclaimer">¡Descargo de responsabilidad!</a>
 <a href="https://github.com/HuidaeCho/covid-19/issues">¿Sugerencias?</a>
 </div>
-<div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Confirmados: logarítmico, Otros: area proporcional a confirmados, Tasa Activos: opacidad</div>
+<div id="legend"><span class="iconify" data-icon="mdi:map-legend"></span> Confirmados: logarítmico. Otros: area proporcional a confirmados. Tasa Activos: opacidad.</div>
 <div id="country-links-wrap"><span id="country-links">&nbsp;</span></div>
 </div>
 <div id="map"></div>
