@@ -75,7 +75,6 @@ key2data = {}
 has_countries_to_display = True if len(config.countries_to_display) else False
 has_duplicate_data = []
 total_days = 0
-utc_now = datetime.datetime.utcnow()
 
 def geocode(country, province='', admin2='', latitude=None, longitude=None):
     # https://docs.microsoft.com/en-us/bingmaps/rest-services/common-parameters-and-types/location-and-area-types
@@ -398,7 +397,7 @@ def fetch_csse_rest():
     with open('data/csse_rest.json', 'w') as f:
         f.write(json.dumps(features))
 
-    today_iso = utc_now.strftime('%Y-%m-%d 00:00:00+00:00')
+    today_iso = datetime.datetime.utcnow().strftime('%Y-%m-%d 00:00:00+00:00')
     today = datetime.datetime.fromisoformat(today_iso)
 
     # try to find most up-to-date info from the REST server
