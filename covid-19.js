@@ -314,11 +314,10 @@ function showPopup(stats, coor){
 
 	for(let i = start; i < time.length; i++){
 		confirmedIncrease.push(confirmedCount[i] -
-			(i > start ? confirmedCount[i - 1] : null));
+			(i > 0 ? confirmedCount[i - 1] : 0));
 		recoveredIncrease.push(recoveredCount[i] -
-			(i > start ? recoveredCount[i - 1] : null));
-		deathsIncrease.push(deathsCount[i] -
-			(i > start ? deathsCount[i - 1] : null));
+			(i > 0 ? recoveredCount[i - 1] : 0));
+		deathsIncrease.push(deathsCount[i] - (i > 0 ? deathsCount[i - 1] : 0));
 		cfrT.push(i >= start + T ?
 			roundCFR(deathsCount[i] / confirmedCount[i - T]) : null);
 		if(cfrDDR)
@@ -1084,11 +1083,10 @@ function showGlobalStats(panToMaxConfirmed){
 
 	for(let i = 0; i < time.length; i++){
 		confirmedIncrease.push(confirmedCount[i] -
-			(i > 0 ? confirmedCount[i - 1] : null));
+			(i > 0 ? confirmedCount[i - 1] : 0));
 		recoveredIncrease.push(recoveredCount[i] -
-			(i > 0 ? recoveredCount[i - 1] : null));
-		deathsIncrease.push(deathsCount[i] -
-			(i > 0 ? deathsCount[i - 1] : null));
+			(i > 0 ? recoveredCount[i - 1] : 0));
+		deathsIncrease.push(deathsCount[i] - (i > 0 ? deathsCount[i - 1] : 0));
 		cfrT.push(i >= averageDaysFromConfirmedToDeath ?
 			roundCFR(deathsCount[i] /
 				confirmedCount[i - averageDaysFromConfirmedToDeath]) : null);

@@ -75,6 +75,7 @@ key2data = {}
 has_countries_to_display = True if len(config.countries_to_display) else False
 has_duplicate_data = []
 total_days = 0
+utc_now = datetime.datetime.utcnow()
 
 def geocode(country, province='', admin2='', latitude=None, longitude=None):
     # https://docs.microsoft.com/en-us/bingmaps/rest-services/common-parameters-and-types/location-and-area-types
@@ -296,7 +297,7 @@ def fetch_csse_daily_csv(year, month, day):
                 raise Exception('Commas are not allowed in country names: '
                         f'{country} in {date_csv}')
             last_updated = datetime.datetime.fromisoformat(
-                    f'{date_iso}T23:59:59+00:00')
+                    f'{date_iso} 23:59:59+00:00')
             key = generate_key(country, province, admin2)
             if key in dic.keymap:
                 key = dic.keymap[key]
@@ -397,7 +398,7 @@ def fetch_csse_rest():
     with open('data/csse_rest.json', 'w') as f:
         f.write(json.dumps(features))
 
-    today_iso = datetime.datetime.utcnow().strftime('%Y-%m-%d 00:00:00+00:00')
+    today_iso = utc_now.strftime('%Y-%m-%d 00:00:00+00:00')
     today = datetime.datetime.fromisoformat(today_iso)
 
     # try to find most up-to-date info from the REST server
@@ -419,7 +420,7 @@ def fetch_csse_rest():
         last_updated = datetime.datetime.fromtimestamp(
                 attr['Last_Update']/1000, tz=datetime.timezone.utc)
         # sometimes, the last date in the CSV file is later than REST; in this
-        # case, let's use today's date at 00:00:00
+        # case, let's use today's time at 00:00:00
         if today > last_updated:
             last_updated = today
         if 'geometry' in feature:
@@ -605,22 +606,25 @@ def clean_us_data():
         deaths = []
         for i in range(0, total_days):
             c = r = d = 0
+            last_updated = None
             for j in others_indices:
                 rec = data[j]
+                time = rec['confirmed'][i]['time']
+                if last_updated is None or time > last_updated:
+                    last_updated = time
                 c += rec['confirmed'][i]['count']
                 r += rec['recovered'][i]['count']
                 d += rec['deaths'][i]['count']
-            time = datetime.datetime.fromisoformat(f'{dates[i]} 23:59:59+00:00')
             confirmed.append({
-                'time': time,
+                'time': last_updated,
                 'count': c
             })
             recovered.append({
-                'time': time,
+                'time': last_updated,
                 'count': r
             })
             deaths.append({
-                'time': time,
+                'time': last_updated,
                 'count': d
             })
         province = 'Others'
@@ -645,22 +649,25 @@ def clean_us_data():
     deaths = []
     for i in range(0, total_days):
         c = r = d = 0
+        last_updated = None
         for rec in data:
             if rec['country'] == country and not rec['admin2']:
+                time = rec['confirmed'][i]['time']
+                if last_updated is None or time > last_updated:
+                    last_updated = time
                 c += rec['confirmed'][i]['count']
                 r += rec['recovered'][i]['count']
                 d += rec['deaths'][i]['count']
-        time = datetime.datetime.fromisoformat(f'{dates[i]} 23:59:59+00:00')
         confirmed.append({
-            'time': time,
+            'time': last_updated,
             'count': c
         })
         recovered.append({
-            'time': time,
+            'time': last_updated,
             'count': r
         })
         deaths.append({
-            'time': time,
+            'time': last_updated,
             'count': d
         })
 
