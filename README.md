@@ -63,39 +63,6 @@ I found [CSSE](https://systems.jhu.edu)'s data unreliable because they keep chan
 * geodata.json: GeoJSON file with case locations and time series data
 * data.csv: CSV file with the same information in a tabular format
 
-## Vim Settings for File Editing
-
-```vim
-if has("autocmd")
-	" restore the cursor position
-	autocmd BufReadPost *
-	\	if line("'\"") > 0 && line("'\"") <= line("$") |
-	\		exe "normal g`\"" |
-	\	endif
-
-	autocmd FileType python
-	\	set tabstop=4 |
-	\	set shiftwidth=4 |
-	\	set expandtab |
-	\	set smarttab |
-	\	match ColorColumn /\%>80v.\+/
-
-	" do not expand tabs to reduce file size for less web traffic
-	autocmd BufNewFile,BufRead *.js
-	\	set tabstop=4 |
-	\	set shiftwidth=4 |
-	\	set smartindent |
-	\	set nocindent |
-	\	match ColorColumn /\%>80v.\+/
-
-	" do not expand tabs to reduce file size for less web traffic
-	autocmd BufNewFile,BufRead *.css,*.html
-	\	set tabstop=4 |
-	\	set shiftwidth=4 |
-	\	match ColorColumn /\%>80v.\+/
-endif
-```
-
 ## Disclaimer
 
 Data that `fetch_data.py` collects from various data sources is copyrighted by its original owners. Post-processing of the data by the script may introduce errors and the author is not responsible for any damages caused by using the processed data and the web map.
