@@ -57,7 +57,8 @@ statistichecoronavirus_re = '<tr[^>]*>.*?<td[^>]*>(?:<[^>]*>)?(.*?)(?:<[^>]*>)?<
 
 minsal_url = 'https://www.minsal.cl/nuevo-coronavirus-2019-ncov/casos-confirmados-en-chile-covid-19/'
 minsal_re = '<tr[^>]*>.*?<td[^>]*>([^<>]+)</td>.*?<td[^>]*>[0-9.]+</td>.*?<td[^>]*>([0-9.]+)</td>.*?<td[^>]*>[0-9]+ %</td>.*?<td[^>]*>([0-9.]+)</td>.*?</tr>'
-minsal_total_re = '<tr[^>]*>.*?<td[^>]*><strong>Total</strong></td>.*?<td[^>]*><strong>[0-9.]+</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?<td[^>]*><strong>[0-9]+%</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>.*?<tr[^>]*>.*?<td[^>]*><strong>Casos recuperados a nivel nacional</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>'
+minsal_total_re = '<tr[^>]*>.*?<td[^>]*><strong>Total</strong></td>.*?<td[^>]*><strong>[0-9.]+</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?<td[^>]*><strong>[0-9]+%</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>.*?<tr[^>]*>.*?<td[^>]*><strong>Casos recuperados a nivel nacional *</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>'
+minsal_total_re = '<tr[^>]*>.*?<td[^>]*><strong>Total</strong></td>.*?<td[^>]*><strong>[0-9.]+</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?<td[^>]*><strong>[0-9]+%</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>.*?<tr[^>]*>.*?<td[^>]*><strong>Casos recuperados a nivel nacional\s*</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>'
 
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
 geocode_province_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&adminDistrict={{province}}&key={config.bing_maps_key}'
@@ -585,15 +586,15 @@ def clean_us_data():
                 r += rec2['recovered'][j]['count']
                 d += rec2['deaths'][j]['count']
             if c > confirmed[j]['count']:
-                print(f'US   confirmed: {province}, {country}, '
+                print(f'US   confirmed: {province}, {country}, {dates[j]}, '
                         f'{confirmed[j]["count"]} => {c}')
                 confirmed[j]['count'] = c
             if r > recovered[j]['count']:
-                print(f'US   recovered: {province}, {country}, '
+                print(f'US   recovered: {province}, {country}, {dates[j]}, '
                         f'{recovered[j]["count"]} => {r}')
                 recovered[j]['count'] = r
             if d > deaths[j]['count']:
-                print(f'US   deaths   : {province}, {country}, '
+                print(f'US   deaths   : {province}, {country}, {dates[j]}, '
                         f'{deaths[j]["count"]} => {d}')
                 deaths[j]['count'] = d
 
