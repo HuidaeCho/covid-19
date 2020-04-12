@@ -56,7 +56,7 @@ statistichecoronavirus_url = 'https://statistichecoronavirus.it/regioni-coronavi
 statistichecoronavirus_re = '<tr[^>]*>.*?<td[^>]*>(?:<[^>]*>)?(.*?)(?:<[^>]*>)?</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>'
 
 minsal_url = 'https://www.minsal.cl/nuevo-coronavirus-2019-ncov/casos-confirmados-en-chile-covid-19/'
-minsal_re = '<tr[^>]*>.*?<td[^>]*>([^<>]+)</td>.*?<td[^>]*>[0-9.]+</td>.*?<td[^>]*>([0-9.]+)</td>.*?<td[^>]*>[0-9]+ %</td>.*?<td[^>]*>([0-9.]+)</td>.*?</tr>'
+minsal_re = '<tr[^>]*>.*?<td[^>]*>([^<>]+)</td>.*?<td[^>]*>[0-9.]+</td>.*?<td[^>]*>([0-9.]+)</td>.*?<td[^>]*>[0-9,]+ %</td>.*?<td[^>]*>([0-9.]+)</td>.*?</tr>'
 minsal_total_re = '<tr[^>]*>.*?<td[^>]*><strong>Total</strong></td>.*?<td[^>]*><strong>[0-9.]+</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?<td[^>]*><strong>[0-9]+%</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>.*?<tr[^>]*>.*?<td[^>]*><strong>Casos recuperados a nivel nacional *</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>'
 minsal_total_re = '<tr[^>]*>.*?<td[^>]*><strong>Total</strong></td>.*?<td[^>]*><strong>[0-9.]+</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?<td[^>]*><strong>[0-9]+%</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>.*?<tr[^>]*>.*?<td[^>]*><strong>Casos recuperados a nivel nacional\s*</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>'
 
@@ -864,7 +864,8 @@ def update_fetched_data(country, province, confirmed, recovered, deaths):
 def fetch_statistichecoronavirus():
     print('Fetching StatisticheCoronavirus...')
 
-    res = requests.get(statistichecoronavirus_url).content.decode()
+    res = requests.get(statistichecoronavirus_url).content.decode(
+            errors='replace')
     matches = re.findall(statistichecoronavirus_re, res, re.DOTALL)
     if not matches:
         raise Exception('Fetching StatisticheCoronavirus failed')
