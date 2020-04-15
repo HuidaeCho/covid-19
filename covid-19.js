@@ -80,9 +80,8 @@ function createStyle(feature, resolution){
 		const confirmedRadius = calculateConfirmedRadius(confirmed) *
 			radiusFactor;
 		const recoveredRadius = Math.sqrt((recovered + deaths) / confirmed) *
-			confirmedRadius * radiusFactor;
-		const deathsRadius = Math.sqrt(deaths / confirmed) * confirmedRadius *
-			radiusFactor;
+			confirmedRadius;
+		const deathsRadius = Math.sqrt(deaths / confirmed) * confirmedRadius;
 		const minOpacity = 0.05;
 		const maxOpacity = 0.4;
 		const opacity = minOpacity + (maxOpacity - minOpacity) *
