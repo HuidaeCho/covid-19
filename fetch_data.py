@@ -53,7 +53,7 @@ dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
 dxy_re = 'window\.getListByCountryTypeService2true.*?"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
 
 statistichecoronavirus_url = 'https://statistichecoronavirus.it/regioni-coronavirus-italia/'
-statistichecoronavirus_re = '<tr[^>]*>.*?<td[^>]*>(?:<[^>]*>)?(.*?)(?:<[^>]*>)?</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>'
+statistichecoronavirus_re = '<tr[^>]*>.*?<td[^>]*>(?:<[^>]*>){2}(.*?)<[^>]*></td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>'
 
 minsal_url = 'https://www.minsal.cl/nuevo-coronavirus-2019-ncov/casos-confirmados-en-chile-covid-19/'
 minsal_re = '<tr[^>]*>.*?<td[^>]*>([^<>]+)</td>.*?<td[^>]*>[0-9.]+</td>.*?<td[^>]*>([0-9.]+)</td>.*?<td[^>]*>[0-9,]+ %</td>.*?<td[^>]*>([0-9.]+)</td>.*?</tr>'
