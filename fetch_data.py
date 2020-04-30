@@ -56,7 +56,7 @@ statistichecoronavirus_url = 'https://statistichecoronavirus.it/regioni-coronavi
 statistichecoronavirus_re = '<tr[^>]*>.*?<td[^>]*>(?:<[^>]*>){2}(.*?)<[^>]*></td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>'
 
 minsal_url = 'https://www.minsal.cl/nuevo-coronavirus-2019-ncov/casos-confirmados-en-chile-covid-19/'
-minsal_re = '<tr[^>]*>.*?<td[^>]*>([^<>]+)</td>.*?<td[^>]*>[0-9.]+</td>.*?<td[^>]*>([0-9.]+)</td>.*?<td[^>]*>[0-9,]+ *%</td>.*?<td[^>]*>([0-9.]+)</td>.*?</tr>'
+minsal_re = '<tr[^>]*>.*?<td[^>]*>([^<>]+)</td>.*?<td[^>]*>([0-9.]+)</td>.*?(?:<td[^>]*>[0-9.]+</td>.*?){3}<td[^>]*>([0-9.]+)</td>.*?<td[^>]*>[0-9,.]+ *%</td>.*?</tr>'
 minsal_total_re = '<tr[^>]*>.*?<td[^>]*><strong>Total</strong></td>.*?<td[^>]*><strong>[0-9.]+</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?<td[^>]*><strong>[0-9]+ *%</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>.*?<tr[^>]*>.*?<td[^>]*><strong>Casos recuperados a nivel nacional\s*</strong></td>.*?<td[^>]*><strong>([0-9.]+)</strong></td>.*?</tr>'
 
 geocode_country_url = f'http://dev.virtualearth.net/REST/v1/Locations?countryRegion={{country}}&key={config.bing_maps_key}'
