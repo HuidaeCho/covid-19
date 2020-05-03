@@ -52,8 +52,8 @@ kcdc_provinces_subre = '>([^>]+)</th>.*?<[^>]+?s_type1[^>]+>\s*([0-9,]+)\s*<.+?s
 dxy_url = 'https://ncov.dxy.cn/ncovh5/view/pneumonia'
 dxy_re = 'window\.getListByCountryTypeService2true.*?"createTime":([0-9]+),.*window\.getAreaStat = (.*?)\}catch\(e\)'
 
-statistichecoronavirus_url = 'https://statistichecoronavirus.it/regioni-coronavirus-italia/'
-statistichecoronavirus_re = '<tr[^>]*>.*?<td[^>]*>(?:<[^>]*>){2}(.*?)<[^>]*></td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>.*?</td>.*?<td[^>]*>(.*?)</td>.*?<td[^>]*>(.*?)</td>'
+statistichecoronavirus_url = 'https://statistichecoronavirus.it/coronavirus-italia/'
+statistichecoronavirus_re = '<tr[^>]*>\s*<td[^>]*>(?:<[^>]*>){2}([^<>]*?)<[^>]*></td>\s*<td[^>]*>[^<>]*?</td>\s*<td[^>]*>([^<>]*?)</td>\s*<td[^>]*>[^<>]*?</td>\s*<td[^>]*>[^<>]*?</td>\s*<td[^>]*>([^<>]*?)</td>\s*<td[^>]*>([^<>]*?)</td>\s*</tr>'
 
 minsal_url = 'https://www.minsal.cl/nuevo-coronavirus-2019-ncov/casos-confirmados-en-chile-covid-19/'
 minsal_re = '<tr[^>]*>.*?<td[^>]*>([^<>]+)</td>.*?<td[^>]*>([0-9.]+)</td>.*?(?:<td[^>]*>[0-9.]+</td>.*?){3}<td[^>]*>([0-9.]+)</td>.*?<td[^>]*>[0-9,.]+ *%</td>.*?</tr>'
@@ -1260,35 +1260,35 @@ def write_csv():
 
 if __name__ == '__main__':
     if not config.use_local_data_only:
-        fetch_csse_csv()
-        fetch_csse_rest()
-        clean_us_data()
+        #fetch_csse_csv()
+        #fetch_csse_rest()
+        #clean_us_data()
 
-        try:
-            fetch_kcdc_country()
-        except:
-            traceback.print_exc(file=sys.stdout)
-        try:
-            fetch_kcdc_provinces()
-        except:
-            traceback.print_exc(file=sys.stdout)
-        try:
-            fetch_dxy()
-        except:
-            traceback.print_exc(file=sys.stdout)
+        #try:
+        #    fetch_kcdc_country()
+        #except:
+        #    traceback.print_exc(file=sys.stdout)
+        #try:
+        #    fetch_kcdc_provinces()
+        #except:
+        #    traceback.print_exc(file=sys.stdout)
+        #try:
+        #    fetch_dxy()
+        #except:
+        #    traceback.print_exc(file=sys.stdout)
         try:
             fetch_statistichecoronavirus()
         except:
             traceback.print_exc(file=sys.stdout)
-        try:
-            fetch_minsal()
-        except:
-            traceback.print_exc(file=sys.stdout)
+        #try:
+        #    fetch_minsal()
+        #except:
+        #    traceback.print_exc(file=sys.stdout)
 
-    merge_local_data()
+    #merge_local_data()
 
-    sort_data()
-    report_data()
+    #sort_data()
+    #report_data()
 
-    write_geojson()
-    write_csv()
+    #write_geojson()
+    #write_csv()
