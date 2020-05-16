@@ -1283,7 +1283,10 @@ if __name__ == '__main__':
             fetch_minsal()
         except:
             traceback.print_exc(file=sys.stdout)
-    merge_local_data()
+    try:
+        merge_local_data()
+    except:
+        traceback.print_exc(file=sys.stdout)
     sort_data()
     report_data()
     write_geojson()
