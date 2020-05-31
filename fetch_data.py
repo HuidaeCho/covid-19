@@ -212,7 +212,7 @@ def fetch_csse_daily_csv(year, month, day):
         ncols = len(header)
         for row in reader:
             admin2 = latitude = longitude = ''
-            if ncols == 12:
+            if ncols == 14 or ncols == 12:
                 # since 03-22-2020
                 # 0: FIPS
                 # 1: Admin2
@@ -226,6 +226,9 @@ def fetch_csse_daily_csv(year, month, day):
                 # 9: Recovered
                 # 10: Active
                 # 11: Combined_Key
+                # since 05-29-2020
+                # 12: Incidence_Rate
+                # 13: Case-Fatality_Ratio
                 admin2 = '' if row[1].strip() == 'None' else row[1].strip()
                 province = '' if row[2].strip() == 'None' else row[2].strip()
                 country = row[3].strip()
