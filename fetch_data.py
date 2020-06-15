@@ -1266,30 +1266,30 @@ if __name__ == '__main__':
         fetch_csse_csv()
         fetch_csse_rest()
         clean_us_data()
-        try:
-            fetch_kcdc_country()
-        except:
-            traceback.print_exc(file=sys.stdout)
-        try:
-            fetch_kcdc_provinces()
-        except:
-            traceback.print_exc(file=sys.stdout)
-        try:
-            fetch_dxy()
-        except:
-            traceback.print_exc(file=sys.stdout)
-        try:
-            fetch_statistichecoronavirus()
-        except:
-            traceback.print_exc(file=sys.stdout)
-        try:
-            fetch_minsal()
-        except:
-            traceback.print_exc(file=sys.stdout)
-    try:
-        merge_local_data()
-    except:
-        traceback.print_exc(file=sys.stdout)
+#        try:
+#            fetch_kcdc_country()
+#        except:
+#            traceback.print_exc(file=sys.stdout)
+#        try:
+#            fetch_kcdc_provinces()
+#        except:
+#            traceback.print_exc(file=sys.stdout)
+#        try:
+#            fetch_dxy()
+#        except:
+#            traceback.print_exc(file=sys.stdout)
+#        try:
+#            fetch_statistichecoronavirus()
+#        except:
+#            traceback.print_exc(file=sys.stdout)
+#        try:
+#            fetch_minsal()
+#        except:
+#            traceback.print_exc(file=sys.stdout)
+#    try:
+#        merge_local_data()
+#    except:
+#        traceback.print_exc(file=sys.stdout)
     sort_data()
     report_data()
     write_geojson()
