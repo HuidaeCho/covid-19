@@ -4,6 +4,8 @@
 
 ## UPDATES
 
+As of December 10, 2020, I stopped updating [my demo site](https://app.isnew.info/covid-19) because, unfortunately, there is too much data to process and upload to the server. Also, the client-only model doesn't seem to work smoothly at this point. It became too slow to be practical. It wasn't expected at all when I started writing this code early this year.
+
 Single-country maps are now supported:
 * [코로나바이러스 (코로나19) 국내 발생 현황](https://app.isnew.info/covid-19/south-korea.html)
 * [Casos de COVID-19 en Chile](https://app.isnew.info/covid-19/chile.html)
