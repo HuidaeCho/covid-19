@@ -71,7 +71,7 @@ Data that `fetch_data.py` collects from various data sources is copyrighted by i
 
 ## License
 
-Copyright (C) 2020, Huidae Cho <<https://idea.isnew.info>>
+Copyright (C) 2020, Huidae Cho <<https://idea.isnew.info/>>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as
